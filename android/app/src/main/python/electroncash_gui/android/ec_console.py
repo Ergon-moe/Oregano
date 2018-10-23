@@ -6,7 +6,6 @@ from os.path import dirname, exists, join
 import unittest
 
 from electroncash import commands, daemon, keystore, tests, util, version
-from electroncash import main  # electron-cash script, renamed by build.gradle.
 from electroncash.simple_config import SimpleConfig
 from electroncash.storage import WalletStorage
 from electroncash.wallet import Wallet
@@ -137,7 +136,7 @@ class AllCommands(commands.Commands):
             self.wallet = None
             self.network.notify("updated")
 
-    def create(self, name, password=None, seed=None):
+    def create(self, name, password, seed=None):
         """Create or restore a new wallet"""
         path = self._wallet_path(name)
         if exists(path):
@@ -150,10 +149,6 @@ class AllCommands(commands.Commands):
         storage.put('keystore', keystore.from_seed(seed, "", False).dump())
         storage.put('wallet_type', 'standard')
         wallet = Wallet(storage)
-
-        if password is None:
-            password = main.prompt_password(
-                "Password (hit return if you do not wish to encrypt your wallet):")
         wallet.update_password(None, password, True)
         storage.write()
 
