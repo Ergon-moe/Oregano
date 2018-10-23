@@ -65,9 +65,7 @@ class CrashhubDialog : CrashReportDialog() {
 
 class CrashhubSenderFactory : ReportSenderFactory {
     override fun create(context: Context, config: CoreConfiguration): ReportSender {
-        // TODO switch to Marcel's server https://crashhub.electroncash.org/crash once
-        // it's back online.
-        return CrashhubSender(config, "https://crashhubtest.bauerj.eu/crash")
+        return CrashhubSender(config, "https://crashhub.electroncash.org/crash")
     }
 }
 
