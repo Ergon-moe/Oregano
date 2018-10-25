@@ -58,6 +58,7 @@ android {
                 include "lib/**"                               // In ../.. (renamed below)
                 include("chaquopy/**", "electroncash_gui/**",  // In src/main/python
                         "electroncash_plugins/**")             //
+                exclude "**/*.po", "**/*.pot"
             }
         }
     }
@@ -76,19 +77,36 @@ android {
     }
 }
 
-// Rearrange source code slightly.
 afterEvaluate {
-    for (variant in android.applicationVariants) {
-        def task = project.tasks.getByName("merge${variant.name.capitalize()}PythonSources")
-        def dstDir = task.destinationDir
+    def stringsTask = task("generateStrings", type: Exec) {
+        def pyVersion = "3"
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            executable "py"
+            args "-$pyVersion"
+        } else {
+            executable "python$pyVersion"
+        }
+        args "generate_strings.py"
+    }
 
-        // Rename directory to match package name, like package_dir does in setup.py.
+    for (variant in android.applicationVariants) {
+        // Rename directories to match package names, like package_dir does in setup.py.
+        def task = tasks.getByName("merge${variant.name.capitalize()}PythonSources")
+        def dstDir = task.destinationDir
         task.doLast {
             def src = "$dstDir/lib"
             def dst = "$dstDir/electroncash"
             if (! file(src).renameTo(dst)) {
                 throw new GradleException("Failed to rename $src to $dst")
             }
+        }
+
+        // Automatically generate strings the first time the app is built. To regenerate them
+        // later, either delete values/strings.xml and rebuild the app, or simply rerun the
+        // `generateStrings` task manually.
+        if (!file("src/main/res/values/strings.xml").exists()) {
+            tasks.getByName("generate${variant.name.capitalize()}Resources")
+                .dependsOn(stringsTask)
         }
     }
 }

@@ -139,7 +139,7 @@ class DaemonModel(val app: Application) : AndroidViewModel(app) {
             throw if (e.message!!.startsWith("AddressError"))
                 ToastException(R.string.invalid_address) else e
         }
-        if (amount <= 0) throw ToastException(R.string.invalid_amount)
+        if (amount <= 0) throw ToastException(R.string.Invalid_amount)
 
         val outputs = arrayOf(arrayOf(address, formatSatoshis(amount, UNIT_BCH)))
         try {

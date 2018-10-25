@@ -81,7 +81,7 @@ class SendDialog : AlertDialogFragment(), View.OnClickListener {
         get() {
             val amountStr = dialog.etAmount.text.toString()
             if (amountStr.isEmpty()) throw ToastException(R.string.enter_amount)
-            val amount = toSatoshis(amountStr) ?: throw ToastException(R.string.invalid_amount)
+            val amount = toSatoshis(amountStr) ?: throw ToastException(R.string.Invalid_amount)
             return amount
         }
 

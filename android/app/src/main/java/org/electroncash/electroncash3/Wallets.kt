@@ -151,7 +151,9 @@ class NewWalletDialog : AlertDialogFragment(), DialogInterface.OnClickListener {
             val name = dialog.etName.text.toString()
             if (name.isEmpty()) throw ToastException(R.string.name_is)
             if (name.contains("/")) throw ToastException(R.string.invalid_name)
-            if (daemonModel.listWallets().contains(name)) throw ToastException(R.string.a_wallet)
+            if (daemonModel.listWallets().contains(name)) {
+                throw ToastException(R.string.a_wallet_with_that_name_already_exists_please)
+            }
 
             val password = dialog.etPassword.text.toString()
             if (password.isEmpty()) throw ToastException(R.string.password_required)
@@ -161,7 +163,6 @@ class NewWalletDialog : AlertDialogFragment(), DialogInterface.OnClickListener {
 
             // Can't put this within the lambda or daemonModel will be found in NewSeedDialog
             // and return null.
-            // TODO: select seed language.
             val seed = if (which == AlertDialog.BUTTON_NEGATIVE)
                        daemonModel.commands.callAttr("make_seed").toString()
                        else null
@@ -195,7 +196,7 @@ class NewSeedDialog : SeedDialog() {
                         daemonModel.commands.callAttr("create", name, password, seed)
                     } catch (e: PyException) {
                         if (e.message!!.startsWith("InvalidSeed")) {
-                            throw ToastException(R.string.the_seed)
+                            throw ToastException(R.string.the_seed_you_entered_does_not_appear)
                         }
                         throw e
                     }
@@ -224,7 +225,7 @@ class DeleteWalletDialog : AlertDialogFragment() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         val walletName = daemonModel.walletName.value
         builder.setTitle(R.string.delete_wallet)
-            .setMessage(getString(R.string.you_are, walletName))
+            .setMessage(getString(R.string.you_are_about, walletName))
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 daemonModel.commands.callAttr("delete_wallet", walletName)
             }
@@ -341,7 +342,7 @@ open class SeedDialog : AlertDialogFragment() {
     override fun onShowDialog(dialog: AlertDialog) {
         val seed = arguments!!.getString("seed")
         if (seed == null) {
-            dialog.tvSeedLabel.setText(R.string.please_enter)
+            dialog.tvSeedLabel.setText(R.string.please_enter_your_seed_phrase)
         } else {
             dialog.tvSeedLabel.setText(seedAdvice(seed))
             dialog.etSeed.setText(seed)

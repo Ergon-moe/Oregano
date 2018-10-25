@@ -60,7 +60,7 @@ class AddressesFragment : MainFragment() {
 
             subtitle.value = getString(when {
                 addresses == null -> R.string.no_wallet
-                rvAddresses.adapter.itemCount == 0 -> R.string.generating_your
+                rvAddresses.adapter.itemCount == 0 -> R.string.generating_your_addresses
                 else -> R.string.touch_to_copy
             })
         })

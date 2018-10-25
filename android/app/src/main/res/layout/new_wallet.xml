@@ -13,7 +13,7 @@
         android:layout_marginLeft="24dp"
         android:layout_marginStart="24dp"
         android:layout_marginTop="8dp"
-        android:text="@string/wallet_name"
+        android:text="@string/Wallet_name"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
 
@@ -80,7 +80,7 @@
         android:layout_marginBottom="8dp"
         android:layout_marginTop="8dp"
         android:labelFor="@id/etSeed"
-        android:text="@string/do_you"
+        android:text="@string/do_you_want_to_create"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/etConfirmPassword"
         app:layout_constraintStart_toStartOf="@+id/etPassword"
