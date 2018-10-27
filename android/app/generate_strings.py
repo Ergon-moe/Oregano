@@ -7,7 +7,7 @@
 # `requests`.
 
 import argparse
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime
 import gettext
 import os
@@ -43,20 +43,41 @@ def main():
         run([sys.executable, join(EC_ROOT, "contrib/make_locale")], check=True)
 
     locale_dir = join(EC_ROOT, "lib/locale")
-    langs = [name for name in os.listdir(locale_dir)
-             if isdir(join(locale_dir, name))]
-
     src_strings = set()
-    strings = {}
-    for lang in langs:
-        trans = gettext.translation("electron-cash", locale_dir, [lang])
+    lang_strings = defaultdict(list)
+    for lang_region in [name for name in os.listdir(locale_dir)
+                        if isdir(join(locale_dir, name))]:
+        lang, region = lang_region.split("_")
+        trans = gettext.translation("electron-cash", locale_dir, [lang_region])
         catalog = {src_str: tgt_str for src_str, tgt_str in trans._catalog.items()
                    if not is_excluded(src_str)}
-        strings[lang] = catalog
+        lang_strings[lang].append((region, catalog))
         src_strings.update(catalog)
 
     ids = make_ids(src_strings)
+
+    # The region with the most translations is output without a country code so it will act as
+    # a fallback for the others.
+    #
+    # This doesn't entirely work for Chinese. Apparently Android 7 and later treats traditional
+    # and simplified Chinese as unrelated languages. Since it interprets "zh" as being
+    # simplified, it will never use it in any traditional locale, preferring English instead
+    # (https://gist.github.com/amake/0ac7724681ac1c178c6f95a5b09f03ce).
+    for lang, region_strings in lang_strings.items():
+        region_strings.sort(key=region_order, reverse=True)
+        for i, (region, strings) in enumerate(region_strings):
+            write_xml(lang if i == 0 else "{}-r{}".format(lang, region),
+                      strings, ids)
+
+    # The main strings.xml should be generated last, because this script will only be
+    # automatically run if it's missing.
     write_xml("", {s: s for s in src_strings}, ids)
+
+
+def region_order(item):
+    region, strings = item
+    return (region == "CN",   # "zh" must always be simplified Chinese: see comment above.
+            len(strings))
 
 
 def parse_args():
