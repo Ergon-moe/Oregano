@@ -127,6 +127,11 @@ dependencies {
 
     implementation "android.arch.lifecycle:extensions:1.1.1"
 
+    // As recommended in zxing-android-embedded documentation, reduce zxing:core version
+    // number, otherwise we require API level 19.
+    implementation('com.journeyapps:zxing-android-embedded:3.6.0') { transitive = false }
+    implementation 'com.google.zxing:core:3.3.0'
+
     def acraVersion = "5.2.0"
     implementation "ch.acra:acra-core:$acraVersion"
     implementation "ch.acra:acra-dialog:$acraVersion"

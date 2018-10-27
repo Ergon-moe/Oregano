@@ -4,12 +4,14 @@ import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProviders
+import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.text.Editable
 import android.text.TextWatcher
-import android.view.View
 import android.widget.SeekBar
+import com.chaquo.python.PyException
+import com.google.zxing.integration.android.IntentIntegrator
 import kotlinx.android.synthetic.main.send.*
 import org.json.JSONException
 import org.json.JSONObject
@@ -19,12 +21,13 @@ val MIN_FEE = 1
 val MAX_FEE = 10
 
 
-class SendDialog : AlertDialogFragment(), View.OnClickListener {
+class SendDialog : AlertDialogFragment() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         builder.setTitle(R.string.send)
             .setView(R.layout.send)
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(android.R.string.ok, null)
+            .setNeutralButton(R.string.qr_code, null)
     }
 
     override fun onShowDialog(dialog: AlertDialog) {
@@ -49,7 +52,8 @@ class SendDialog : AlertDialogFragment(), View.OnClickListener {
             })
         }
         showFee()
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(this)
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener { onOK() }
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { onQRRequest() }
     }
 
     fun showFee() {
@@ -61,7 +65,37 @@ class SendDialog : AlertDialogFragment(), View.OnClickListener {
         dialog.tvFeeLabel.setText(label)
     }
 
-    override fun onClick(v: View) {
+    fun onQRRequest() {
+        IntentIntegrator.forSupportFragment(this)
+            .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
+            .setPrompt(getString(R.string.please_scan))
+            .setBeepEnabled(false)
+            .initiateScan()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
+        if (result != null && result.contents != null) {
+            try {
+                val parsed = py.getModule("electroncash.web")!!
+                    .callAttr("parse_URI", result.contents)!!
+                val address = parsed.callAttr("get", "address")
+                if (address != null) {
+                    dialog.etAddress.setText(address.toString())
+                }
+                val amount = parsed.callAttr("get", "amount")
+                if (amount != null) {
+                    dialog.etAmount.setText(formatSatoshis(amount.toJava(Long::class.java)))
+                }
+            } catch (e: PyException) {
+                dialog.etAddress.setText(result.contents)
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data)
+        }
+    }
+
+    fun onOK() {
         try {
             makeUnsignedTx()
             showDialog(activity!!, SendPasswordDialog().apply { arguments = Bundle().apply {
