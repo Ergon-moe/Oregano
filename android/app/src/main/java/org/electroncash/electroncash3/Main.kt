@@ -2,6 +2,7 @@ package org.electroncash.electroncash3
 
 import android.app.Dialog
 import android.app.ProgressDialog
+import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
@@ -12,18 +13,20 @@ import android.support.v4.app.Fragment
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import kotlinx.android.synthetic.main.main.*
+import kotlin.reflect.KClass
 
 
 class MainActivity : AppCompatActivity() {
-    // TODO: integrate console into MainActivity and remove this.
     companion object {
+        // TODO: integrate console into MainActivity and remove this.
         var instance: MainActivity? = null
-    }
 
-    val FRAGMENTS = mapOf(
-        R.id.navWallets to WalletsFragment::class,
-        R.id.navAddresses to AddressesFragment::class
-    )
+        val FRAGMENTS = HashMap<Int, KClass<out Fragment>>().apply {
+            put(R.id.navWallets, WalletsFragment::class)
+            put(R.id.navAddresses, AddressesFragment::class)
+            put(R.id.navSettings, SettingsFragment::class)
+        }
+    }
 
     val daemonModel by lazy { ViewModelProviders.of(this).get(DaemonModel::class.java) }
 
@@ -66,12 +69,14 @@ class MainActivity : AppCompatActivity() {
         }
         val newFrag = getFragment(id)
         ft.attach(newFrag)
-        newFrag.title.observe(this, Observer { setTitle(it ?: "") })
-        newFrag.subtitle.observe(this, Observer { supportActionBar!!.setSubtitle(it) })
+        if (newFrag is MainFragment) {
+            newFrag.title.observe(this, Observer { setTitle(it ?: "") })
+            newFrag.subtitle.observe(this, Observer { supportActionBar!!.setSubtitle(it) })
+        }
         ft.commit()
     }
 
-    private fun getFragment(id: Int): MainFragment {
+    private fun getFragment(id: Int): Fragment {
         val tag = "MainFragment:$id"
         var frag = supportFragmentManager.findFragmentByTag(tag)
         if (frag == null) {
@@ -79,26 +84,26 @@ class MainActivity : AppCompatActivity() {
             supportFragmentManager.beginTransaction()
                 .add(flContent.id, frag, tag).commit()
         }
-        return frag as MainFragment
+        return frag
     }
 }
 
+val Fragment.mainActivity
+    get() = activity as MainActivity
 
-open class MainFragment : Fragment() {
-    val mainActivity by lazy { activity as MainActivity }
-    val daemonModel by lazy { mainActivity.daemonModel }
+val Fragment.daemonModel
+    get() = mainActivity.daemonModel
 
-    val title = MutableLiveData<String>().apply { value = "" }
-    val subtitle = MutableLiveData<String>().apply { value = null }
+
+interface MainFragment {
+    // To control the title or subtitle, override these with a MutableLiveData.
+    val title: LiveData<String>
+        get() = MutableLiveData<String>().apply { value = "" }
+    val subtitle: LiveData<String>
+        get() = MutableLiveData<String>().apply { value = null }
 }
 
 open class AlertDialogFragment : DialogFragment() {
-    // TODO remove duplication
-    val mainActivity by lazy {
-        activity as MainActivity
-    }
-    val daemonModel by lazy { mainActivity.daemonModel }
-
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val builder = AlertDialog.Builder(context!!)
         onBuildDialog(builder)

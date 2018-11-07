@@ -15,6 +15,10 @@ from .i18n import _
 from .util import PrintError, ThreadJob
 
 
+DEFAULT_ENABLED = False
+DEFAULT_CURRENCY = "EUR"
+DEFAULT_EXCHANGE = "Kraken"
+
 # See https://en.wikipedia.org/wiki/ISO_4217
 CCY_PRECISIONS = {'BHD': 3, 'BIF': 0, 'BYR': 0, 'CLF': 4, 'CLP': 0,
                   'CVE': 0, 'DJF': 0, 'GNF': 0, 'IQD': 3, 'ISK': 0,
@@ -344,7 +348,7 @@ class FxThread(ThreadJob):
                 self.exchange.update(self.ccy)
 
     def is_enabled(self):
-        return bool(self.config.get('use_exchange_rate'))
+        return self.config.get('use_exchange_rate', DEFAULT_ENABLED)
 
     def set_enabled(self, b):
         return self.config.set_key('use_exchange_rate', bool(b))
@@ -363,10 +367,10 @@ class FxThread(ThreadJob):
 
     def get_currency(self):
         '''Use when dynamic fetching is needed'''
-        return self.config.get("currency", "EUR")
+        return self.config.get("currency", DEFAULT_CURRENCY)
 
     def config_exchange(self):
-        return self.config.get('use_exchange', 'Kraken')
+        return self.config.get('use_exchange', DEFAULT_EXCHANGE)
 
     def show_history(self):
         return self.is_enabled() and self.get_history_config() and self.ccy in self.exchange.history_ccys()

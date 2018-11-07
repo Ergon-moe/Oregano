@@ -7,6 +7,7 @@ import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProviders
 import android.content.DialogInterface
 import android.os.Bundle
+import android.support.v4.app.Fragment
 import android.support.v7.app.AlertDialog
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
@@ -21,7 +22,10 @@ import kotlinx.android.synthetic.main.wallets.*
 import org.electroncash.electroncash3.databinding.WalletsBinding
 
 
-class WalletsFragment : MainFragment() {
+class WalletsFragment : Fragment(), MainFragment {
+    override val title = MutableLiveData<String>()
+    override val subtitle = MutableLiveData<String>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)

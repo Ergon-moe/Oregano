@@ -16,4 +16,9 @@
         android:icon="@drawable/ic_chevron_right_black_24dp"
         android:title="@string/console"/>
 
+    <item
+        android:id="@+id/navSettings"
+        android:icon="@drawable/ic_settings_black_24dp"
+        android:title="@string/settings"/>
+
 </menu>
