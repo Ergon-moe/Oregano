@@ -79,12 +79,14 @@ class MainActivity : AppCompatActivity() {
     private fun getFragment(id: Int): Fragment {
         val tag = "MainFragment:$id"
         var frag = supportFragmentManager.findFragmentByTag(tag)
-        if (frag == null) {
+        if (frag != null) {
+            return frag
+        } else {
             frag = FRAGMENTS[id]!!.java.newInstance()
             supportFragmentManager.beginTransaction()
                 .add(flContent.id, frag, tag).commit()
+            return frag
         }
-        return frag
     }
 }
 

@@ -28,10 +28,11 @@ open class LivePreferences(val context: Context, val resId: Int) {
         var result = map.get(key)
         if (result != null) {
             return result
+        } else {
+            result = create()
+            map.put(key, result)
+            return result
         }
-        result = create()
-        map.put(key, result)
-        return result
     }
 
     open fun setDefaultValues() {
@@ -85,6 +86,6 @@ class LiveBooleanPreference(sp: SharedPreferences, key: String) : LivePreference
 }
 
 class LiveStringPreference(sp: SharedPreferences, key: String) : LivePreference<String>(sp, key) {
-    override fun spGet(): String { return sp.getString(key, null) }
+    override fun spGet(): String { return sp.getString(key, null)!! }
     override fun spSet(value: String) { sp.edit().putString(key, value).apply() }
 }
