@@ -5,9 +5,11 @@ import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProviders
+import android.content.ClipboardManager
 import android.content.DialogInterface
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v4.app.FragmentActivity
 import android.support.v7.app.AlertDialog
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
@@ -94,7 +96,8 @@ class WalletsFragment : Fragment(), MainFragment {
             addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
         }
         daemonModel.transactions.observe(this, Observer {
-            rvTransactions.adapter = if (it == null) null else TransactionsAdapter(it)
+            rvTransactions.adapter = if (it == null) null
+                                     else TransactionsAdapter(activity!!, it)
         })
 
         btnSend.setOnClickListener { showDialog(activity!!, SendDialog()) }
@@ -363,12 +366,13 @@ fun seedAdvice(seed: String): String {
 }
 
 
-class TransactionsAdapter(val transactions: PyObject)
+class TransactionsAdapter(val activity: FragmentActivity, val transactions: PyObject)
     : BoundAdapter<TransactionModel>(R.layout.transaction) {
 
     override fun getItem(position: Int): TransactionModel {
         val t = transactions.callAttr("__getitem__", itemCount - position - 1)
         return TransactionModel(
+            t.callAttr("__getitem__", "txid").toString(),
             t.callAttr("__getitem__", "value").toString(),
             t.callAttr("__getitem__", "balance").toString(),
             t.callAttr("__getitem__", "date").toString())
@@ -377,10 +381,43 @@ class TransactionsAdapter(val transactions: PyObject)
     override fun getItemCount(): Int {
         return transactions.callAttr("__len__").toJava(Int::class.java)
     }
+
+    override fun onBindViewHolder(holder: BoundViewHolder<TransactionModel>, position: Int) {
+        super.onBindViewHolder(holder, position)
+        holder.itemView.setOnClickListener {
+            showDialog(activity, TransactionDialog(holder.item.txid))
+        }
+    }
 }
 
 // TODO: eliminate this once Chaquopy provides better syntax for dict access.
 class TransactionModel(
+    val txid: String,
     val value: String,
     val balance: String,
     val date: String)
+
+
+class TransactionDialog() : MenuDialog() {
+    constructor(txid: String) : this() {
+        arguments = Bundle().apply { putString("txid", txid) }
+    }
+    val txid by lazy { arguments!!.getString("txid")!! }
+
+    override fun onBuildDialog(builder: AlertDialog.Builder, menu: Menu,
+                               inflater: MenuInflater) {
+        builder.setTitle(txid)
+        inflater.inflate(R.menu.transaction, menu)
+    }
+
+    override fun onMenuItemSelected(item: MenuItem) {
+        when (item.itemId) {
+            R.id.menuCopy -> {
+                (getSystemService(ClipboardManager::class)).text = txid
+                toast(R.string.text_copied_to_clipboard)
+            }
+            R.id.menuExplorer -> exploreTransaction(mainActivity, txid)
+            else -> throw Exception("Unknown item $item")
+        }
+    }
+}

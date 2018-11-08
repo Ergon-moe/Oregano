@@ -5,6 +5,8 @@ import android.arch.lifecycle.Observer
 import android.content.ClipboardManager
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v4.app.FragmentActivity
+import android.support.v7.app.AlertDialog
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.view.*
@@ -62,19 +64,20 @@ class AddressesFragment : Fragment(), MainFragment {
         daemonModel.addresses.observe(this, Observer { addresses ->
             rvAddresses.adapter =
                 if (addresses == null) null
-                else AddressesAdapter(daemonModel.wallet!!, addresses)
+                else AddressesAdapter(activity!!, daemonModel.wallet!!, addresses)
 
-            subtitle.value = getString(when {
-                addresses == null -> R.string.no_wallet
-                rvAddresses.adapter!!.itemCount == 0 -> R.string.generating_your_addresses
-                else -> R.string.touch_to_copy
-            })
+            subtitle.value = when {
+                addresses == null -> getString(R.string.no_wallet)
+                rvAddresses.adapter!!.itemCount == 0 -> getString(R.string.generating_your_addresses)
+                else -> null
+            }
         })
     }
 }
 
 
-class AddressesAdapter(val wallet: PyObject, val addresses: PyObject)
+class AddressesAdapter(val activity: FragmentActivity, val wallet: PyObject,
+                       val addresses: PyObject)
     : BoundAdapter<AddressModel>(R.layout.address) {
 
     override fun getItem(position: Int): AddressModel {
@@ -88,11 +91,7 @@ class AddressesAdapter(val wallet: PyObject, val addresses: PyObject)
     override fun onBindViewHolder(holder: BoundViewHolder<AddressModel>, position: Int) {
         super.onBindViewHolder(holder, position)
         holder.itemView.setOnClickListener {
-            val addrString = holder.item.addrString
-            (getSystemService(ClipboardManager::class)).text =
-                if (clsAddress["FMT_UI"] == clsAddress["FMT_LEGACY"]) addrString
-                else "bitcoincash:" + addrString
-            toast(R.string.address_copied)
+            showDialog(activity, AddressDialog(holder.item.addrString))
         }
     }
 }
@@ -103,4 +102,31 @@ class AddressModel(val wallet: PyObject, val addr: PyObject) {
 
     val addrString
         get() = addr.callAttr("to_ui_string").toString()
+}
+
+
+class AddressDialog() : MenuDialog() {
+    constructor(address: String) : this() {
+        arguments = Bundle().apply { putString("address", address) }
+    }
+    val address by lazy { arguments!!.getString("address")!! }
+
+    override fun onBuildDialog(builder: AlertDialog.Builder, menu: Menu,
+                               inflater: MenuInflater) {
+        builder.setTitle(address)
+        inflater.inflate(R.menu.address, menu)
+    }
+
+    override fun onMenuItemSelected(item: MenuItem) {
+        when (item.itemId) {
+            R.id.menuCopy -> {
+                (getSystemService(ClipboardManager::class)).text =
+                    if (clsAddress["FMT_UI"] == clsAddress["FMT_LEGACY"]) address
+                    else "bitcoincash:" + address
+                toast(R.string.address_copied)
+            }
+            R.id.menuExplorer -> exploreAddress(mainActivity, address)
+            else -> throw Exception("Unknown item $item")
+        }
+    }
 }

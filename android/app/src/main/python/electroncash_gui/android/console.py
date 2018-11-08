@@ -5,10 +5,11 @@ import os
 from os.path import dirname, exists, join
 import unittest
 
-from electroncash import commands, daemon, keystore, tests, util, version
-from electroncash.simple_config import SimpleConfig
+from electroncash import commands, daemon, keystore, tests, simple_config, util, version
 from electroncash.storage import WalletStorage
 from electroncash.wallet import Wallet
+
+from android.preference import PreferenceManager
 
 
 # Too noisy: "servers", "interfaces"
@@ -68,7 +69,7 @@ class Help:
 # Adds additional commands which aren't available over JSON RPC.
 class AndroidCommands(commands.Commands):
     def __init__(self, app):
-        super().__init__(SimpleConfig({"verbose": True}), wallet=None, network=None)
+        super().__init__(AndroidConfig(app), wallet=None, network=None)
         fd, server = daemon.get_fd_or_server(self.config)
         if not fd:
             raise Exception("Daemon already running")  # Same wording as in daemon.py.
@@ -195,3 +196,28 @@ all_commands = commands.known_commands.copy()
 for name, func in vars(AndroidCommands).items():
     if not name.startswith("_"):
         all_commands[name] = commands.Command(func, "")
+
+
+SP_SET_METHODS = {
+    bool: "putBoolean",
+    float: "putFloat",
+    int: "putLong",
+    str: "putString",
+}
+
+# We store the config in the SharedPreferences because it's very easy to base an Android
+# settings UI on that. The reverse approach would be harder (using PreferenceDataStore to make
+# the settings UI access an Electron Cash config file).
+class AndroidConfig(simple_config.SimpleConfig):
+    def __init__(self, app):
+        self.sp = PreferenceManager.getDefaultSharedPreferences(app)
+        super().__init__()
+
+    def get(self, key, default=None):
+        return self.sp.getAll().get(key) if self.sp.contains(key) else default
+
+    def set_key(self, key, value, save=None):
+        set_method = SP_SET_METHODS.get(type(value))
+        if not set_method:
+            raise TypeError("Don't know how to set value of type " + type(value).__name__)
+        getattr(self.sp.edit(), set_method)(key, value).apply()

@@ -9,6 +9,13 @@
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
     </style>
 
+    <style name="Clickable">
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+    </style>
+
+    <!-- Text styles -->
     <style name="Address">
         <item name="android:textColor">?android:textColorPrimary</item>
         <item name="android:ellipsize">middle</item>

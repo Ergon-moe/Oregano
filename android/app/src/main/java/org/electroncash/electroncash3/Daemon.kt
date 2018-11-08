@@ -23,7 +23,6 @@ val libDaemon by lazy {
     mod
 }
 val libExchange by lazy { libMod("exchange_rate") }
-val libWeb by lazy { libMod("web") }
 
 val WATCHDOG_INTERVAL = 1000L
 

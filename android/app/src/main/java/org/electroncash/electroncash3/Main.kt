@@ -1,16 +1,12 @@
 package org.electroncash.electroncash3
 
-import android.app.Dialog
-import android.app.ProgressDialog
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
 import android.support.v4.app.Fragment
-import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import kotlinx.android.synthetic.main.main.*
 import kotlin.reflect.KClass
@@ -105,41 +101,3 @@ interface MainFragment {
         get() = MutableLiveData<String>().apply { value = null }
 }
 
-open class AlertDialogFragment : DialogFragment() {
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val builder = AlertDialog.Builder(context!!)
-        onBuildDialog(builder)
-        val dialog = builder.create()
-        dialog.setOnShowListener { onShowDialog(dialog) }
-        return dialog
-    }
-
-    open fun onBuildDialog(builder: AlertDialog.Builder) {}
-
-    /** Can be used to do things like configure custom views, or attach listeners to buttons so
-     *  they don't always close the dialog. */
-    open fun onShowDialog(dialog: AlertDialog) {}
-}
-
-open class MessageDialog() : AlertDialogFragment() {
-    constructor(title: String, message: String) : this() {
-        arguments = Bundle().apply {
-            putString("title", title)
-            putString("message", message)
-        }
-    }
-    override fun onBuildDialog(builder: AlertDialog.Builder) {
-        builder.setTitle(arguments!!.getString("title"))
-            .setMessage(arguments!!.getString("message"))
-            .setPositiveButton(android.R.string.ok, null)
-    }
-}
-
-class ProgressDialogFragment : AlertDialogFragment() {
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        isCancelable = false
-        return ProgressDialog(context).apply {
-            setMessage(getString(R.string.please_wait))
-        }
-    }
-}
