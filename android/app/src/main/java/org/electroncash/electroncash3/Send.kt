@@ -77,8 +77,7 @@ class SendDialog : AlertDialogFragment() {
         val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
         if (result != null && result.contents != null) {
             try {
-                val parsed = py.getModule("electroncash.web")!!
-                    .callAttr("parse_URI", result.contents)!!
+                val parsed = libWeb.callAttr("parse_URI", result.contents)!!
                 val address = parsed.callAttr("get", "address")
                 if (address != null) {
                     dialog.etAddress.setText(address.toString())

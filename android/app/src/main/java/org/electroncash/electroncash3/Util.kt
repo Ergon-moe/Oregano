@@ -91,10 +91,7 @@ val SERVICES = mapOf(
 )
 
 fun <T: Any> getSystemService(kcls: KClass<T>): T {
-    // TODO: do this once we move to support library version 28 (28.0.0-rc02 breaks the layout
-    // editor in Android Studio 3.1):
-    // return ContextCompat.getSystemService(app, kcls.java)!!
-    return app.getSystemService(SERVICES.get(kcls)!!) as T
+    return ContextCompat.getSystemService(app, kcls.java)!!
 }
 
 

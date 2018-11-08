@@ -14,20 +14,22 @@ val py by lazy {
     Python.start(AndroidPlatform(app))
     Python.getInstance()
 }
-val libMod by lazy { py.getModule("electroncash")!! }
-val daemonMod by lazy {
-    val mod =  py.getModule("electroncash_gui.android.daemon")!!
+fun libMod(name: String) = py.getModule("electroncash.$name")!!
+fun guiMod(name: String) = py.getModule("electroncash_gui.android.$name")!!
+
+val libDaemon by lazy {
+    val mod = guiMod("daemon")
     mod.callAttr("set_excepthook", mainHandler)
     mod
 }
+val libExchange by lazy { libMod("exchange_rate") }
+val libWeb by lazy { libMod("web") }
 
 val WATCHDOG_INTERVAL = 1000L
 
 
 class DaemonModel(val app: Application) : AndroidViewModel(app) {
-    val consoleMod = py.getModule("electroncash_gui.android.ec_console")
-
-    val commands = consoleMod.callAttr("AllCommands")!!
+    val commands = guiConsole.callAttr("AndroidCommands", app)!!
     val config = commands.get("config")!!
     val daemon = commands.get("daemon")!!
     val network = commands.get("network")!!
@@ -46,8 +48,8 @@ class DaemonModel(val app: Application) : AndroidViewModel(app) {
     init {
         checkAcra()
         initCallback()
-        network.callAttr("register_callback", daemonMod.callAttr("make_callback", this),
-                         consoleMod.get("CALLBACKS"))
+        network.callAttr("register_callback", libDaemon.callAttr("make_callback", this),
+                         guiConsole.get("CALLBACKS"))
         commands.callAttr("start")
 
         // This is still necessary even with the excepthook, in case a thread exits
@@ -83,7 +85,7 @@ class DaemonModel(val app: Application) : AndroidViewModel(app) {
                     walletBalance.value = null
                 }
                 transactions.value = wallet.callAttr("export_history")
-                addresses.value = modAddresses.callAttr("get_addresses", wallet)
+                addresses.value = guiAddresses.callAttr("get_addresses", wallet)
             } else {
                 for (ld in listOf(walletName, walletBalance, transactions, addresses)) {
                     ld.value = null
@@ -134,7 +136,7 @@ class DaemonModel(val app: Application) : AndroidViewModel(app) {
             throw ToastException(R.string.enter_or)
         }
         try {
-            libMod["address"]!!["Address"]!!.callAttr("from_string", address)
+            clsAddress.callAttr("from_string", address)
         } catch (e: PyException) {
             throw if (e.message!!.startsWith("AddressError"))
                 ToastException(R.string.invalid_address) else e

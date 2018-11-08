@@ -12,8 +12,9 @@ import com.chaquo.python.PyObject
 import kotlinx.android.synthetic.main.addresses.*
 
 
-val modAddresses = py.getModule("electroncash_gui.android.addresses")
-val clsAddress = libMod["address"]!!["Address"]!!
+val guiAddresses by lazy { guiMod("addresses") }
+val libAddress by lazy { libMod("address") }
+val clsAddress by lazy { libAddress["Address"]!! }
 
 
 class AddressesFragment : Fragment(), MainFragment {
@@ -98,7 +99,7 @@ class AddressesAdapter(val wallet: PyObject, val addresses: PyObject)
 
 class AddressModel(val wallet: PyObject, val addr: PyObject) {
     val type
-        get() = modAddresses.callAttr("addr_type", wallet, addr).toJava(Int::class.java)
+        get() = guiAddresses.callAttr("addr_type", wallet, addr).toJava(Int::class.java)
 
     val addrString
         get() = addr.callAttr("to_ui_string").toString()

@@ -25,8 +25,8 @@ class SplashActivity : AppCompatActivity() {
 class SplashModel : ViewModel() {
     val thread = Thread {
         // Start Python and load electroncash module: this may take several seconds.
-        libMod.id()
-        daemonMod.id()  // See android/daemon.py
+        libMod("daemon")
+        libDaemon.id()  // TODO remove workaound: see android/daemon.py.
         ready.postValue(Unit)
     }
 

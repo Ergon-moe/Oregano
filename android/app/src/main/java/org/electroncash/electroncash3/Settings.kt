@@ -10,20 +10,16 @@ import android.support.v7.preference.PreferenceGroup
 import com.chaquo.python.PyObject
 
 
-val webMod by lazy { py.getModule("electroncash.web") }
-val exchangeMod  by lazy { py.getModule("electroncash.exchange_rate") }
-
-
 class Settings(context: Context, resId: Int) : LivePreferences(context, resId) {
     override fun setDefaultValues() {
         // Appearance
-        setDefaultValue("block_explorer", webMod.get("DEFAULT_EXPLORER")!!.toString())
+        setDefaultValue("block_explorer", libWeb.get("DEFAULT_EXPLORER")!!.toString())
 
         // Fiat
         setDefaultValue("use_exchange_rate",
-                        exchangeMod.get("DEFAULT_ENABLED")!!.toJava(Boolean::class.java))
-        setDefaultValue("currency", exchangeMod.get("DEFAULT_CURRENCY")!!.toString())
-        setDefaultValue("use_exchange", exchangeMod.get("DEFAULT_EXCHANGE")!!.toString())
+                        libExchange.get("DEFAULT_ENABLED")!!.toJava(Boolean::class.java))
+        setDefaultValue("currency", libExchange.get("DEFAULT_CURRENCY")!!.toString())
+        setDefaultValue("use_exchange", libExchange.get("DEFAULT_EXCHANGE")!!.toString())
 
         // Set any remaining defaults from XML.
         super.setDefaultValues()
@@ -41,7 +37,7 @@ class SettingsFragment : PreferenceFragmentCompat(), MainFragment {
         observeGroup(preferenceScreen)
 
         // Appearance
-        setEntries("block_explorer", webMod.callAttr("BE_sorted_list"))
+        setEntries("block_explorer", libWeb.callAttr("BE_sorted_list"))
 
         // Fiat
         // TODO

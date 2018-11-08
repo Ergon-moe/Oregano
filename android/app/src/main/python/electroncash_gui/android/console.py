@@ -16,11 +16,11 @@ from electroncash.wallet import Wallet
 CALLBACKS = ["updated", "new_transaction", "status", "banner", "verified", "fee"]
 
 
-class ECConsole(InteractiveConsole):
+class AndroidConsole(InteractiveConsole):
     """`interact` must be run on a background thread, because it blocks waiting for input.
     """
-    def __init__(self, context, cmds):
-        namespace = dict(c=cmds, context=context.getApplicationContext())
+    def __init__(self, app, cmds):
+        namespace = dict(c=cmds, context=app)
         namespace.update({name: CommandWrapper(cmds, name) for name in all_commands})
         namespace.update(help=Help())
         InteractiveConsole.__init__(self, locals=namespace)
@@ -66,8 +66,8 @@ class Help:
 
 
 # Adds additional commands which aren't available over JSON RPC.
-class AllCommands(commands.Commands):
-    def __init__(self):
+class AndroidCommands(commands.Commands):
+    def __init__(self, app):
         super().__init__(SimpleConfig({"verbose": True}), wallet=None, network=None)
         fd, server = daemon.get_fd_or_server(self.config)
         if not fd:
@@ -192,6 +192,6 @@ class AllCommands(commands.Commands):
 
 
 all_commands = commands.known_commands.copy()
-for name, func in vars(AllCommands).items():
+for name, func in vars(AndroidCommands).items():
     if not name.startswith("_"):
         all_commands[name] = commands.Command(func, "")
