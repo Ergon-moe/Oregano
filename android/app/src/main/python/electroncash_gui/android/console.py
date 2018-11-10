@@ -12,9 +12,8 @@ from electroncash.wallet import Wallet
 from android.preference import PreferenceManager
 
 
-# Too noisy: "servers", "interfaces"
-# Unused: "on_quotes", "on_history"
-CALLBACKS = ["updated", "new_transaction", "status", "banner", "verified", "fee"]
+# Currently unused: "on_history", "servers", "interfaces"
+CALLBACKS = ["updated", "new_transaction", "status", "banner", "verified", "fee", "on_quotes"]
 
 
 class AndroidConsole(InteractiveConsole):

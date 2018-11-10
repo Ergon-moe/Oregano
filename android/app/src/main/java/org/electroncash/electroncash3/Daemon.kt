@@ -22,7 +22,6 @@ val libDaemon by lazy {
     mod.callAttr("set_excepthook", mainHandler)
     mod
 }
-val libExchange by lazy { libMod("exchange_rate") }
 
 val WATCHDOG_INTERVAL = 1000L
 
@@ -96,8 +95,12 @@ class DaemonModel(val app: Application) : AndroidViewModel(app) {
 
     // This will sometimes be called on the main thread and sometimes on the network thread.
     fun onCallback(event: String) {
-        mainHandler.removeCallbacks(callback)  // Mitigate callback floods.
-        mainHandler.post(callback)
+        if (event == "on_quotes") {
+            fiatUpdate.postValue(Unit)
+        } else {
+            mainHandler.removeCallbacks(callback)  // Mitigate callback floods.
+            mainHandler.post(callback)
+        }
     }
 
     // TODO: when the app is off-screen, the device is rotated, and the app is resumed, all

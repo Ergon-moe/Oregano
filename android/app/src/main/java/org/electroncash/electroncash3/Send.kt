@@ -34,9 +34,8 @@ class SendDialog : AlertDialogFragment() {
         dialog.etAmount.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) { showFee() }
+            override fun afterTextChanged(s: Editable?) { updateLabels() }
         })
-        dialog.tvUnit.setText(unitName)
         with (dialog.sbFee) {
             // setMin is not available until API level 26, so values are offset by MIN_FEE.
             progress = (daemonModel.config.callAttr("fee_per_kb").toJava(Int::class.java) / 1000
@@ -45,24 +44,33 @@ class SendDialog : AlertDialogFragment() {
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                     daemonModel.config.callAttr("set_key", "fee_per_kb", feeSpb * 1000)
-                    showFee()
+                    updateLabels()
                 }
                 override fun onStartTrackingTouch(seekBar: SeekBar) {}
                 override fun onStopTrackingTouch(seekBar: SeekBar) {}
             })
         }
-        showFee()
+        fiatUpdate.observe(this, Observer { updateLabels() })
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener { onOK() }
         dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { onQRRequest() }
     }
 
-    fun showFee() {
-        var label = "$feeSpb sat/byte"
+    fun updateLabels() {
+        var amountLabel = unitName
+        try {
+            val fiat = formatFiat(daemonModel, amount)
+            if (fiat != null) {
+                amountLabel += " ($fiat)"
+            }
+        } catch (e: ToastException) {}
+        dialog.tvAmountLabel.setText(amountLabel)
+
+        var feeLabel = "$feeSpb sat/byte"
         try {
             val fee = makeUnsignedTx().callAttr("get_fee").toJava(Long::class.java)
-            label += " (${formatSatoshis(fee)} $unitName)"
+            feeLabel += " (${formatSatoshis(fee)} $unitName)"
         } catch (e: ToastException) {}
-        dialog.tvFeeLabel.setText(label)
+        dialog.tvFeeLabel.setText(feeLabel)
     }
 
     fun onQRRequest() {

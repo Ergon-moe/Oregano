@@ -377,7 +377,8 @@ class FxThread(ThreadJob):
 
     def set_currency(self, ccy):
         self.ccy = ccy
-        self.config.set_key('currency', ccy, True)
+        if self.get_currency() != ccy:
+            self.config.set_key('currency', ccy, True)
         self.timeout = 0 # Because self.ccy changes
         self.on_quotes()
 

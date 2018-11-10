@@ -13,7 +13,6 @@ import org.acra.annotation.AcraDialog
 val DEFAULT_CHANNEL = "default"
 
 lateinit var app: App
-lateinit var settings: Settings
 lateinit var mainHandler: Handler
 
 
@@ -31,8 +30,10 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         app = this
-        settings = Settings(app, R.xml.settings)
         mainHandler = Handler()
+
+        initSettings()
+        initExchange()
 
         if (Build.VERSION.SDK_INT >= 26) {
             getSystemService(NotificationManager::class).createNotificationChannel(

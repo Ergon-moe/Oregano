@@ -1,15 +1,10 @@
 package org.electroncash.electroncash3
 
 import android.arch.lifecycle.MutableLiveData
-import android.content.Context
 import android.content.SharedPreferences
-import android.preference.PreferenceManager
 
 
-open class LivePreferences(val context: Context, val resId: Int) {
-    val sp = PreferenceManager.getDefaultSharedPreferences(context)
-    var haveSetDefaults = false
-
+class LivePreferences(val sp: SharedPreferences) {
     val booleans = HashMap<String, LivePreference<Boolean>>()
     val strings = HashMap<String, LivePreference<String>>()
 
@@ -20,11 +15,6 @@ open class LivePreferences(val context: Context, val resId: Int) {
         get(strings, key, { LiveStringPreference(sp, key) })
 
     fun <T> get(map: MutableMap<String, T>, key: String, create: () -> T): T {
-        if (!haveSetDefaults) {
-            setDefaultValues()
-            haveSetDefaults = true
-        }
-
         var result = map.get(key)
         if (result != null) {
             return result
@@ -33,19 +23,6 @@ open class LivePreferences(val context: Context, val resId: Int) {
             map.put(key, result)
             return result
         }
-    }
-
-    open fun setDefaultValues() {
-        // Despite what some documentation says, this will NOT overwrite existing values.
-        PreferenceManager.setDefaultValues(context, resId, true)
-    }
-
-    fun setDefaultValue(key: String, value: Boolean) {
-        if (!sp.contains(key)) sp.edit().putBoolean(key, value).apply()
-    }
-
-    fun setDefaultValue(key: String, value: String) {
-        if (!sp.contains(key)) sp.edit().putString(key, value).apply()
     }
 }
 

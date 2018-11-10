@@ -62,6 +62,16 @@
                 app:layout_constraintStart_toEndOf="@+id/tvBalance"
                 tools:text="@string/bch"/>
 
+            <TextView
+                android:id="@+id/tvFiat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dp"
+                android:layout_marginStart="4dp"
+                app:layout_constraintBaseline_toBaselineOf="@+id/tvBalanceUnit"
+                app:layout_constraintStart_toEndOf="@+id/tvBalanceUnit"
+                tools:text="(9.87 USD)"/>
+
             <ImageView
                 android:id="@+id/imageView2"
                 android:layout_width="wrap_content"

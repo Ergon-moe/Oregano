@@ -89,7 +89,9 @@ class WalletsFragment : Fragment(), MainFragment {
                 balance == null -> getString(R.string.synchronizing)
                 else -> unitName
             }
+            updateFiat()
         })
+        fiatUpdate.observe(this, Observer { updateFiat() })
 
         with (rvTransactions) {
             layoutManager = LinearLayoutManager(activity)
@@ -104,6 +106,12 @@ class WalletsFragment : Fragment(), MainFragment {
         btnReceive.setOnClickListener {
             mainActivity.navigation.selectedItemId = R.id.navAddresses
         }
+    }
+
+    fun updateFiat() {
+        val balance = daemonModel.walletBalance.value
+        val fiat = if (balance == null) null else formatFiat(daemonModel, balance)
+        tvFiat.text = if (fiat == null) "" else "($fiat)"
     }
 }
 
