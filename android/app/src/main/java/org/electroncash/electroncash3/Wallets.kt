@@ -251,7 +251,6 @@ class DeleteWalletDialog : AlertDialogFragment() {
 
 abstract class PasswordDialog(val runInBackground: Boolean = false) : AlertDialogFragment() {
     class Model : ViewModel() {
-        var firstStart = true
         val result = MutableLiveData<Boolean>()
     }
     private val model by lazy { ViewModelProviders.of(this).get(Model::class.java) }
@@ -277,15 +276,10 @@ abstract class PasswordDialog(val runInBackground: Boolean = false) : AlertDialo
         dialog.etPassword.setOnEditorActionListener { _, _, _ ->
             posButton.performClick()
         }
-
         model.result.observe(this, Observer { onResult(it) })
-        if (model.firstStart) {
-            model.firstStart = false
-            tryPassword(null, showError = false)
-        }
     }
 
-    fun tryPassword(password: String?, showError: Boolean = true) {
+    fun tryPassword(password: String) {
         model.result.value = null
         val r = Runnable {
             try {
@@ -297,9 +291,7 @@ abstract class PasswordDialog(val runInBackground: Boolean = false) : AlertDialo
                         ToastException(R.string.password_incorrect, Toast.LENGTH_SHORT) else e
                 }
             } catch (e: ToastException) {
-                if (showError) {
-                    e.show()
-                }
+                e.show()
                 model.result.postValue(false)
             }
         }
@@ -311,11 +303,10 @@ abstract class PasswordDialog(val runInBackground: Boolean = false) : AlertDialo
         }
     }
 
-    /** Attempt to perform the operation with the given password. `null` means to try with no
-     * password, which will automatically be attempted when the dialog first opens. If the
-     * operation fails, this method should throw either a ToastException, or an InvalidPassword
-     * PyException (most lib functions that take passwords will do this automatically). */
-    abstract fun onPassword(password: String?)
+    /** Attempt to perform the operation with the given password. If the operation fails, this
+     * method should throw either a ToastException, or an InvalidPassword PyException (most
+     * lib functions that take passwords will do this automatically). */
+    abstract fun onPassword(password: String)
 
     private fun onResult(success: Boolean?) {
         if (success == null) return
@@ -328,14 +319,14 @@ abstract class PasswordDialog(val runInBackground: Boolean = false) : AlertDialo
 
 
 class OpenWalletDialog: PasswordDialog(runInBackground = true) {
-    override fun onPassword(password: String?) {
+    override fun onPassword(password: String) {
         daemonModel.loadWallet(arguments!!.getString("walletName")!!, password)
     }
 }
 
 
 class ShowSeedPasswordDialog : PasswordDialog() {
-    override fun onPassword(password: String?) {
+    override fun onPassword(password: String) {
         val seed = daemonModel.wallet!!.callAttr("get_seed", password).toString()
         if (! seed.contains(" ")) {
             // get_seed(None) doesn't throw an exception, but returns the encrypted base64 seed.

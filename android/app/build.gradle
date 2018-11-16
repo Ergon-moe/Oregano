@@ -73,6 +73,19 @@ android {
         disable "MissingTranslation"
     }
 
+    def keystore = file("../keystore.jks")
+    if (keystore.exists()) {
+        signingConfigs {
+            config {
+                storeFile keystore
+                keyAlias "key0"
+                keyPassword "android"
+                storePassword "android"
+            }
+        }
+        buildTypes.all { it.signingConfig signingConfigs.config }
+    }
+
     applicationVariants.all { variant ->
         variant.outputs.all {
             outputFileName = "electroncash-${variant.versionName}.apk"

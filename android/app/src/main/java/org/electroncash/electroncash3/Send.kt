@@ -170,7 +170,7 @@ class SendPasswordDialog : PasswordDialog(runInBackground = true) {
         model.result.observe(this, Observer { onResult(it) })
     }
 
-    override fun onPassword(password: String?) {
+    override fun onPassword(password: String) {
         val tx = daemonModel.makeTx(arguments!!.getString("address")!!,
                                     arguments!!.getLong("amount"), password)
         if (daemonModel.netStatus.value == null) {
