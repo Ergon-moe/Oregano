@@ -240,8 +240,10 @@ class NewSeedDialog : SeedDialog() {
 class DeleteWalletDialog : AlertDialogFragment() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         val walletName = daemonModel.walletName.value
+        val message = getString(R.string.do_you_want_to_delete, walletName) + "\n\n" +
+                      getString(R.string.if_your_wallet)
         builder.setTitle(R.string.delete_wallet)
-            .setMessage(getString(R.string.you_are_about, walletName))
+            .setMessage(message)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 daemonModel.commands.callAttr("delete_wallet", walletName)
             }
