@@ -35,35 +35,65 @@
         android:id="@+id/textView5"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:text="@string/amount"
         app:layout_constraintStart_toStartOf="@+id/etAddress"
         app:layout_constraintTop_toBottomOf="@+id/etAddress"/>
 
     <TextView
-        android:id="@+id/tvAmountLabel"
-        android:layout_width="wrap_content"
+        android:id="@+id/tvFiat"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="@+id/etAddress"
+        android:layout_marginEnd="4dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginStart="8dp"
+        android:gravity="end"
+        app:layout_constraintEnd_toStartOf="@+id/btnMax"
+        app:layout_constraintStart_toEndOf="@+id/textView5"
         app:layout_constraintTop_toTopOf="@+id/textView5"
-        tools:text="@string/bch"/>
+        tools:text="456.87 USD"/>
 
     <EditText
         android:id="@+id/etAmount"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="4dp"
+        android:layout_marginRight="4dp"
         android:inputType="numberDecimal"
         android:singleLine="true"
-        app:layout_constraintEnd_toEndOf="@+id/tvAmountLabel"
+        app:layout_constraintEnd_toStartOf="@+id/tvUnit"
         app:layout_constraintStart_toStartOf="@+id/textView5"
-        app:layout_constraintTop_toBottomOf="@+id/textView5"
+        app:layout_constraintTop_toBottomOf="@+id/tvFiat"
         tools:text="12.34567890"/>
+
+    <TextView
+        android:id="@+id/tvUnit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="4dp"
+        android:layout_marginRight="4dp"
+        app:layout_constraintBaseline_toBaselineOf="@+id/etAmount"
+        app:layout_constraintEnd_toStartOf="@+id/btnMax"
+        tools:text="BCH"/>
+
+    <ToggleButton
+        android:id="@+id/btnMax"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:checked="false"
+        android:textOff="@string/max"
+        android:textOn="@string/max"
+        app:layout_constraintBottom_toBottomOf="@+id/etAmount"
+        app:layout_constraintEnd_toEndOf="@+id/etAddress"
+        app:layout_constraintTop_toBottomOf="@+id/etAddress"/>
 
     <TextView
         android:id="@+id/textView7"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:text="@string/mining_fee"
         app:layout_constraintStart_toStartOf="@+id/etAmount"
         app:layout_constraintTop_toBottomOf="@+id/etAmount"/>
@@ -78,16 +108,21 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/tvFeeLabel"
         app:layout_constraintStart_toStartOf="@+id/textView7"
-        app:layout_constraintTop_toBottomOf="@+id/textView7"
+        app:layout_constraintTop_toBottomOf="@+id/tvFeeLabel"
         app:layout_constraintVertical_bias="0.0"
-        tools:max="10"/>
+        tools:max="10"
+        tools:progress="1"/>
 
     <TextView
         android:id="@+id/tvFeeLabel"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="@+id/etAmount"
+        android:layout_marginLeft="8dp"
+        android:layout_marginStart="8dp"
+        android:gravity="end"
+        app:layout_constraintEnd_toEndOf="@+id/btnMax"
+        app:layout_constraintStart_toEndOf="@+id/textView7"
         app:layout_constraintTop_toTopOf="@+id/textView7"
-        tools:text="1 sat/byte (0.00003456 BCH)"/>
+        tools:text="2 sat/byte (0.00003456 BCH)"/>
 
 </android.support.constraint.ConstraintLayout>

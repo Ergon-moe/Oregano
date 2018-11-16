@@ -11,6 +11,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.widget.SeekBar
 import com.chaquo.python.PyException
+import com.chaquo.python.PyObject
 import com.google.zxing.integration.android.IntentIntegrator
 import kotlinx.android.synthetic.main.send.*
 import org.json.JSONException
@@ -34,8 +35,15 @@ class SendDialog : AlertDialogFragment() {
         dialog.etAmount.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) { updateLabels() }
+            override fun afterTextChanged(s: Editable?) {
+                if (!dialog.btnMax.isChecked) {  // Avoid infinite recursion.
+                    updateUI()
+                }
+            }
         })
+        dialog.tvUnit.setText(unitName)
+        dialog.btnMax.setOnCheckedChangeListener { _, _ -> updateUI() }
+
         with (dialog.sbFee) {
             // setMin is not available until API level 26, so values are offset by MIN_FEE.
             progress = (daemonModel.config.callAttr("fee_per_kb").toJava(Int::class.java) / 1000
@@ -44,30 +52,52 @@ class SendDialog : AlertDialogFragment() {
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                     daemonModel.config.callAttr("set_key", "fee_per_kb", feeSpb * 1000)
-                    updateLabels()
+                    updateUI()
                 }
                 override fun onStartTrackingTouch(seekBar: SeekBar) {}
                 override fun onStopTrackingTouch(seekBar: SeekBar) {}
             })
         }
-        fiatUpdate.observe(this, Observer { updateLabels() })
+        fiatUpdate.observe(this, Observer { updateUI() })
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener { onOK() }
         dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { onQRRequest() }
     }
 
-    fun updateLabels() {
-        var amountLabel = unitName
+    fun updateUI() {
+        var addrOrDummy: String
+        try {
+            daemonModel.makeAddress(address)
+            addrOrDummy = address
+        } catch (e: ToastException) {
+            addrOrDummy = daemonModel.wallet!!.callAttr("dummy_address")
+                            .callAttr("to_ui_string").toString()
+        }
+
+        var tx: PyObject? = null
+        dialog.etAmount.isEnabled = !dialog.btnMax.isChecked
+        if (dialog.btnMax.isChecked) {
+            try {
+                tx = daemonModel.makeTx(addrOrDummy, null, unsigned=true)
+                dialog.etAmount.setText(
+                    formatSatoshis(tx.callAttr("output_value").toJava(Long::class.java)))
+            } catch (e: ToastException) {}
+        }
+
+        var fiatLabel = ""
         try {
             val fiat = formatFiat(daemonModel, amount)
             if (fiat != null) {
-                amountLabel += " ($fiat)"
+                fiatLabel = fiat
             }
         } catch (e: ToastException) {}
-        dialog.tvAmountLabel.setText(amountLabel)
+        dialog.tvFiat.setText(fiatLabel)
 
         var feeLabel = "$feeSpb sat/byte"
         try {
-            val fee = makeUnsignedTx().callAttr("get_fee").toJava(Long::class.java)
+            if (tx == null) {
+                tx = daemonModel.makeTx(addrOrDummy, amount, unsigned = true)
+            }
+            val fee = tx.callAttr("get_fee").toJava(Long::class.java)
             feeLabel += " (${formatSatoshis(fee)} $unitName)"
         } catch (e: ToastException) {}
         dialog.tvFeeLabel.setText(feeLabel)
@@ -104,7 +134,7 @@ class SendDialog : AlertDialogFragment() {
 
     fun onOK() {
         try {
-            makeUnsignedTx()
+            daemonModel.makeTx(address, amount, unsigned=true)
             showDialog(activity!!, SendPasswordDialog().apply { arguments = Bundle().apply {
                 putString("address", address)
                 putLong("amount", amount)
@@ -112,8 +142,6 @@ class SendDialog : AlertDialogFragment() {
         } catch (e: ToastException) { e.show() }
         // Don't dismiss this dialog yet: the user might want to come back to it.
     }
-
-    fun makeUnsignedTx() = daemonModel.makeTx(address, amount, unsigned=true)
 
     val address
         get() = dialog.etAddress.text.toString()

@@ -103,10 +103,6 @@ class DaemonModel(val app: Application) : AndroidViewModel(app) {
         }
     }
 
-    // TODO: when the app is off-screen, the device is rotated, and the app is resumed, all
-    // ViewModels are incorrectly recreated. This is said to be fixed in support library version
-    // 28 (https://stackoverflow.com/a/51475630), but we're not using that yet because the
-    // current pre-release breaks the layout editor in Android Studio 3.1.
     override fun onCleared() {
         mainHandler.removeCallbacks(watchdog)
         commands.callAttr("stop")
@@ -132,26 +128,37 @@ class DaemonModel(val app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun makeTx(address: String, amount: Long, password: String? = null,
+    fun makeTx(address: String, amount: Long?, password: String? = null,
                unsigned: Boolean = false): PyObject {
-        if (address.isEmpty()) {
-            throw ToastException(R.string.enter_or)
-        }
-        try {
-            clsAddress.callAttr("from_string", address)
-        } catch (e: PyException) {
-            throw if (e.message!!.startsWith("AddressError"))
-                ToastException(R.string.invalid_address) else e
-        }
-        if (amount <= 0) throw ToastException(R.string.Invalid_amount)
+        makeAddress(address)
 
-        val outputs = arrayOf(arrayOf(address, formatSatoshis(amount, UNIT_BCH)))
+        val amountStr: String
+        if (amount == null) {
+            amountStr = "!"
+        } else {
+            if (amount <= 0) throw ToastException(R.string.Invalid_amount)
+            amountStr = formatSatoshis(amount, UNIT_BCH)
+        }
+
+        val outputs = arrayOf(arrayOf(address, amountStr))
         try {
             return commands.callAttr("_mktx", outputs, Kwarg("password", password),
                                      Kwarg("unsigned", unsigned))
         } catch (e: PyException) {
             throw if (e.message!!.startsWith("NotEnoughFunds"))
                 ToastException(R.string.insufficient_funds) else e
+        }
+    }
+
+    fun makeAddress(addrStr: String): PyObject {
+        if (addrStr.isEmpty()) {
+            throw ToastException(R.string.enter_or)
+        }
+        try {
+            return clsAddress.callAttr("from_string", addrStr)
+        } catch (e: PyException) {
+            throw if (e.message!!.startsWith("AddressError"))
+                ToastException(R.string.invalid_address) else e
         }
     }
 }
