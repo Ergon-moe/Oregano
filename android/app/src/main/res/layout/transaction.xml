@@ -68,9 +68,11 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="4dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
             android:text="@{model.balance}"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="@+id/tvValue"
+            app:layout_constraintEnd_toStartOf="@+id/tvConfirmations"
             app:layout_constraintStart_toStartOf="@+id/tvValue"
             app:layout_constraintTop_toBottomOf="@+id/tvValue"
             tools:text="0.98765432"/>
@@ -86,6 +88,15 @@
             app:layout_constraintBaseline_toBaselineOf="@+id/tvValue"
             app:layout_constraintEnd_toEndOf="parent"
             tools:text="2018.04.01 16:20"/>
+
+        <TextView
+            android:id="@+id/tvConfirmations"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBaseline_toBaselineOf="@+id/tvBalance"
+            app:layout_constraintEnd_toEndOf="@+id/tvTimestamp"
+            android:text='@{model.confirmationsStr}'
+            tools:text="3 confirmations"/>
 
         <android.support.constraint.Barrier
             android:id="@+id/barrier2"

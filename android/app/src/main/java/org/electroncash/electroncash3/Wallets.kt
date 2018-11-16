@@ -1,5 +1,6 @@
 package org.electroncash.electroncash3
 
+import android.annotation.SuppressLint
 import android.app.Dialog
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
@@ -370,11 +371,13 @@ class TransactionsAdapter(val activity: FragmentActivity, val transactions: PyOb
 
     override fun getItem(position: Int): TransactionModel {
         val t = transactions.callAttr("__getitem__", itemCount - position - 1)
+        // TODO: simplify this once Chaquopy provides better syntax for dict access
         return TransactionModel(
             t.callAttr("__getitem__", "txid").toString(),
             t.callAttr("__getitem__", "value").toString(),
             t.callAttr("__getitem__", "balance").toString(),
-            t.callAttr("__getitem__", "date").toString())
+            t.callAttr("__getitem__", "date").toString(),
+            t.callAttr("__getitem__", "confirmations").toJava(Int::class.java))
     }
 
     override fun getItemCount(): Int {
@@ -389,12 +392,20 @@ class TransactionsAdapter(val activity: FragmentActivity, val transactions: PyOb
     }
 }
 
-// TODO: eliminate this once Chaquopy provides better syntax for dict access.
 class TransactionModel(
     val txid: String,
     val value: String,
     val balance: String,
-    val date: String)
+    val date: String,
+    val confirmations: Int) {
+
+    @SuppressLint("StringFormatMatches")
+    val confirmationsStr = when {
+        confirmations <= 0 -> ""
+        confirmations > 6 -> app.getString(R.string.confirmed)
+        else -> app.getString(R.string.___confirmations, confirmations)
+    }
+}
 
 
 class TransactionDialog() : MenuDialog() {
