@@ -61,7 +61,7 @@ class AddressesFragment : Fragment(), MainFragment {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         rvAddresses.layoutManager = LinearLayoutManager(activity)
         rvAddresses.addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
-        daemonModel.addresses.observe(this, Observer { addresses ->
+        daemonModel.addresses.observe(viewLifecycleOwner, Observer { addresses ->
             rvAddresses.adapter =
                 if (addresses == null) null
                 else AddressesAdapter(activity!!, daemonModel.wallet!!, addresses)

@@ -56,20 +56,20 @@ class MainActivity : AppCompatActivity() {
 
     fun showFragment(id: Int) {
         val ft = supportFragmentManager.beginTransaction()
+        val newFrag = getFragment(id)
         for (frag in supportFragmentManager.fragments) {
-            if (frag is MainFragment) {
+            if (frag is MainFragment && frag !== newFrag) {
                 ft.detach(frag)
                 frag.title.removeObservers(this)
                 frag.subtitle.removeObservers(this)
             }
         }
-        val newFrag = getFragment(id)
         ft.attach(newFrag)
         if (newFrag is MainFragment) {
             newFrag.title.observe(this, Observer { setTitle(it ?: "") })
             newFrag.subtitle.observe(this, Observer { supportActionBar!!.setSubtitle(it) })
         }
-        ft.commit()
+        ft.commitNow()
     }
 
     private fun getFragment(id: Int): Fragment {
@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             frag = FRAGMENTS[id]!!.java.newInstance()
             supportFragmentManager.beginTransaction()
-                .add(flContent.id, frag, tag).commit()
+                .add(flContent.id, frag, tag).commitNow()
             return frag
         }
     }

@@ -83,7 +83,7 @@ class WalletsFragment : Fragment(), MainFragment {
         walletPanel.setOnClickListener {
             showDialog(activity!!, SelectWalletDialog())
         }
-        daemonModel.walletBalance.observe(this, Observer { balance ->
+        daemonModel.walletBalance.observe(viewLifecycleOwner, Observer { balance ->
             tvBalance.text = if (balance == null) "" else formatSatoshis(balance)
             tvBalanceUnit.text = when {
                 daemonModel.wallet == null -> getString(R.string.touch_to_load)
@@ -92,13 +92,13 @@ class WalletsFragment : Fragment(), MainFragment {
             }
             updateFiat()
         })
-        fiatUpdate.observe(this, Observer { updateFiat() })
+        fiatUpdate.observe(viewLifecycleOwner, Observer { updateFiat() })
 
         with (rvTransactions) {
             layoutManager = LinearLayoutManager(activity)
             addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
         }
-        daemonModel.transactions.observe(this, Observer {
+        daemonModel.transactions.observe(viewLifecycleOwner, Observer {
             rvTransactions.adapter = if (it == null) null
                                      else TransactionsAdapter(activity!!, it)
         })
