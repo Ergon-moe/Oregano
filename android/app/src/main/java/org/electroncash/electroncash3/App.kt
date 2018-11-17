@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import android.os.Handler
+import org.acra.ACRA
 import org.acra.annotation.AcraCore
 import org.acra.annotation.AcraDialog
 
@@ -24,7 +25,7 @@ class App : Application() {
 
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
-        initAcra(this)
+        ACRA.init(this)
     }
 
     override fun onCreate() {
@@ -32,13 +33,16 @@ class App : Application() {
         app = this
         mainHandler = Handler()
 
-        initSettings()
-        initExchange()
-
         if (Build.VERSION.SDK_INT >= 26) {
             getSystemService(NotificationManager::class).createNotificationChannel(
                 NotificationChannel(DEFAULT_CHANNEL, "Default",
                                     NotificationManager.IMPORTANCE_DEFAULT))
+        }
+
+        if (!ACRA.isACRASenderServiceProcess()) {
+            initSettings()
+            initExchange()
+            initDaemon()
         }
     }
 

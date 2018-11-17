@@ -8,15 +8,15 @@ import android.net.Uri
 val libWeb by lazy { libMod("web") }
 
 
-fun exploreAddress(activity: MainActivity, address: String) {
+fun exploreAddress(activity: Activity, address: String) {
     val addressObj = clsAddress.callAttr("from_string", address)
-    openBrowser(activity, libWeb.callAttr("BE_URL", activity.daemonModel.config,
+    openBrowser(activity, libWeb.callAttr("BE_URL", daemonModel.config,
                                           "addr", addressObj).toString())
 }
 
 
-fun exploreTransaction(activity: MainActivity, txid: String) {
-    openBrowser(activity, libWeb.callAttr("BE_URL", activity.daemonModel.config,
+fun exploreTransaction(activity: Activity, txid: String) {
+    openBrowser(activity, libWeb.callAttr("BE_URL", daemonModel.config,
                                           "tx", txid).toString())
 }
 

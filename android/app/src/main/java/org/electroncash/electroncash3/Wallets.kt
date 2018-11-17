@@ -105,7 +105,7 @@ class WalletsFragment : Fragment(), MainFragment {
 
         btnSend.setOnClickListener { showDialog(activity!!, SendDialog()) }
         btnReceive.setOnClickListener {
-            mainActivity.navigation.selectedItemId = R.id.navAddresses
+            (activity as MainActivity).navigation.selectedItemId = R.id.navAddresses
         }
     }
 
@@ -202,7 +202,7 @@ class NewSeedDialog : SeedDialog() {
         super.onShowDialog(dialog)
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             model.result.value = null
-            showDialog(mainActivity, ProgressDialogFragment())
+            showDialog(activity!!, ProgressDialogFragment())
             Thread {
                 try {
                     val name = arguments!!.getString("name")!!
@@ -229,7 +229,7 @@ class NewSeedDialog : SeedDialog() {
 
     fun onResult(success: Boolean?) {
         if (success == null) return
-        dismissDialog(mainActivity, ProgressDialogFragment::class)
+        dismissDialog(activity!!, ProgressDialogFragment::class)
         if (success) {
             dismiss()
         }
@@ -299,7 +299,7 @@ abstract class PasswordDialog(val runInBackground: Boolean = false) : AlertDialo
             }
         }
         if (runInBackground) {
-            showDialog(mainActivity, ProgressDialogFragment())
+            showDialog(activity!!, ProgressDialogFragment())
             Thread(r).start()
         } else {
             r.run()
@@ -313,7 +313,7 @@ abstract class PasswordDialog(val runInBackground: Boolean = false) : AlertDialo
 
     private fun onResult(success: Boolean?) {
         if (success == null) return
-        dismissDialog(mainActivity, ProgressDialogFragment::class)
+        dismissDialog(activity!!, ProgressDialogFragment::class)
         if (success) {
             dismiss()
         }
@@ -428,7 +428,7 @@ class TransactionDialog() : MenuDialog() {
                 (getSystemService(ClipboardManager::class)).text = txid
                 toast(R.string.text_copied_to_clipboard)
             }
-            R.id.menuExplorer -> exploreTransaction(mainActivity, txid)
+            R.id.menuExplorer -> exploreTransaction(activity!!, txid)
             else -> throw Exception("Unknown item $item")
         }
     }

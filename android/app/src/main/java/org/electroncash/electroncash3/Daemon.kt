@@ -1,7 +1,5 @@
 package org.electroncash.electroncash3
 
-import android.app.Application
-import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.MutableLiveData
 import com.chaquo.python.Kwarg
 import com.chaquo.python.PyException
@@ -25,8 +23,15 @@ val libDaemon by lazy {
 
 val WATCHDOG_INTERVAL = 1000L
 
+lateinit var daemonModel: DaemonModel
 
-class DaemonModel(val app: Application) : AndroidViewModel(app) {
+
+fun initDaemon() {
+    daemonModel = DaemonModel()
+}
+
+
+class DaemonModel {
     val commands = guiConsole.callAttr("AndroidCommands", app)!!
     val config = commands.get("config")!!
     val daemon = commands.get("daemon")!!
@@ -44,7 +49,6 @@ class DaemonModel(val app: Application) : AndroidViewModel(app) {
     val addresses = MutableLiveData<PyObject>()
 
     init {
-        checkAcra()
         initCallback()
         network.callAttr("register_callback", libDaemon.callAttr("make_callback", this),
                          guiConsole.get("CALLBACKS"))
@@ -101,11 +105,6 @@ class DaemonModel(val app: Application) : AndroidViewModel(app) {
             mainHandler.removeCallbacks(callback)  // Mitigate callback floods.
             mainHandler.post(callback)
         }
-    }
-
-    override fun onCleared() {
-        mainHandler.removeCallbacks(watchdog)
-        commands.callAttr("stop")
     }
 
     // TODO remove once Chaquopy provides better syntax.

@@ -125,7 +125,7 @@ class AddressDialog() : MenuDialog() {
                     else "bitcoincash:" + address
                 toast(R.string.address_copied)
             }
-            R.id.menuExplorer -> exploreAddress(mainActivity, address)
+            R.id.menuExplorer -> exploreAddress(activity!!, address)
             else -> throw Exception("Unknown item $item")
         }
     }

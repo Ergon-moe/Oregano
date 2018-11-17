@@ -3,7 +3,6 @@ package org.electroncash.electroncash3
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
-import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.os.Bundle
 import android.support.v4.app.Fragment
@@ -12,22 +11,16 @@ import kotlinx.android.synthetic.main.main.*
 import kotlin.reflect.KClass
 
 
+val FRAGMENTS = HashMap<Int, KClass<out Fragment>>().apply {
+    put(R.id.navWallets, WalletsFragment::class)
+    put(R.id.navAddresses, AddressesFragment::class)
+    put(R.id.navSettings, SettingsFragment::class)
+}
+
+
 class MainActivity : AppCompatActivity() {
-    companion object {
-        // TODO: integrate console into MainActivity and remove this.
-        var instance: MainActivity? = null
-
-        val FRAGMENTS = HashMap<Int, KClass<out Fragment>>().apply {
-            put(R.id.navWallets, WalletsFragment::class)
-            put(R.id.navAddresses, AddressesFragment::class)
-            put(R.id.navSettings, SettingsFragment::class)
-        }
-    }
-
-    val daemonModel by lazy { ViewModelProviders.of(this).get(DaemonModel::class.java) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        instance = this
         setTheme(R.style.AppTheme)  // Remove splash screen.
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main)
@@ -48,11 +41,6 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         showFragment(navigation.selectedItemId)
-    }
-
-    override fun onDestroy() {
-        instance = null
-        super.onDestroy()
     }
 
     fun showFragment(id: Int) {
@@ -86,12 +74,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
-
-val Fragment.mainActivity
-    get() = activity as MainActivity
-
-val Fragment.daemonModel
-    get() = mainActivity.daemonModel
 
 
 interface MainFragment {
