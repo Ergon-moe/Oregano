@@ -19,10 +19,16 @@ val FRAGMENTS = HashMap<Int, KClass<out Fragment>>().apply {
 
 
 class MainActivity : AppCompatActivity() {
+    var wasChangingConfigurations = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.AppTheme)  // Remove splash screen.
         super.onCreate(savedInstanceState)
+        if (savedInstanceState != null) {
+            wasChangingConfigurations =
+                savedInstanceState.getBoolean("wasChangingConfigurations", false)
+        }
+
         setContentView(R.layout.main)
         navigation.setOnNavigationItemSelectedListener {
             when (it.itemId) {
@@ -38,9 +44,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean("wasChangingConfigurations", isChangingConfigurations)
+    }
+
     override fun onResume() {
         super.onResume()
         showFragment(navigation.selectedItemId)
+        if (wasChangingConfigurations) {
+            wasChangingConfigurations = false
+        } else {
+            if (navigation.selectedItemId == R.id.navWallets &&
+                daemonModel.walletName.value == null) {
+                showDialog(this, SelectWalletDialog())
+            }
+        }
     }
 
     fun showFragment(id: Int) {
