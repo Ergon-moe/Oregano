@@ -28,6 +28,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         instance = this
+        setTheme(R.style.AppTheme)  // Remove splash screen.
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main)
         navigation.setOnNavigationItemSelectedListener {
