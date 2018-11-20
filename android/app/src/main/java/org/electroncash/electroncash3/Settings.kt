@@ -2,6 +2,7 @@ package org.electroncash.electroncash3
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.support.v4.app.DialogFragment
@@ -106,6 +107,15 @@ class SettingsFragment : PreferenceFragmentCompat(), MainFragment {
                     pref.summary = pref.entry
                 })
             }
+        }
+    }
+
+    override fun onPreferenceTreeClick(preference: Preference): Boolean {
+        if (preference.key == "console") {
+            startActivity(Intent(activity!!, ECConsoleActivity::class.java))
+            return true
+        } else {
+            return super.onPreferenceTreeClick(preference)
         }
     }
 

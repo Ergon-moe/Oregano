@@ -12,11 +12,6 @@
         android:title="@string/addresses"/>
 
     <item
-        android:id="@+id/navConsole"
-        android:icon="@drawable/ic_chevron_right_24dp"
-        android:title="@string/console"/>
-
-    <item
         android:id="@+id/navSettings"
         android:icon="@drawable/ic_settings_24dp"
         android:title="@string/settings"/>

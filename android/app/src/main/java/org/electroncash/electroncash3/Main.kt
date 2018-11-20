@@ -3,7 +3,6 @@ package org.electroncash.electroncash3
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
-import android.content.Intent
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
@@ -31,16 +30,8 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.main)
         navigation.setOnNavigationItemSelectedListener {
-            when (it.itemId) {
-                R.id.navConsole -> {
-                    startActivity(Intent(this, ECConsoleActivity::class.java))
-                    false
-                }
-                else -> {
-                    showFragment(it.itemId)
-                    true
-                }
-            }
+            showFragment(it.itemId)
+            true
         }
     }
 

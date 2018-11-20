@@ -42,6 +42,7 @@ class DaemonModel {
     lateinit var callback: Runnable
     lateinit var watchdog: Runnable
 
+    // TODO get rid of these: see onCallback.
     val netStatus = MutableLiveData<NetworkStatus>()
     val walletName = MutableLiveData<String>()
     val walletBalance = MutableLiveData<Long>()
@@ -97,6 +98,13 @@ class DaemonModel {
         onCallback("ui_create")  // Set initial LiveData values.
     }
 
+    // TODO: notify *all* callbacks via individual LiveDatas. e.g. initExchange will have:
+    //     addSource(daemonModel.getCallback("on_quotes"))
+    //
+    // Then get rid of the other LiveDatas above, and distribute the content of initCallback to
+    // the places which actually use the data. Callback floods will be mitigated automatically,
+    // and only the on-screen data will be pulled from the lib.
+    //
     // This will sometimes be called on the main thread and sometimes on the network thread.
     fun onCallback(event: String) {
         if (event == "on_quotes") {
