@@ -12,8 +12,8 @@ from electroncash.wallet import Wallet
 from android.preference import PreferenceManager
 
 
-# Currently unused: "on_history", "servers", "interfaces"
-CALLBACKS = ["updated", "new_transaction", "status", "banner", "verified", "fee", "on_quotes"]
+CALLBACKS = ["banner", "fee", "interfaces", "new_transaction", "on_history", "on_quotes",
+             "servers", "status", "updated", "verified"]
 
 
 class AndroidConsole(InteractiveConsole):
@@ -216,7 +216,14 @@ class AndroidConfig(simple_config.SimpleConfig):
         return self.sp.getAll().get(key) if self.sp.contains(key) else default
 
     def set_key(self, key, value, save=None):
-        set_method = SP_SET_METHODS.get(type(value))
-        if not set_method:
-            raise TypeError("Don't know how to set value of type " + type(value).__name__)
-        getattr(self.sp.edit(), set_method)(key, value).apply()
+        spe = self.sp.edit()
+        if value is None:
+            # We can't store null in SharedPreferences, but the default value in `get` means
+            # removing the setting will have the same result.
+            spe.remove(key)
+        else:
+            set_method = SP_SET_METHODS.get(type(value))
+            if not set_method:
+                raise TypeError("Don't know how to set value of type " + type(value).__name__)
+            getattr(spe, set_method)(key, value)
+        spe.apply()

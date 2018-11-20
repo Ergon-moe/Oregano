@@ -1,15 +1,22 @@
 package org.electroncash.electroncash3
 
 import android.arch.lifecycle.MediatorLiveData
-import android.arch.lifecycle.MutableLiveData
 
 
 val libExchange by lazy { libMod("exchange_rate") }
-lateinit var fiatUpdate: MutableLiveData<Unit>
+val fiatUpdate = MediatorLiveData<Unit>()
 
 
 fun initExchange() {
-    fiatUpdate = MediatorLiveData<Unit>().apply {
+    val fx = daemonModel.daemon.get("fx")!!
+    settings.getString("currency").observeForever {
+        fx.callAttr("set_currency", it)
+    }
+    settings.getString("use_exchange").observeForever {
+        fx.callAttr("set_exchange", it)
+    }
+
+    with (fiatUpdate) {
         addSource(settings.getBoolean("use_exchange_rate"), { value = Unit })
         addSource(settings.getString("currency"), { value = Unit })
         addSource(settings.getString("use_exchange"), { value = Unit })

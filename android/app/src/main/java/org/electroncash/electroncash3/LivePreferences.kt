@@ -5,8 +5,8 @@ import android.content.SharedPreferences
 
 
 class LivePreferences(val sp: SharedPreferences) {
-    val booleans = HashMap<String, LivePreference<Boolean>>()
-    val strings = HashMap<String, LivePreference<String>>()
+    private val booleans = HashMap<String, LivePreference<Boolean>>()
+    private val strings = HashMap<String, LivePreference<String>>()
 
     fun getBoolean(key: String) =
         get(booleans, key, { LiveBooleanPreference(sp, key) })
@@ -14,7 +14,7 @@ class LivePreferences(val sp: SharedPreferences) {
     fun getString(key: String) =
         get(strings, key, { LiveStringPreference(sp, key) })
 
-    fun <T> get(map: MutableMap<String, T>, key: String, create: () -> T): T {
+    private fun <T> get(map: MutableMap<String, T>, key: String, create: () -> T): T {
         var result = map.get(key)
         if (result != null) {
             return result
@@ -49,10 +49,7 @@ abstract class LivePreference<T>(val sp: SharedPreferences, val key: String)
     }
 
     private fun update(sp: SharedPreferences) {
-        if (!sp.contains(key)) {
-            throw IllegalArgumentException("Preference not found: $key")
-        }
-        super.setValue(spGet())
+        super.setValue(if (sp.contains(key)) spGet() else null)
     }
 }
 

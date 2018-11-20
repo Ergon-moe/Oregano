@@ -41,8 +41,9 @@ class App : Application() {
 
         if (!ACRA.isACRASenderServiceProcess()) {
             initSettings()
-            initExchange()
             initDaemon()
+            initNetwork()
+            initExchange()
         }
     }
 

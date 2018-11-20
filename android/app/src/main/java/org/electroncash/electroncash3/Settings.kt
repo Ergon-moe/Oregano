@@ -4,10 +4,13 @@ import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.preference.PreferenceManager
+import android.support.v4.app.DialogFragment
+import android.support.v7.preference.EditTextPreference
 import android.support.v7.preference.ListPreference
+import android.support.v7.preference.Preference
 import android.support.v7.preference.PreferenceFragmentCompat
 import android.support.v7.preference.PreferenceGroup
+import android.support.v7.preference.PreferenceManager
 import com.chaquo.python.PyObject
 
 
@@ -17,6 +20,13 @@ lateinit var settings: LivePreferences
 fun initSettings() {
     val sp = PreferenceManager.getDefaultSharedPreferences(app)
     settings = LivePreferences(sp)
+
+    // Network
+    setDefaultValue(sp, "auto_connect",
+                    libNetwork.get("DEFAULT_AUTO_CONNECT")!!.toJava(Boolean::class.java))
+    // null would cause issues with the preference framework, but the empty string has
+    // the same effect of making the daemon choose a random server.
+    setDefaultValue(sp, "server", "")
 
     // Appearance
     setDefaultValue(sp, "block_explorer", libWeb.get("DEFAULT_EXPLORER")!!.toString())
@@ -54,26 +64,20 @@ class SettingsFragment : PreferenceFragmentCompat(), MainFragment {
         setEntries("block_explorer", libWeb.callAttr("BE_sorted_list"))
 
         // Fiat
-        val fx = daemonModel.daemon.get("fx")!!
         val currencies = libExchange.callAttr("get_exchanges_by_ccy", false)
         setEntries("currency", py.builtins.callAttr("sorted", currencies))
-        settings.getString("currency").observe(this, Observer {
+        settings.getString("currency").observe(this, Observer { currency ->
             val prefExchange = findPreference("use_exchange") as ListPreference
             setEntries("use_exchange",
-                       py.builtins.callAttr("sorted", currencies.callAttr("get", it)))
+                       py.builtins.callAttr("sorted", currencies.callAttr("get", currency)))
             if (prefExchange.value !in prefExchange.entries) {
                 prefExchange.value = prefExchange.entries[0].toString()
             }
-            fx.callAttr("set_currency", it)
-        })
-        settings.getString("use_exchange").observe(this, Observer {
-            fx.callAttr("set_exchange", it)
         })
 
         // Do last, otherwise exchanges entries won't be populated yet and summary won't appear.
         observeGroup(preferenceScreen)
     }
-
 
     // TODO improve once Chaquopy provides better syntax.
     fun setEntries(key: String, pyList: PyObject) {
@@ -91,14 +95,32 @@ class SettingsFragment : PreferenceFragmentCompat(), MainFragment {
             val pref = group.getPreference(i)
             if (pref is PreferenceGroup) {
                 observeGroup(pref)
+            } else if (pref is EditTextPreference) {
+                settings.getString(pref.key).observe(this, Observer {
+                    pref.text = it
+                    pref.summary = pref.text
+                })
             } else if (pref is ListPreference) {
                 settings.getString(pref.key).observe(this, Observer {
-                    if (pref.value != it) {  // Avoid infinite recursion.
-                        pref.value = it
-                    }
+                    pref.value = it
                     pref.summary = pref.entry
                 })
             }
+        }
+    }
+
+    override fun onDisplayPreferenceDialog(preference: Preference) {
+        var dialog: DialogFragment? = null
+        if (preference is ServerPreference) {
+            dialog = ServerPreferenceDialog()
+        }
+
+        if (dialog != null) {
+            dialog.arguments = Bundle().apply { putString("key", preference.key) }
+            dialog.setTargetFragment(this, 0)
+            showDialog(activity!!, dialog)
+        } else {
+            super.onDisplayPreferenceDialog(preference)
         }
     }
 }
