@@ -20,24 +20,24 @@
     </style>
 
     <!-- Text styles -->
-    <style name="Address">
+    <style name="Field">
         <item name="android:textColor">?android:textColorPrimary</item>
-        <item name="android:ellipsize">middle</item>
-    </style>
-    <style name="Value">
-        <item name="android:textColor">?android:textColorPrimary</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:singleLine">true</item>
         <item name="android:ellipsize">end</item>
     </style>
-    <style name="Value.Small">
+    <style name="Field.Address">
+        <item name="android:ellipsize">middle</item>
+    </style>
+    <style name="Field.Value">
+        <item name="android:textStyle">bold</item>
+        <item name="android:singleLine">true</item>
+    </style>
+    <style name="Field.Value.Small">
         <item name="android:textSize">18sp</item>
     </style>
-    <style name="Value.Large">
+    <style name="Field.Value.Large">
         <item name="android:textSize">28sp</item>
     </style>
-    <style name="Timestamp">
-        <item name="android:textColor">?android:textColorPrimary</item>
+    <style name="Field.Timestamp">
         <item name="android:textSize">16sp</item>
     </style>
 

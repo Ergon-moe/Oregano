@@ -16,7 +16,7 @@
 
         <TextView
             android:id="@+id/tvAddress"
-            style="@style/Address"
+            style="@style/Field.Address"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
@@ -36,6 +36,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
+            android:layout_marginTop="4dp"
             android:text="@{@stringArray/address_type[model.type]}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/tvAddress"

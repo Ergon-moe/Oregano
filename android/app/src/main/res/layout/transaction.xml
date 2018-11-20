@@ -22,11 +22,11 @@
             android:layout_marginLeft="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
-            android:src="@{model.value.charAt(0) == '+' ? @drawable/ic_receive_black_24dp : @drawable/ic_send_black_24dp}"
+            android:src="@{model.value.charAt(0) == '+' ? @drawable/ic_receive_24dp : @drawable/ic_send_24dp}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:src="@drawable/ic_receive_black_24dp"/>
+            tools:src="@drawable/ic_receive_24dp"/>
 
         <TextView
             android:id="@+id/textView"
@@ -48,7 +48,7 @@
 
         <TextView
             android:id="@+id/tvValue"
-            style="@style/Value.Small"
+            style="@style/Field.Value.Small"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
@@ -64,7 +64,7 @@
 
         <TextView
             android:id="@+id/tvBalance"
-            style="@style/Value.Small"
+            style="@style/Field.Value.Small"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="4dp"
@@ -79,7 +79,7 @@
 
         <TextView
             android:id="@+id/tvTimestamp"
-            style="@style/Timestamp"
+            style="@style/Field.Timestamp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"

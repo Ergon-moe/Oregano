@@ -45,7 +45,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="4dp"
-                android:textAppearance="@style/Value.Large"
+                android:textAppearance="@style/Field.Value.Large"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="@+id/tvWalletName"
                 app:layout_constraintTop_toBottomOf="@+id/tvWalletName"
@@ -83,7 +83,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_chevron_down_black_36dp"/>
+                app:srcCompat="@drawable/ic_chevron_down_36dp"/>
         </android.support.constraint.ConstraintLayout>
 
         <android.support.v7.widget.RecyclerView
