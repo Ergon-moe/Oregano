@@ -64,7 +64,6 @@ class WalletsFragment : Fragment(), MainFragment {
         when (item.itemId) {
             R.id.menuShowSeed-> showDialog(activity!!, ShowSeedPasswordDialog())
             R.id.menuDelete -> showDialog(activity!!, DeleteWalletDialog())
-            R.id.menuRefresh -> daemonModel.onCallback("ui_refresh")
             R.id.menuClose -> daemonModel.commands.callAttr("close_wallet")
             else -> throw Exception("Unknown item $item")
         }
