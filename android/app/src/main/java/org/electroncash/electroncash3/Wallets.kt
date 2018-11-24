@@ -18,7 +18,6 @@ import android.view.*
 import android.widget.Toast
 import com.chaquo.python.PyException
 import com.chaquo.python.PyObject
-import kotlinx.android.synthetic.main.main.*
 import kotlinx.android.synthetic.main.new_wallet.*
 import kotlinx.android.synthetic.main.seed.*
 import kotlinx.android.synthetic.main.wallets.*
@@ -47,6 +46,11 @@ class WalletsFragment : Fragment(), MainFragment {
         })
         daemonModel.walletName.observe(this, Observer {
             activity!!.invalidateOptionsMenu()
+            if (it == null) {
+                btnSend.hide()
+            } else {
+                btnSend.show()
+            }
         })
     }
 
@@ -103,9 +107,6 @@ class WalletsFragment : Fragment(), MainFragment {
         })
 
         btnSend.setOnClickListener { showDialog(activity!!, SendDialog()) }
-        btnReceive.setOnClickListener {
-            (activity as MainActivity).navigation.selectedItemId = R.id.navAddresses
-        }
     }
 
     fun updateFiat() {

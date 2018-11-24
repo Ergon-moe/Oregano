@@ -22,11 +22,11 @@
             android:layout_marginLeft="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
-            android:src="@{model.value.charAt(0) == '+' ? @drawable/ic_receive_24dp : @drawable/ic_send_24dp}"
+            android:src="@{model.value.charAt(0) == '+' ? @drawable/ic_add_24dp : @drawable/ic_remove_24dp}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:src="@drawable/ic_receive_24dp"/>
+            tools:src="@drawable/ic_add_24dp"/>
 
         <TextView
             android:id="@+id/textView"
