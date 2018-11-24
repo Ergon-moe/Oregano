@@ -1,17 +1,16 @@
 package org.electroncash.electroncash3
 
-import android.app.NotificationManager
 import android.content.ClipboardManager
-import android.content.Context
 import android.databinding.DataBindingUtil
 import android.databinding.ViewDataBinding
 import android.support.v4.app.DialogFragment
 import android.support.v4.app.FragmentActivity
 import android.support.v4.content.ContextCompat
+import android.support.v7.widget.DividerItemDecoration
+import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import kotlin.reflect.KClass
 
@@ -84,16 +83,22 @@ fun toast(resId: Int, duration: Int = Toast.LENGTH_SHORT, key: String? = null) {
 }
 
 
-val SERVICES = mapOf(
-    ClipboardManager::class to Context.CLIPBOARD_SERVICE,
-    InputMethodManager::class to Context.INPUT_METHOD_SERVICE,
-    NotificationManager::class to Context.NOTIFICATION_SERVICE
-)
+fun copyToClipboard(text: CharSequence) {
+    @Suppress("DEPRECATION")
+    (getSystemService(ClipboardManager::class)).text = text
+}
+
 
 fun <T: Any> getSystemService(kcls: KClass<T>): T {
     return ContextCompat.getSystemService(app, kcls.java)!!
 }
 
+
+fun setupVerticalList(rv: RecyclerView) {
+    rv.layoutManager = LinearLayoutManager(rv.context)
+    rv.addItemDecoration(DividerItemDecoration(rv.context, DividerItemDecoration.VERTICAL))
+
+}
 
 // Based on https://medium.com/google-developers/android-data-binding-recyclerview-db7c40d9f0e4
 abstract class BoundAdapter<Model: Any>(val layoutId: Int)

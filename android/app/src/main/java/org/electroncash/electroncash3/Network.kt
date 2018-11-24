@@ -10,8 +10,6 @@ import android.support.v4.app.FragmentActivity
 import android.support.v7.app.AlertDialog
 import android.support.v7.preference.EditTextPreference
 import android.support.v7.preference.EditTextPreferenceDialogFragmentCompat
-import android.support.v7.widget.DividerItemDecoration
-import android.support.v7.widget.LinearLayoutManager
 import android.text.InputType
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -53,9 +51,7 @@ class NetworkFragment : Fragment(), MainFragment {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        rvIfaces.layoutManager = LinearLayoutManager(context)
-        rvIfaces.addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
-
+        setupVerticalList(rvIfaces)
         daemonUpdate.observe(viewLifecycleOwner, Observer {
             val ifaceItems = py.builtins.callAttr(
                 "sorted", daemonModel.network.get("interfaces")!!.callAttr("items"))

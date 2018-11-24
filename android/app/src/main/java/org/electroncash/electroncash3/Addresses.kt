@@ -2,14 +2,16 @@ package org.electroncash.electroncash3
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
-import android.content.ClipboardManager
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentActivity
 import android.support.v7.app.AlertDialog
-import android.support.v7.widget.DividerItemDecoration
-import android.support.v7.widget.LinearLayoutManager
-import android.view.*
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
 import com.chaquo.python.PyObject
 import kotlinx.android.synthetic.main.addresses.*
 
@@ -59,8 +61,7 @@ class AddressesFragment : Fragment(), MainFragment {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        rvAddresses.layoutManager = LinearLayoutManager(activity)
-        rvAddresses.addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
+        setupVerticalList(rvAddresses)
         daemonModel.addresses.observe(viewLifecycleOwner, Observer { addresses ->
             rvAddresses.adapter =
                 if (addresses == null) null
@@ -120,9 +121,9 @@ class AddressDialog() : MenuDialog() {
     override fun onMenuItemSelected(item: MenuItem) {
         when (item.itemId) {
             R.id.menuCopy -> {
-                (getSystemService(ClipboardManager::class)).text =
+                copyToClipboard(
                     if (clsAddress["FMT_UI"] == clsAddress["FMT_LEGACY"]) address
-                    else "bitcoincash:" + address
+                    else "bitcoincash:" + address)
                 toast(R.string.address_copied)
             }
             R.id.menuExplorer -> exploreAddress(activity!!, address)

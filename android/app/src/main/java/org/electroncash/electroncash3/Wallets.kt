@@ -6,15 +6,18 @@ import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProviders
-import android.content.ClipboardManager
 import android.content.DialogInterface
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentActivity
 import android.support.v7.app.AlertDialog
-import android.support.v7.widget.DividerItemDecoration
-import android.support.v7.widget.LinearLayoutManager
-import android.view.*
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.Toast
 import com.chaquo.python.PyException
 import com.chaquo.python.PyObject
@@ -42,14 +45,6 @@ class WalletsFragment : Fragment(), MainFragment {
             } else {
                 title.value = getString(R.string.offline)
                 subtitle.value = getString(R.string.cannot_send)
-            }
-        })
-        daemonModel.walletName.observe(this, Observer {
-            activity!!.invalidateOptionsMenu()
-            if (it == null) {
-                btnSend.hide()
-            } else {
-                btnSend.show()
             }
         })
     }
@@ -97,15 +92,20 @@ class WalletsFragment : Fragment(), MainFragment {
         })
         fiatUpdate.observe(viewLifecycleOwner, Observer { updateFiat() })
 
-        with (rvTransactions) {
-            layoutManager = LinearLayoutManager(activity)
-            addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
-        }
+        setupVerticalList(rvTransactions)
         daemonModel.transactions.observe(viewLifecycleOwner, Observer {
             rvTransactions.adapter = if (it == null) null
                                      else TransactionsAdapter(activity!!, it)
         })
 
+        daemonModel.walletName.observe(viewLifecycleOwner, Observer {
+            activity!!.invalidateOptionsMenu()
+            if (it == null) {
+                btnSend.hide()
+            } else {
+                btnSend.show()
+            }
+        })
         btnSend.setOnClickListener { showDialog(activity!!, SendDialog()) }
     }
 
@@ -425,7 +425,7 @@ class TransactionDialog() : MenuDialog() {
     override fun onMenuItemSelected(item: MenuItem) {
         when (item.itemId) {
             R.id.menuCopy -> {
-                (getSystemService(ClipboardManager::class)).text = txid
+                copyToClipboard(txid)
                 toast(R.string.text_copied_to_clipboard)
             }
             R.id.menuExplorer -> exploreTransaction(activity!!, txid)
