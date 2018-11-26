@@ -111,7 +111,7 @@ class WalletsFragment : Fragment(), MainFragment {
 
     fun updateFiat() {
         val balance = daemonModel.walletBalance.value
-        val fiat = if (balance == null) null else formatFiat(daemonModel, balance)
+        val fiat = if (balance == null) null else formatFiatAmountAndUnit(balance)
         tvFiat.text = if (fiat == null) "" else "($fiat)"
     }
 }

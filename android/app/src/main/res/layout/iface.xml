@@ -14,7 +14,6 @@
 
         <TextView
             android:id="@+id/tvAddress"
-            style="@style/Field"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
@@ -22,12 +21,12 @@
             android:layout_marginRight="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
-            android:singleLine="true"
             android:text="@{model.address}"
+            android:textAppearance="@style/Medium"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="electron.example.com:50002"/>
+            tools:text="@string/test_server_address"/>
 
         <TextView
             android:id="@+id/tvSplit"
@@ -45,20 +44,20 @@
             android:id="@+id/textView1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_marginRight="8dp"
+            android:layout_marginEnd="6dp"
+            android:layout_marginRight="6dp"
             android:text="@string/height"
             app:layout_constraintBaseline_toBaselineOf="@+id/tvHeight"
             app:layout_constraintEnd_toStartOf="@+id/tvHeight"/>
 
         <TextView
             android:id="@+id/tvHeight"
-            style="@style/Field"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:layout_marginTop="4dp"
             android:text="@{model.height}"
+            android:textAppearance="@style/Medium"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/tvAddress"
             app:layout_constraintTop_toBottomOf="@+id/tvAddress"

@@ -16,7 +16,7 @@
 
         <TextView
             android:id="@+id/tvAddress"
-            style="@style/Field.Address"
+            style="@style/Address"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
@@ -26,10 +26,11 @@
             android:layout_marginTop="8dp"
             android:singleLine="true"
             android:text="@{model.addrString}"
+            android:textAppearance="@style/Medium"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="qp3wjpa3tjlj042z2wv7hahsldgwhwy0rq9sywjpyy"/>
+            tools:text="@string/test_address"/>
 
         <TextView
             android:id="@+id/tvType"

@@ -33,7 +33,7 @@
         app:layout_constraintEnd_toEndOf="@+id/textView4"
         app:layout_constraintStart_toStartOf="@+id/textView4"
         app:layout_constraintTop_toBottomOf="@+id/textView4"
-        tools:text="16NZJ9d2eVNMFDjWnTw5RYYG2yTJYiBIIT"/>
+        tools:text="@string/test_address"/>
 
     <TextView
         android:id="@+id/textView5"
@@ -53,10 +53,19 @@
         android:layout_marginRight="4dp"
         android:layout_marginStart="8dp"
         android:gravity="end"
-        app:layout_constraintEnd_toStartOf="@+id/btnMax"
+        android:textAppearance="@style/Medium"
+        app:layout_constraintBaseline_toBaselineOf="@+id/textView5"
+        app:layout_constraintEnd_toStartOf="@+id/tvFiatUnit"
         app:layout_constraintStart_toEndOf="@+id/textView5"
-        app:layout_constraintTop_toTopOf="@+id/textView5"
-        tools:text="456.87 USD"/>
+        tools:text="@string/test_fiat"/>
+
+    <TextView
+        android:id="@+id/tvFiatUnit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBaseline_toBaselineOf="@+id/tvFiat"
+        app:layout_constraintEnd_toEndOf="@+id/tvUnit"
+        tools:text="USD"/>
 
     <EditText
         android:id="@+id/etAmount"
@@ -124,6 +133,7 @@
         android:layout_marginLeft="8dp"
         android:layout_marginStart="8dp"
         android:gravity="end"
+        android:textAppearance="@style/Medium"
         app:layout_constraintEnd_toEndOf="@+id/btnMax"
         app:layout_constraintStart_toEndOf="@+id/textView7"
         app:layout_constraintTop_toTopOf="@+id/textView7"

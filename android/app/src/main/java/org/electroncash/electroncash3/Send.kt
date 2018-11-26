@@ -83,14 +83,17 @@ class SendDialog : AlertDialogFragment() {
             } catch (e: ToastException) {}
         }
 
-        var fiatLabel = ""
+        var fiatAmount = ""
+        var fiatUnit = ""
         try {
-            val fiat = formatFiat(daemonModel, amount)
+            val fiat = formatFiatAmount(amount)
             if (fiat != null) {
-                fiatLabel = fiat
+                fiatAmount = fiat
+                fiatUnit = formatFiatUnit()
             }
         } catch (e: ToastException) {}
-        dialog.tvFiat.setText(fiatLabel)
+        dialog.tvFiat.setText(fiatAmount)
+        dialog.tvFiatUnit.setText(fiatUnit)
 
         var feeLabel = "$feeSpb sat/byte"
         try {

@@ -408,8 +408,12 @@ class FxThread(ThreadJob):
             return Decimal(rate)
 
     def format_amount_and_units(self, btc_balance):
+        amount_str = self.format_amount(btc_balance)
+        return '' if not amount_str else "%s %s" % (amount_str, self.ccy)
+
+    def format_amount(self, btc_balance):
         rate = self.exchange_rate()
-        return '' if rate is None else "%s %s" % (self.value_str(btc_balance, rate), self.ccy)
+        return '' if rate is None else self.value_str(btc_balance, rate)
 
     def get_fiat_status_text(self, btc_balance, base_unit, decimal_point):
         rate = self.exchange_rate()

@@ -8,9 +8,10 @@ val EXCHANGE_CALLBACKS = setOf("on_quotes", "on_history")
 val libExchange by lazy { libMod("exchange_rate") }
 val fiatUpdate = MediatorLiveData<Unit>()
 
+val fx by lazy { daemonModel.daemon.get("fx")!! }
+
 
 fun initExchange() {
-    val fx = daemonModel.daemon.get("fx")!!
     settings.getString("currency").observeForever {
         fx.callAttr("set_currency", it)
     }
@@ -26,11 +27,25 @@ fun initExchange() {
 }
 
 
-fun formatFiat(daemonModel: DaemonModel, amount: Long): String? {
-    val fx = daemonModel.daemon.get("fx")!!
+fun formatFiatAmountAndUnit(amount: Long): String? {
+    val amountStr = formatFiatAmount(amount)
+    if (amountStr == null) {
+        return null
+    } else {
+        return amountStr + " " + formatFiatUnit()
+    }
+}
+
+
+fun formatFiatAmount(amount: Long): String? {
     if (!fx.callAttr("is_enabled").toJava(Boolean::class.java)) {
         return null
     }
-    val result = fx.callAttr("format_amount_and_units", amount).toString()
-    return if (result.isEmpty()) null else result
+    val amountStr = fx.callAttr("format_amount", amount).toString()
+    return if (amountStr.isEmpty()) null else amountStr
+}
+
+
+fun formatFiatUnit(): String {
+    return fx.callAttr("get_currency").toString()
 }
