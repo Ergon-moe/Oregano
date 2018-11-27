@@ -18,8 +18,11 @@
             style="?android:windowTitleStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
             android:layout_marginTop="20dp"
             android:text="@string/request"
+            app:layout_constraintEnd_toStartOf="@+id/btnCopy"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
 
@@ -28,8 +31,11 @@
             style="@style/FAB.Dialog"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:layout_marginTop="14dp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/tvTitle"
+            app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_copy_24dp"/>
 
     </android.support.constraint.ConstraintLayout>

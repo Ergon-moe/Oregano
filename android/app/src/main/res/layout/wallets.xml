@@ -98,7 +98,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/walletPanel"
             tools:itemCount="3"
-            tools:listitem="@layout/transaction"/>
+            tools:listitem="@layout/transaction_list"/>
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/btnSend"

@@ -94,7 +94,7 @@
         app:layout_constraintEnd_toEndOf="@+id/btnMax"
         app:layout_constraintStart_toEndOf="@+id/textView7"
         app:layout_constraintTop_toTopOf="@+id/textView7"
-        tools:text="2 sat/byte (0.00003456 BCH)"/>
+        tools:text="@string/test_fee"/>
 
 </android.support.constraint.ConstraintLayout>
 

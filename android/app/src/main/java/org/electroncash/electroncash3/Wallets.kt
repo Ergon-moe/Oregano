@@ -23,8 +23,10 @@ import com.chaquo.python.PyException
 import com.chaquo.python.PyObject
 import kotlinx.android.synthetic.main.new_wallet.*
 import kotlinx.android.synthetic.main.seed.*
+import kotlinx.android.synthetic.main.transaction_detail.*
 import kotlinx.android.synthetic.main.wallets.*
 import org.electroncash.electroncash3.databinding.WalletsBinding
+import kotlin.math.roundToInt
 
 
 class WalletsFragment : Fragment(), MainFragment {
@@ -369,7 +371,7 @@ fun seedAdvice(seed: String): String {
 
 
 class TransactionsAdapter(val activity: FragmentActivity, val transactions: PyObject)
-    : BoundAdapter<TransactionModel>(R.layout.transaction) {
+    : BoundAdapter<TransactionModel>(R.layout.transaction_list) {
 
     override fun getItem(position: Int): TransactionModel {
         val t = transactions.callAttr("__getitem__", itemCount - position - 1)
@@ -410,23 +412,43 @@ class TransactionModel(
 }
 
 
-class TransactionDialog() : MenuDialog() {
+class TransactionDialog() : AlertDialogFragment() {
     constructor(txid: String) : this() {
         arguments = Bundle().apply { putString("txid", txid) }
     }
     val txid by lazy { arguments!!.getString("txid")!! }
+    val wallet by lazy { daemonModel.wallet!! }
 
-    override fun onBuildDialog(builder: AlertDialog.Builder, menu: Menu,
-                               inflater: MenuInflater) {
-        builder.setTitle(txid)
-        inflater.inflate(R.menu.transaction, menu)
+    override fun onBuildDialog(builder: AlertDialog.Builder) {
+        builder.setView(R.layout.transaction_detail)
+            .setPositiveButton(R.string.ok, null)
     }
 
-    override fun onMenuItemSelected(item: MenuItem) {
-        when (item.itemId) {
-            R.id.menuCopy -> copyToClipboard(txid)
-            R.id.menuExplorer -> exploreTransaction(activity!!, txid)
-            else -> throw Exception("Unknown item $item")
+    override fun onShowDialog(dialog: AlertDialog) {
+        dialog.btnExplore.setOnClickListener { exploreTransaction(activity!!, txid) }
+        dialog.btnCopy.setOnClickListener { copyToClipboard(txid) }
+
+        val tx = wallet.get("transactions")!!.callAttr("get", txid)!!
+        val txInfo = wallet.callAttr("get_tx_info", tx)
+        dialog.tvTxid.text = txid
+
+        val timestamp = txInfo.callAttr("__getitem__", 8).toJava(Long::class.java)
+        dialog.tvTimestamp.text = if (timestamp == 0L) getString(R.string.Unconfirmed)
+                                  else libUtil.callAttr("format_time", timestamp).toString()
+
+        dialog.tvStatus.text = txInfo.callAttr("__getitem__", 1).toString()
+
+        val size = tx.callAttr("estimated_size").toJava(Int::class.java)
+        dialog.tvSize.text = getString(R.string.bytes, size)
+
+        val fee = txInfo.callAttr("__getitem__", 5)?.toJava(Long::class.java)
+        if (fee == null) {
+            dialog.tvFee.text = getString(R.string.Unknown)
+        } else {
+            val feeSpb = (fee.toDouble() / size.toDouble()).roundToInt()
+            dialog.tvFee.text = String.format("%s (%s %s)",
+                                              getString(R.string.sat_byte, feeSpb),
+                                              formatSatoshis(fee), unitName)
         }
     }
 }

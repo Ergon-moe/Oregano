@@ -85,7 +85,7 @@ class SendDialog : AlertDialogFragment() {
         }
         amountBoxUpdate(dialog)
 
-        var feeLabel = "$feeSpb sat/byte"
+        var feeLabel = getString(R.string.sat_byte, feeSpb)
         try {
             if (tx == null) {
                 tx = daemonModel.makeTx(addrOrDummy, amountBoxGet(dialog), unsigned = true)
