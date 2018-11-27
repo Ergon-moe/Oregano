@@ -14,10 +14,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning">
+
         <activity
             android:name=".ECConsoleActivity"
             android:label="@string/console"
             android:launchMode="singleInstance"/>
+        
         <activity
             android:name=".MainActivity"
             android:theme="@style/AppTheme.Splash">
@@ -26,6 +28,13 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <!-- On some devices it forces landscape by default. -->
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:screenOrientation="unspecified"
+            tools:replace="screenOrientation" />
+
         <activity
             android:name=".CrashhubDialog"
             android:process=":acra"

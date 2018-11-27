@@ -20,15 +20,27 @@ val UNIT_MBCH = 100000L
 var unitSize = UNIT_BCH  // TODO: make unit configurable
 var unitName = "BCH"     //
 
-fun toSatoshis(s: String, unit: Long = unitSize) : Long? {
+val libUtil by lazy { libMod("util") }
+
+
+fun toSatoshis(s: String, unit: Long = unitSize) : Long {
+    if (s.isEmpty()) {
+        throw ToastException(R.string.enter_amount)
+    }
     try {
         return Math.round(s.toDouble() * unit)
-    } catch (e: NumberFormatException) { return null }
+    } catch (e: NumberFormatException) {
+        throw ToastException(R.string.Invalid_amount)
+    }
 }
 
 fun formatSatoshis(amount: Long, unit: Long = unitSize): String {
     val places = Math.log10(unit.toDouble()).toInt()
-    return "%.${places}f".format(amount.toDouble() / unit)
+    var result = "%.${places}f".format(amount.toDouble() / unit).trimEnd('0')
+    if (result.endsWith(".")) {
+        result += "0"
+    }
+    return result
 }
 
 
@@ -86,6 +98,7 @@ fun toast(resId: Int, duration: Int = Toast.LENGTH_SHORT, key: String? = null) {
 fun copyToClipboard(text: CharSequence) {
     @Suppress("DEPRECATION")
     (getSystemService(ClipboardManager::class)).text = text
+    toast(R.string.text_copied_to_clipboard)
 }
 
 

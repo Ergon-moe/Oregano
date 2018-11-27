@@ -13,6 +13,7 @@ import android.widget.SeekBar
 import com.chaquo.python.PyException
 import com.chaquo.python.PyObject
 import com.google.zxing.integration.android.IntentIntegrator
+import kotlinx.android.synthetic.main.amount_box.*
 import kotlinx.android.synthetic.main.send.*
 import org.json.JSONException
 import org.json.JSONObject
@@ -60,7 +61,7 @@ class SendDialog : AlertDialogFragment() {
         }
         fiatUpdate.observe(this, Observer { updateUI() })
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener { onOK() }
-        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { onQRRequest() }
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { scanQR(this) }
     }
 
     fun updateUI() {
@@ -82,36 +83,17 @@ class SendDialog : AlertDialogFragment() {
                     formatSatoshis(tx.callAttr("output_value").toJava(Long::class.java)))
             } catch (e: ToastException) {}
         }
-
-        var fiatAmount = ""
-        var fiatUnit = ""
-        try {
-            val fiat = formatFiatAmount(amount)
-            if (fiat != null) {
-                fiatAmount = fiat
-                fiatUnit = formatFiatUnit()
-            }
-        } catch (e: ToastException) {}
-        dialog.tvFiat.setText(fiatAmount)
-        dialog.tvFiatUnit.setText(fiatUnit)
+        amountBoxUpdate(dialog)
 
         var feeLabel = "$feeSpb sat/byte"
         try {
             if (tx == null) {
-                tx = daemonModel.makeTx(addrOrDummy, amount, unsigned = true)
+                tx = daemonModel.makeTx(addrOrDummy, amountBoxGet(dialog), unsigned = true)
             }
             val fee = tx.callAttr("get_fee").toJava(Long::class.java)
             feeLabel += " (${formatSatoshis(fee)} $unitName)"
         } catch (e: ToastException) {}
         dialog.tvFeeLabel.setText(feeLabel)
-    }
-
-    fun onQRRequest() {
-        IntentIntegrator.forSupportFragment(this)
-            .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
-            .setPrompt(getString(R.string.please_scan))
-            .setBeepEnabled(false)
-            .initiateScan()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -137,6 +119,7 @@ class SendDialog : AlertDialogFragment() {
 
     fun onOK() {
         try {
+            val amount = amountBoxGet(dialog)
             daemonModel.makeTx(address, amount, unsigned=true)
             showDialog(activity!!, SendPasswordDialog().apply { arguments = Bundle().apply {
                 putString("address", address)
@@ -148,14 +131,6 @@ class SendDialog : AlertDialogFragment() {
 
     val address
         get() = dialog.etAddress.text.toString()
-
-    val amount: Long
-        get() {
-            val amountStr = dialog.etAmount.text.toString()
-            if (amountStr.isEmpty()) throw ToastException(R.string.enter_amount)
-            val amount = toSatoshis(amountStr) ?: throw ToastException(R.string.Invalid_amount)
-            return amount
-        }
 
     val feeSpb
         get() = MIN_FEE + dialog.sbFee.progress

@@ -424,10 +424,7 @@ class TransactionDialog() : MenuDialog() {
 
     override fun onMenuItemSelected(item: MenuItem) {
         when (item.itemId) {
-            R.id.menuCopy -> {
-                copyToClipboard(txid)
-                toast(R.string.text_copied_to_clipboard)
-            }
+            R.id.menuCopy -> copyToClipboard(txid)
             R.id.menuExplorer -> exploreTransaction(activity!!, txid)
             else -> throw Exception("Unknown item $item")
         }

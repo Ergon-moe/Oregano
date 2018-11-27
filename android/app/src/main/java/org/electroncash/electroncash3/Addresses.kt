@@ -124,7 +124,6 @@ class AddressDialog() : MenuDialog() {
                 copyToClipboard(
                     if (clsAddress["FMT_UI"] == clsAddress["FMT_LEGACY"]) address
                     else "bitcoincash:" + address)
-                toast(R.string.address_copied)
             }
             R.id.menuExplorer -> exploreAddress(activity!!, address)
             else -> throw Exception("Unknown item $item")
