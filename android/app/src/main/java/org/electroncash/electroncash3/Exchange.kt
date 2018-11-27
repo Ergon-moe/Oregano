@@ -6,7 +6,7 @@ import android.arch.lifecycle.MediatorLiveData
 val EXCHANGE_CALLBACKS = setOf("on_quotes", "on_history")
 
 val libExchange by lazy { libMod("exchange_rate") }
-val fiatUpdate = MediatorLiveData<Unit>()
+val fiatUpdate = MediatorLiveData<Unit>().apply { value = Unit }
 
 val fx by lazy { daemonModel.daemon.get("fx")!! }
 

@@ -1395,7 +1395,7 @@ class Abstract_Wallet(PrintError):
             status = PR_UNKNOWN
         return status, conf
 
-    def make_payment_request(self, addr, amount, message, expiration):
+    def make_payment_request(self, addr, amount, message, expiration=None):
         assert isinstance(addr, Address)
         timestamp = int(time.time())
         _id = bh2u(Hash(addr.to_storage_string() + "%d" % timestamp))[0:10]
@@ -1421,6 +1421,7 @@ class Abstract_Wallet(PrintError):
         requests = {addr.to_storage_string() : delete_address(value.copy())
                     for addr, value in self.receive_requests.items()}
         self.storage.put('payment_requests', requests)
+        self.storage.write()
 
     def sign_payment_request(self, key, alias, alias_addr, password):
         req = self.receive_requests.get(key)
@@ -1432,14 +1433,15 @@ class Abstract_Wallet(PrintError):
         self.receive_requests[key] = req
         self.save_payment_requests()
 
-    def add_payment_request(self, req, config):
+    def add_payment_request(self, req, config, set_address_label=True):
         addr = req['address']
         addr_text = addr.to_storage_string()
         amount = req['amount']
         message = req['memo']
         self.receive_requests[addr] = req
         self.save_payment_requests()
-        self.set_label(addr_text, message) # should be a default label
+        if set_address_label:
+            self.set_label(addr_text, message) # should be a default label
 
         rdir = config.get('requests_dir')
         if rdir and amount is not None:

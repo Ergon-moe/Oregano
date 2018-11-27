@@ -31,10 +31,15 @@
 
     <!-- FloatingActionButton -->
     <style name="FAB">
+        <item name="android:tint">#FFFFFF</item>
+    </style>
+    <style name="FAB.Main">
         <item name="android:layout_marginRight">16dp</item>
         <item name="android:layout_marginBottom">16dp</item>
         <item name="fabSize">normal</item>
-        <item name="android:tint">#FFFFFF</item>
+    </style>
+    <style name="FAB.Dialog">
+        <item name="fabSize">mini</item>
     </style>
 
     <!-- Field importances (use with `textAppearance`). -->
