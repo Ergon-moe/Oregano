@@ -16,8 +16,8 @@
 
     <!-- On a medium-sized phone, with the default text size, this is two lines in portrait and
     one line in landscape. -->
-    <string name="test_description">Lorem ipsum dolor sit amet, consectetur adipiscing elit,
-        sed do eiusmod</string>
+    <string name="lorem">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+        eiusmod</string>
 
     <string-array name="payment_status">
         <item>@string/pending</item>

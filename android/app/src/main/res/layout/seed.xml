@@ -18,7 +18,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="@string/please_enter"/>
+        tools:text="@string/please_enter_your_seed_phrase"/>
 
     <EditText
         android:id="@+id/etSeed"
@@ -31,5 +31,5 @@
         app:layout_constraintStart_toStartOf="@+id/tvSeedLabel"
         app:layout_constraintTop_toBottomOf="@+id/tvSeedLabel"
         app:layout_constraintVertical_bias="0.0"
-        tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor"/>
+        tools:text="@string/lorem"/>
 </android.support.constraint.ConstraintLayout>

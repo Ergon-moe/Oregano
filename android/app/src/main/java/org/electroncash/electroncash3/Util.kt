@@ -1,6 +1,7 @@
 package org.electroncash.electroncash3
 
 import android.content.ClipboardManager
+import android.content.Context
 import android.databinding.DataBindingUtil
 import android.databinding.ViewDataBinding
 import android.support.v4.app.DialogFragment
@@ -10,7 +11,11 @@ import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.PopupMenu
 import android.widget.Toast
 import kotlin.reflect.KClass
 
@@ -141,4 +146,33 @@ class BoundViewHolder<Model: Any>(val binding: ViewDataBinding)
     : RecyclerView.ViewHolder(binding.root) {
 
     lateinit var item: Model
+}
+
+
+class MenuAdapter(context: Context, val menu: Menu)
+    : ArrayAdapter<String>(context, android.R.layout.simple_spinner_item, menuToList(menu)) {
+    init {
+        setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+    }
+
+    constructor(context: Context, menuId: Int)
+        : this(context, inflateMenu(context, menuId))
+
+    override fun getItemId(position: Int): Long {
+        return menu.getItem(position).itemId.toLong()
+    }
+}
+
+fun inflateMenu(context: Context, menuId: Int) : Menu {
+    val menu = PopupMenu(context, null).menu
+    MenuInflater(context).inflate(menuId, menu)
+    return menu
+}
+
+private fun menuToList(menu: Menu): List<String> {
+    val result = ArrayList<String>()
+    for (i in 0 until menu.size()) {
+        result.add(menu.getItem(i).title.toString())
+    }
+    return result
 }

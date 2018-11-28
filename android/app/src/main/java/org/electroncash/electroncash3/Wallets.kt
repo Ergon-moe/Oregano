@@ -151,46 +151,45 @@ class SelectWalletDialog : AlertDialogFragment(), DialogInterface.OnClickListene
 }
 
 
-class NewWalletDialog : AlertDialogFragment(), DialogInterface.OnClickListener {
+class NewWalletDialog : AlertDialogFragment() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         builder.setTitle(R.string.new_wallet)
             .setView(R.layout.new_wallet)
-            .setNegativeButton(R.string.create, null)
-            .setPositiveButton(R.string.restore, null)
+            .setPositiveButton(R.string.next, null)
+            .setNegativeButton(R.string.cancel, null)
     }
+
     override fun onShowDialog(dialog: AlertDialog) {
-        for (which in listOf(AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_POSITIVE)) {
-            dialog.getButton(which).setOnClickListener { onClick(dialog, which) }
+        dialog.spnType.adapter = MenuAdapter(context!!, R.menu.wallet_type)
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            try {
+                val name = dialog.etName.text.toString()
+                if (name.isEmpty()) throw ToastException(R.string.name_is)
+                if (name.contains("/")) throw ToastException(R.string.invalid_name)
+                if (daemonModel.listWallets().contains(name)) {
+                    throw ToastException(R.string.a_wallet_with_that_name_already_exists_please)
+                }
+
+                val password = dialog.etPassword.text.toString()
+                if (password.isEmpty()) throw ToastException(R.string.enter_password)
+                if (password != dialog.etConfirmPassword.text.toString()) {
+                    throw ToastException(R.string.wallet_passwords)
+                }
+
+                val seed = when (dialog.spnType.selectedItemId.toInt()) {
+                    R.id.menuCreateSeed -> daemonModel.commands.callAttr("make_seed").toString()
+                    R.id.menuRestoreSeed -> null
+                    else -> throw Exception("Unknown item " + dialog.spnType.selectedItem)
+                }
+                showDialog(activity!!, NewSeedDialog().apply { arguments = Bundle().apply {
+                    putString("name", name)
+                    putString("password", password)
+                    putString("seed", seed)
+                }})
+                dismiss()
+            } catch (e: ToastException) { e.show() }
         }
-    }
-
-    override fun onClick(di: DialogInterface, which: Int) {
-        try {
-            val name = dialog.etName.text.toString()
-            if (name.isEmpty()) throw ToastException(R.string.name_is)
-            if (name.contains("/")) throw ToastException(R.string.invalid_name)
-            if (daemonModel.listWallets().contains(name)) {
-                throw ToastException(R.string.a_wallet_with_that_name_already_exists_please)
-            }
-
-            val password = dialog.etPassword.text.toString()
-            if (password.isEmpty()) throw ToastException(R.string.password_required)
-            if (password != dialog.etConfirmPassword.text.toString()) {
-                throw ToastException(R.string.wallet_passwords)
-            }
-
-            // Can't put this within the lambda or daemonModel will be found in NewSeedDialog
-            // and return null.
-            val seed = if (which == AlertDialog.BUTTON_NEGATIVE)
-                       daemonModel.commands.callAttr("make_seed").toString()
-                       else null
-            showDialog(activity!!, NewSeedDialog().apply { arguments = Bundle().apply {
-                putString("name", name)
-                putString("password", password)
-                putString("seed", seed)
-            }})
-            dismiss()
-        } catch (e: ToastException) { e.show() }
     }
 }
 

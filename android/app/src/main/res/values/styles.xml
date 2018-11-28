@@ -6,6 +6,7 @@
         <item name="colorAccent">@color/colorAccent</item>
 
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+        <item name="spinnerStyle">@style/Widget.AppCompat.Spinner.Underlined</item>
     </style>
 
     <!-- See https://plus.google.com/+AndroidDevelopers/posts/Z1Wwainpjhd -->
