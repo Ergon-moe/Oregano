@@ -27,7 +27,6 @@ import signal
 import sys
 import traceback
 
-
 try:
     import PyQt5
 except Exception:
@@ -41,11 +40,8 @@ import PyQt5.QtCore as QtCore
 from electroncash.i18n import _, set_language
 from electroncash.plugins import run_hook
 from electroncash import WalletStorage
-# from electroncash.synchronizer import Synchronizer
-# from electroncash.verifier import SPV
-# from electroncash.util import DebugMem
 from electroncash.util import UserCancelled, print_error
-# from electroncash.wallet import Abstract_Wallet
+from electroncash.networks import NetworkConstants
 
 from .installwizard import InstallWizard, GoBack
 
@@ -96,7 +92,7 @@ class ElectrumGui:
         if hasattr(QtCore.Qt, "AA_ShareOpenGLContexts"):
             QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
         if hasattr(QGuiApplication, 'setDesktopFileName'):
-            QGuiApplication.setDesktopFileName('electrum.desktop')
+            QGuiApplication.setDesktopFileName('electron-cash.desktop')
         self.config = config
         self.daemon = daemon
         self.plugins = plugins
@@ -110,7 +106,7 @@ class ElectrumGui:
         # init tray
         self.dark_icon = self.config.get("dark_icon", False)
         self.tray = QSystemTrayIcon(self.tray_icon(), None)
-        self.tray.setToolTip('Electrum')
+        self.tray.setToolTip('Electron Cash')
         self.tray.activated.connect(self.tray_activated)
         self.build_tray_menu()
         self.tray.show()
