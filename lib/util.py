@@ -522,7 +522,7 @@ import ssl
 import time
 
 
-class SocketPipe:
+class SocketPipe(PrintError):
     def __init__(self, socket):
         self.socket = socket
         self.message = b''
@@ -550,11 +550,11 @@ class SocketPipe:
                 if err.errno == 60:
                     raise timeout
                 elif err.errno in [11, 35, 10035]:
-                    print_error("socket errno %d (resource temporarily unavailable)"% err.errno)
+                    self.print_error("socket errno %d (resource temporarily unavailable)"% err.errno)
                     time.sleep(0.2)
                     raise timeout
                 else:
-                    print_error("pipe: socket error", err)
+                    self.print_error("socket error:", err)
                     data = b''
             except:
                 traceback.print_exc(file=sys.stderr)
@@ -580,11 +580,11 @@ class SocketPipe:
                 sent = self.socket.send(out)
                 out = out[sent:]
             except ssl.SSLError as e:
-                print_error("SSLError:", e)
+                self.print_error("SSLError:", e)
                 time.sleep(0.1)
                 continue
             except OSError as e:
-                print_error("OSError", e)
+                self.print_error("OSError:", e)
                 time.sleep(0.1)
                 continue
 
