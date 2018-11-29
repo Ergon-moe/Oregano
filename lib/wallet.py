@@ -1540,8 +1540,9 @@ class Simple_Wallet(Abstract_Wallet):
     def update_password(self, old_pw, new_pw, encrypt=False):
         if old_pw is None and self.has_password():
             raise InvalidPassword()
-        self.keystore.update_password(old_pw, new_pw)
-        self.save_keystore()
+        if self.keystore is not None:
+            self.keystore.update_password(old_pw, new_pw)
+            self.save_keystore()
         self.storage.set_password(new_pw, encrypt)
         self.storage.write()
 
@@ -1703,7 +1704,7 @@ class ImportedPrivkeyWallet(ImportedWalletBase):
         Abstract_Wallet.__init__(self, storage)
 
     @classmethod
-    def from_text(cls, storage, text, password):
+    def from_text(cls, storage, text, password=None):
         wallet = cls(storage)
         storage.put('use_encryption', bool(password))
         for privkey in text.split():

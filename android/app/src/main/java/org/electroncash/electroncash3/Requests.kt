@@ -53,13 +53,16 @@ class RequestsFragment : Fragment(), MainFragment {
         requestsUpdate.observe(viewLifecycleOwner, observer)
 
         btnAdd.setOnClickListener {
-            val address = wallet!!.callAttr("get_unused_address")
-            if (address == null) {
-                toast(R.string.electron_cash_is_generating_your_addresses__please_wait_,
-                      Toast.LENGTH_LONG)
+            if (daemonModel.wallet!!.callAttr("is_watching_only").toJava(Boolean::class.java)) {
+                toast(R.string.this_wallet_is_watching_only_)
             } else {
-                showDialog(activity!!,
-                           RequestDialog(address.callAttr("to_ui_string").toString()))
+                val address = wallet!!.callAttr("get_unused_address")
+                if (address == null) {
+                    toast(R.string.no_more, Toast.LENGTH_LONG)
+                } else {
+                    showDialog(activity!!,
+                               RequestDialog(address.callAttr("to_ui_string").toString()))
+                }
             }
         }
     }

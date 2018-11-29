@@ -7,10 +7,13 @@ import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProviders
 import android.content.DialogInterface
+import android.content.Intent
 import android.os.Bundle
+import android.support.v4.app.DialogFragment
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentActivity
 import android.support.v7.app.AlertDialog
+import android.text.Selection
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -21,8 +24,9 @@ import android.view.WindowManager
 import android.widget.Toast
 import com.chaquo.python.PyException
 import com.chaquo.python.PyObject
+import com.google.zxing.integration.android.IntentIntegrator
 import kotlinx.android.synthetic.main.new_wallet.*
-import kotlinx.android.synthetic.main.seed.*
+import kotlinx.android.synthetic.main.text_input.*
 import kotlinx.android.synthetic.main.transaction_detail.*
 import kotlinx.android.synthetic.main.wallets.*
 import org.electroncash.electroncash3.databinding.WalletsBinding
@@ -63,7 +67,13 @@ class WalletsFragment : Fragment(), MainFragment {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.menuShowSeed-> showDialog(activity!!, ShowSeedPasswordDialog())
+            R.id.menuShowSeed-> {
+                if (daemonModel.wallet!!.containsKey("get_seed")) {
+                    showDialog(activity!!, ShowSeedPasswordDialog())
+                } else {
+                    toast(R.string.this_wallet_has_no_seed)
+                }
+            }
             R.id.menuDelete -> showDialog(activity!!, DeleteWalletDialog())
             R.id.menuClose -> daemonModel.commands.callAttr("close_wallet")
             else -> throw Exception("Unknown item $item")
@@ -108,7 +118,13 @@ class WalletsFragment : Fragment(), MainFragment {
                 btnSend.show()
             }
         })
-        btnSend.setOnClickListener { showDialog(activity!!, SendDialog()) }
+        btnSend.setOnClickListener {
+            if (daemonModel.wallet!!.callAttr("is_watching_only").toJava(Boolean::class.java)) {
+                toast(R.string.this_wallet_is_watching_only_)
+            } else {
+                showDialog(activity!!, SendDialog())
+            }
+        }
     }
 
     fun updateFiat() {
@@ -145,13 +161,13 @@ class SelectWalletDialog : AlertDialogFragment(), DialogInterface.OnClickListene
                 putString("walletName", items[which])
             }})
         } else {
-            showDialog(activity!!, NewWalletDialog())
+            showDialog(activity!!, NewWalletDialog1())
         }
     }
 }
 
 
-class NewWalletDialog : AlertDialogFragment() {
+class NewWalletDialog1 : AlertDialogFragment() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         builder.setTitle(R.string.new_wallet)
             .setView(R.layout.new_wallet)
@@ -177,27 +193,44 @@ class NewWalletDialog : AlertDialogFragment() {
                     throw ToastException(R.string.wallet_passwords)
                 }
 
-                val seed = when (dialog.spnType.selectedItemId.toInt()) {
-                    R.id.menuCreateSeed -> daemonModel.commands.callAttr("make_seed").toString()
-                    R.id.menuRestoreSeed -> null
-                    else -> throw Exception("Unknown item " + dialog.spnType.selectedItem)
-                }
-                showDialog(activity!!, NewSeedDialog().apply { arguments = Bundle().apply {
+                val nextDialog: DialogFragment
+                val arguments = Bundle().apply {
                     putString("name", name)
                     putString("password", password)
-                    putString("seed", seed)
-                }})
+                }
+
+                val walletType = dialog.spnType.selectedItemId.toInt()
+                if (walletType in listOf(R.id.menuCreateSeed, R.id.menuRestoreSeed)) {
+                    nextDialog = NewWalletSeedDialog()
+                    val seed = if (walletType == R.id.menuCreateSeed)
+                                   daemonModel.commands.callAttr("make_seed").toString()
+                               else null
+                    arguments.putString("seed", seed)
+                } else if (walletType == R.id.menuImport) {
+                    nextDialog = NewWalletImportDialog()
+                } else {
+                    throw Exception("Unknown item: ${dialog.spnType.selectedItem}")
+                }
+                showDialog(activity!!, nextDialog.apply { setArguments(arguments) })
                 dismiss()
             } catch (e: ToastException) { e.show() }
         }
     }
 }
 
-class NewSeedDialog : SeedDialog() {
+
+abstract class NewWalletDialog2 : AlertDialogFragment() {
     class Model : ViewModel() {
         val result = MutableLiveData<Boolean>()
     }
     private val model by lazy { ViewModelProviders.of(this).get(Model::class.java) }
+
+    override fun onBuildDialog(builder: AlertDialog.Builder) {
+        builder.setTitle(R.string.new_wallet)
+            .setView(R.layout.text_input)
+            .setPositiveButton(android.R.string.ok, null)
+            .setNegativeButton(R.string.cancel, null)
+    }
 
     override fun onShowDialog(dialog: AlertDialog) {
         super.onShowDialog(dialog)
@@ -207,16 +240,8 @@ class NewSeedDialog : SeedDialog() {
             Thread {
                 try {
                     val name = arguments!!.getString("name")!!
-                    val password = arguments!!.getString("password")
-                    val seed = dialog.etSeed.text.toString()
-                    try {
-                        daemonModel.commands.callAttr("create", name, password, seed)
-                    } catch (e: PyException) {
-                        if (e.message!!.startsWith("InvalidSeed")) {
-                            throw ToastException(R.string.the_seed_you_entered_does_not_appear)
-                        }
-                        throw e
-                    }
+                    val password = arguments!!.getString("password")!!
+                    onCreateWallet(name, password, dialog.etInput.text.toString())
                     daemonModel.loadWallet(name, password)
                     model.result.postValue(true)
                 } catch (e: ToastException) {
@@ -228,11 +253,87 @@ class NewSeedDialog : SeedDialog() {
         model.result.observe(this, Observer { onResult(it) })
     }
 
+    abstract fun onCreateWallet(name: String, password: String, input: String)
+
     fun onResult(success: Boolean?) {
         if (success == null) return
         dismissDialog(activity!!, ProgressDialogFragment::class)
         if (success) {
             dismiss()
+        }
+    }
+}
+
+
+class NewWalletSeedDialog : NewWalletDialog2() {
+    override fun onShowDialog(dialog: AlertDialog) {
+        super.onShowDialog(dialog)
+        setupSeedDialog(this)
+    }
+
+    override fun onCreateWallet(name: String, password: String, input: String) {
+        try {
+            daemonModel.createWallet(name, password, "seed", input)
+        } catch (e: PyException) {
+            if (e.message!!.startsWith("InvalidSeed")) {
+                throw ToastException(R.string.the_seed_you_entered_does_not_appear)
+            }
+            throw e
+        }
+    }
+}
+
+
+class NewWalletImportDialog : NewWalletDialog2() {
+    override fun onBuildDialog(builder: AlertDialog.Builder) {
+        super.onBuildDialog(builder)
+        builder.setNeutralButton(R.string.scan_qr, null)
+    }
+
+    override fun onShowDialog(dialog: AlertDialog) {
+        super.onShowDialog(dialog)
+        dialog.tvPrompt.setText(R.string.enter_a_list_of_bitcoin)
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { scanQR(this) }
+    }
+
+    override fun onCreateWallet(name: String, password: String, input: String) {
+        var foundAddress = false
+        var foundPrivkey = false
+        for (word in input.split(Regex("\\s+"))) {
+            if (word.isEmpty()) {
+                // Can happen at start or end of list.
+            } else if (clsAddress.callAttr("is_valid", word).toJava(Boolean::class.java)) {
+                foundAddress = true
+            } else if (libBitcoin.callAttr("is_private_key", word).toJava(Boolean::class.java)) {
+                foundPrivkey = true
+            } else {
+                throw ToastException(getString(R.string.not_a_valid, word))
+            }
+        }
+
+        if (foundAddress) {
+            if (foundPrivkey) {
+                throw ToastException(R.string.cannot_specify_short)
+            }
+            daemonModel.createWallet(name, password, "addresses", input)
+        } else if (foundPrivkey) {
+            daemonModel.createWallet(name, password, "privkeys", input)
+        } else {
+            throw ToastException(R.string.you_appear_to_have_entered_no)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
+        if (result != null && result.contents != null) {
+            val text = dialog.etInput.text
+            if (!text.isEmpty() && !text.endsWith("\n")) {
+                text.append("\n")
+            }
+            text.append(result.contents)
+            Selection.setSelection(text, text.length)
+        } else {
+            super.onActivityResult(requestCode, resultCode, data)
         }
     }
 }
@@ -345,19 +446,26 @@ class ShowSeedPasswordDialog : PasswordDialog() {
 open class SeedDialog : AlertDialogFragment() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         builder.setTitle(R.string.wallet_seed)
-            .setView(R.layout.seed)
+            .setView(R.layout.text_input)
             .setPositiveButton(android.R.string.ok, null)
     }
 
     override fun onShowDialog(dialog: AlertDialog) {
-        val seed = arguments!!.getString("seed")
-        if (seed == null) {
-            dialog.tvSeedLabel.setText(R.string.please_enter_your_seed_phrase)
-        } else {
-            dialog.tvSeedLabel.setText(seedAdvice(seed))
-            dialog.etSeed.setText(seed)
-            dialog.etSeed.setFocusable(false)
-        }
+        setupSeedDialog(this)
+    }
+}
+
+
+fun setupSeedDialog(fragment: DialogFragment) {
+    val tvPrompt = fragment.dialog.tvPrompt
+    val etInput = fragment.dialog.etInput
+    val seed = fragment.arguments!!.getString("seed")
+    if (seed == null) {
+        tvPrompt.setText(R.string.please_enter_your_seed_phrase)
+    } else {
+        tvPrompt.setText(seedAdvice(seed))
+        etInput.setText(seed)
+        etInput.setFocusable(false)
     }
 }
 

@@ -7,7 +7,8 @@ import unittest
 
 from electroncash import commands, daemon, keystore, tests, simple_config, util, version
 from electroncash.storage import WalletStorage
-from electroncash.wallet import Wallet
+from electroncash.wallet import (ImportedAddressWallet, ImportedPrivkeyWallet, Standard_Wallet,
+                                 Wallet)
 
 from android.preference import PreferenceManager
 
@@ -136,21 +137,25 @@ class AndroidCommands(commands.Commands):
             self.wallet = None
             self.network.notify("updated")
 
-    def create(self, name, password, seed=None):
+    def create(self, name, password, seed=None, addresses=None, privkeys=None):
         """Create or restore a new wallet"""
         path = self._wallet_path(name)
         if exists(path):
             raise FileExistsError(path)
         storage = WalletStorage(path)
 
-        if seed is None:
-            seed = self.make_seed()
-            print("Your wallet generation seed is:\n\"%s\"" % seed)
-        storage.put('keystore', keystore.from_seed(seed, "", False).dump())
-        storage.put('wallet_type', 'standard')
-        wallet = Wallet(storage)
+        if addresses:
+            wallet = ImportedAddressWallet.from_text(storage, addresses)
+        elif privkeys:
+            wallet = ImportedPrivkeyWallet.from_text(storage, privkeys)
+        else:
+            if seed is None:
+                seed = self.make_seed()
+                print("Your wallet generation seed is:\n\"%s\"" % seed)
+            storage.put('keystore', keystore.from_seed(seed, "", False).dump())
+            wallet = Standard_Wallet(storage)
+
         wallet.update_password(None, password, True)
-        storage.write()
 
     # END commands from the argparse interface.
 

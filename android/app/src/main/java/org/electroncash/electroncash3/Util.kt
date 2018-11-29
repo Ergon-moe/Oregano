@@ -25,6 +25,7 @@ val UNIT_MBCH = 100000L
 var unitSize = UNIT_BCH  // TODO: make unit configurable
 var unitName = "BCH"     //
 
+val libBitcoin by lazy { libMod("bitcoin") }
 val libUtil by lazy { libMod("util") }
 
 

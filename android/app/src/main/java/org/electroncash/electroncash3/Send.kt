@@ -29,7 +29,7 @@ class SendDialog : AlertDialogFragment() {
             .setView(R.layout.send)
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(android.R.string.ok, null)
-            .setNeutralButton(R.string.qr_code, null)
+            .setNeutralButton(R.string.scan_qr, null)
     }
 
     override fun onShowDialog(dialog: AlertDialog) {
