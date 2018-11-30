@@ -75,7 +75,7 @@ class WalletsFragment : Fragment(), MainFragment {
                 }
             }
             R.id.menuDelete -> showDialog(activity!!, DeleteWalletDialog())
-            R.id.menuClose -> daemonModel.commands.callAttr("close_wallet")
+            R.id.menuClose -> showDialog(activity!!, CloseWalletDialog())
             else -> throw Exception("Unknown item $item")
         }
         return true
@@ -423,9 +423,16 @@ abstract class PasswordDialog(val runInBackground: Boolean = false) : AlertDialo
 }
 
 
-class OpenWalletDialog: PasswordDialog(runInBackground = true) {
+class OpenWalletDialog : PasswordDialog(runInBackground = true) {
     override fun onPassword(password: String) {
         daemonModel.loadWallet(arguments!!.getString("walletName")!!, password)
+    }
+}
+
+
+class CloseWalletDialog : ProgressDialogTask() {
+    override fun doInBackground() {
+        daemonModel.commands.callAttr("close_wallet")
     }
 }
 

@@ -2,6 +2,10 @@ package org.electroncash.electroncash3
 
 import android.app.Dialog
 import android.app.ProgressDialog
+import android.arch.lifecycle.MutableLiveData
+import android.arch.lifecycle.Observer
+import android.arch.lifecycle.ViewModel
+import android.arch.lifecycle.ViewModelProviders
 import android.os.Bundle
 import android.support.v4.app.DialogFragment
 import android.support.v7.app.AlertDialog
@@ -61,11 +65,39 @@ abstract class MenuDialog : AlertDialogFragment() {
 }
 
 
-class ProgressDialogFragment : AlertDialogFragment() {
+open class ProgressDialogFragment : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         isCancelable = false
-        return ProgressDialog(context).apply {
+        val dialog = ProgressDialog(context).apply {
             setMessage(getString(R.string.please_wait))
         }
+        dialog.setOnShowListener { onShowDialog(dialog) }
+        return dialog
     }
+
+    open fun onShowDialog(dialog: ProgressDialog) {}
+}
+
+
+abstract class ProgressDialogTask : ProgressDialogFragment() {
+    class Model : ViewModel() {
+        val started = MutableLiveData<Unit>()
+        val finished = MutableLiveData<Unit>()
+    }
+    private val model by lazy { ViewModelProviders.of(this).get(Model::class.java) }
+
+    override fun onShowDialog(dialog: ProgressDialog) {
+        if (model.started.value == null) {
+            model.started.value = Unit
+            Thread {
+                doInBackground()
+                model.finished.postValue(Unit)
+            }.start()
+        }
+        model.finished.observe(this, Observer {
+            dismiss()
+        })
+    }
+
+    abstract fun doInBackground()
 }
