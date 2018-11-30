@@ -505,7 +505,13 @@ class TransactionsAdapter(val activity: FragmentActivity, val transactions: PyOb
     override fun onBindViewHolder(holder: BoundViewHolder<TransactionModel>, position: Int) {
         super.onBindViewHolder(holder, position)
         holder.itemView.setOnClickListener {
-            showDialog(activity, TransactionDialog(holder.item.txid))
+            val txid = holder.item.txid
+            val tx = daemonModel.wallet!!.get("transactions")!!.callAttr("get", txid)
+            if (tx == null) {  // Can happen during wallet sync.
+                toast(R.string.transaction_not)
+            } else {
+                showDialog(activity, TransactionDialog(txid))
+            }
         }
     }
 }
@@ -547,7 +553,7 @@ class TransactionDialog() : AlertDialogFragment() {
         dialog.tvTxid.text = txid
 
         val timestamp = txInfo.callAttr("__getitem__", 8).toJava(Long::class.java)
-        dialog.tvTimestamp.text = if (timestamp == 0L) getString(R.string.Unconfirmed)
+        dialog.tvTimestamp.text = if (timestamp == 0L) getString(R.string.Unknown)
                                   else libUtil.callAttr("format_time", timestamp).toString()
 
         dialog.tvStatus.text = txInfo.callAttr("__getitem__", 1).toString()

@@ -468,7 +468,7 @@ class Abstract_Wallet(PrintError):
                 return height, conf, timestamp
             else:
                 height = self.unverified_tx[tx_hash]
-                return height, 0, False
+                return height, 0, 0
 
     def get_txpos(self, tx_hash):
         "return position, even if the tx is unverified"

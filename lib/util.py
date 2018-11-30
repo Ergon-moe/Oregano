@@ -429,8 +429,11 @@ def timestamp_to_datetime(timestamp):
         return None
 
 def format_time(timestamp):
-    date = timestamp_to_datetime(timestamp)
-    return date.isoformat(' ')[:-3] if date else _("Unknown")
+    if timestamp:
+        date = timestamp_to_datetime(timestamp)
+        if date:
+            return date.isoformat(' ')[:-3]
+    return _("Unknown")
 
 
 # Takes a timestamp and returns a string with the approximation of the age
