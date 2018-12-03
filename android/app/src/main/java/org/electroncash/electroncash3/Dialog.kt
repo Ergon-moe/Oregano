@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package org.electroncash.electroncash3
 
 import android.app.Dialog
@@ -54,7 +56,7 @@ abstract class MenuDialog : AlertDialogFragment() {
         val items = Array(menu.size()) {
             menu.getItem(it).title
         }
-        builder.setItems(items) { dialog, index ->
+        builder.setItems(items) { _, index ->
             onMenuItemSelected(menu.getItem(index))
         }
     }
