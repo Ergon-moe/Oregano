@@ -15,11 +15,7 @@ val py by lazy {
 fun libMod(name: String) = py.getModule("electroncash.$name")!!
 fun guiMod(name: String) = py.getModule("electroncash_gui.android.$name")!!
 
-val libDaemon by lazy {
-    val mod = guiMod("daemon")
-    mod.callAttr("set_excepthook", mainHandler)
-    mod
-}
+val guiDaemon by lazy { guiMod("daemon") }
 
 val WATCHDOG_INTERVAL = 1000L
 
@@ -28,6 +24,7 @@ val daemonUpdate = MutableLiveData<Unit>().apply { value = Unit }
 
 
 fun initDaemon() {
+    guiDaemon.callAttr("set_excepthook", mainHandler)
     daemonModel = DaemonModel()
 }
 
@@ -52,7 +49,7 @@ class DaemonModel {
 
     init {
         initCallback()
-        network.callAttr("register_callback", libDaemon.callAttr("make_callback", this),
+        network.callAttr("register_callback", guiDaemon.callAttr("make_callback", this),
                          guiConsole.get("CALLBACKS"))
         commands.callAttr("start")
 
