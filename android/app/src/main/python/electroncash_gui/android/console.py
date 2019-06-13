@@ -16,8 +16,8 @@ from electroncash.wallet import (ImportedAddressWallet, ImportedPrivkeyWallet, S
 from android.preference import PreferenceManager
 
 
-CALLBACKS = ["banner", "fee", "interfaces", "new_transaction", "on_history", "on_quotes",
-             "servers", "status", "updated", "verified"]
+CALLBACKS = ["banner", "blockchain_updated", "fee", "interfaces", "new_transaction",
+             "on_history", "on_quotes", "servers", "status", "verified2", "wallet_updated"]
 
 
 class AndroidConsole(InteractiveConsole):
@@ -122,7 +122,7 @@ class AndroidCommands(commands.Commands):
             self.daemon.add_wallet(wallet)
 
         self.wallet = wallet
-        self.network.notify("updated")
+        self.network.trigger_callback("wallet_updated", self.wallet)
         return wallet
 
     def close_wallet(self, name=None):
@@ -138,7 +138,7 @@ class AndroidCommands(commands.Commands):
         self.daemon.stop_wallet(path)
         if self.wallet and (path == self.wallet.storage.path):
             self.wallet = None
-            self.network.notify("updated")
+            self.network.trigger_callback("wallet_updated", self.wallet)
 
     def create(self, name, password, seed=None, addresses=None, privkeys=None):
         """Create or restore a new wallet"""
