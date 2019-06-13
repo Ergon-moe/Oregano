@@ -41,13 +41,15 @@ class WalletsFragment : Fragment(), MainFragment {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
-        daemonModel.netStatus.observe(this, Observer { status ->
-            if (status != null) {
+        daemonUpdate.observe(this, Observer {
+            if (daemonModel.isConnected()) {
                 title.value = getString(R.string.online)
-                subtitle.value = if (status.localHeight < status.serverHeight) {
-                    "${getString(R.string.synchronizing)} ${status.localHeight} / ${status.serverHeight}"
+                val localHeight = daemonModel.network.callAttr("get_local_height").toInt()
+                val serverHeight = daemonModel.network.callAttr("get_server_height").toInt()
+                subtitle.value = if (localHeight < serverHeight) {
+                    "${getString(R.string.synchronizing)} $localHeight / $serverHeight"
                 } else {
-                    "${getString(R.string.height)} ${status.localHeight}"
+                    "${getString(R.string.height)} $localHeight"
                 }
             } else {
                 title.value = getString(R.string.offline)
@@ -61,7 +63,7 @@ class WalletsFragment : Fragment(), MainFragment {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
-        if (daemonModel.walletName.value == null) {
+        if (daemonModel.wallet == null) {
             menu.clear()
         }
     }
@@ -84,41 +86,30 @@ class WalletsFragment : Fragment(), MainFragment {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
-        val binding = WalletsBinding.inflate(inflater, container, false)
-        binding.setLifecycleOwner(this)
-        binding.model = daemonModel
-        return binding.root
+        return inflater.inflate(R.layout.wallets, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         walletPanel.setOnClickListener {
             showDialog(activity!!, SelectWalletDialog())
         }
-        daemonModel.walletBalance.observe(viewLifecycleOwner, Observer { balance ->
-            tvBalance.text = if (balance == null) "" else formatSatoshis(balance)
-            tvBalanceUnit.text = when {
-                daemonModel.wallet == null -> getString(R.string.touch_to_load)
-                balance == null -> getString(R.string.synchronizing)
-                else -> unitName
-            }
-            updateFiat()
-        })
-        fiatUpdate.observe(viewLifecycleOwner, Observer { updateFiat() })
-
         setupVerticalList(rvTransactions)
-        daemonModel.transactions.observe(viewLifecycleOwner, Observer {
-            rvTransactions.adapter = if (it == null) null
-                                     else TransactionsAdapter(activity!!, it.asList())
-        })
 
-        daemonModel.walletName.observe(viewLifecycleOwner, Observer {
-            activity!!.invalidateOptionsMenu()
-            if (it == null) {
+        daemonUpdate.observe(viewLifecycleOwner, Observer {
+            updateHeader()
+            val wallet = daemonModel.wallet
+            if (wallet == null) {
+                rvTransactions.adapter = null
                 btnSend.hide()
             } else {
+                rvTransactions.adapter = TransactionsAdapter(
+                    activity!!, wallet.callAttr("export_history").asList())
                 btnSend.show()
             }
+            activity!!.invalidateOptionsMenu()
         })
+        fiatUpdate.observe(viewLifecycleOwner, Observer { updateHeader() })
+
         btnSend.setOnClickListener {
             if (daemonModel.wallet!!.callAttr("is_watching_only").toBoolean()) {
                 toast(R.string.this_wallet_is_watching_only_)
@@ -132,10 +123,29 @@ class WalletsFragment : Fragment(), MainFragment {
         }
     }
 
-    fun updateFiat() {
-        val balance = daemonModel.walletBalance.value
-        val fiat = if (balance == null) null else formatFiatAmountAndUnit(balance)
-        tvFiat.text = if (fiat == null) "" else "($fiat)"
+    fun updateHeader() {
+        tvBalance.text = ""
+        tvFiat.text = ""
+
+        val wallet = daemonModel.wallet
+        if (wallet == null) {
+            tvWalletName.text = getString(R.string.no_wallet)
+            tvBalanceUnit.text = getString(R.string.touch_to_load)
+        } else {
+            tvWalletName.text = daemonModel.walletName
+            if (wallet.callAttr("is_up_to_date").toBoolean()) {
+                // get_balance returns the tuple (confirmed, unconfirmed, unmatured)
+                val balance = wallet.callAttr("get_balance").asList().get(0).toLong()
+                tvBalance.text = formatSatoshis(balance)
+                tvBalanceUnit.text = unitName
+                val fiat = formatFiatAmountAndUnit(balance)
+                if (fiat != null) {
+                    tvFiat.text = "($fiat)"
+                }
+            } else {
+                tvBalanceUnit.text = getString(R.string.synchronizing)
+            }
+        }
     }
 }
 
@@ -148,7 +158,7 @@ class SelectWalletDialog : AlertDialogFragment(), DialogInterface.OnClickListene
         items.add(getString(R.string.new_wallet))
         builder.setTitle(R.string.wallets)
             .setSingleChoiceItems(items.toTypedArray(),
-                                  items.indexOf(daemonModel.walletName.value), this)
+                                  items.indexOf(daemonModel.walletName), this)
     }
 
     override fun onResume() {
@@ -345,7 +355,7 @@ class NewWalletImportDialog : NewWalletDialog2() {
 
 class DeleteWalletDialog : AlertDialogFragment() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
-        val walletName = daemonModel.walletName.value
+        val walletName = daemonModel.walletName
         val message = getString(R.string.do_you_want_to_delete, walletName) + "\n\n" +
                       getString(R.string.if_your_wallet)
         builder.setTitle(R.string.delete_wallet)

@@ -36,19 +36,12 @@ class DaemonModel {
     val network = commands.get("network")!!
     val wallet: PyObject?
         get() = commands.get("wallet")
+    val walletName: String?
+        get() = wallet?.callAttr("basename").toString()
 
-    lateinit var callback: Runnable
     lateinit var watchdog: Runnable
 
-    // TODO get rid of these: see onCallback.
-    val netStatus = MutableLiveData<NetworkStatus>()
-    val walletName = MutableLiveData<String>()
-    val walletBalance = MutableLiveData<Long>()
-    val transactions = MutableLiveData<PyObject>()
-    val addresses = MutableLiveData<PyObject>()
-
     init {
-        initCallback()
         network.callAttr("register_callback", guiDaemon.callAttr("make_callback", this),
                          guiConsole.get("CALLBACKS"))
         commands.callAttr("start")
@@ -66,52 +59,17 @@ class DaemonModel {
         watchdog.run()
     }
 
-    fun initCallback() {
-        callback = Runnable {
-            if (network.callAttr("is_connected").toBoolean()) {
-                netStatus.value = NetworkStatus(
-                    network.callAttr("get_local_height").toInt(),
-                    network.callAttr("get_server_height").toInt())
-            } else {
-                netStatus.value = null
-            }
-
-            val wallet = this.wallet
-            if (wallet != null) {
-                walletName.value = wallet.callAttr("basename").toString()
-                if (wallet.callAttr("is_up_to_date").toBoolean()) {
-                    // get_balance returns the tuple (confirmed, unconfirmed, unmatured)
-                    val balances = wallet.callAttr("get_balance").asList()
-                    walletBalance.value = balances.get(0).toLong()
-                } else {
-                    walletBalance.value = null
-                }
-                transactions.value = wallet.callAttr("export_history")
-                addresses.value = guiAddresses.callAttr("get_addresses", wallet)
-            } else {
-                for (ld in listOf(walletName, walletBalance, transactions, addresses)) {
-                    ld.value = null
-                }
-            }
-        }
-        onCallback("ui_create")  // Set initial LiveData values.
-    }
-
-    // TODO: migrate everything to daemonUpdate (no need to distinguish between callback types
-    // yet). Then get rid of the other LiveDatas above, and distribute the content of
-    // initCallback to the places which actually use the data. Callback floods will be
-    // mitigated automatically, and only the on-screen data will be queried.
-    //
-    // This will sometimes be called on the main thread and sometimes on the network thread.
+    // This function is called from src/main/python/electroncash_gui/android/daemon.py.
+    // It will sometimes be called on the main thread and sometimes on the network thread.
     fun onCallback(event: String) {
         if (EXCHANGE_CALLBACKS.contains(event)) {
             fiatUpdate.postValue(Unit)
         } else {
             daemonUpdate.postValue(Unit)
-            mainHandler.removeCallbacks(callback)  // Mitigate callback floods.
-            mainHandler.post(callback)
         }
     }
+
+    fun isConnected() = network.callAttr("is_connected").toBoolean()
 
     fun listWallets(): List<String> {
         return commands.callAttr("list_wallets").asList().map { it.toString() }
@@ -123,7 +81,7 @@ class DaemonModel {
 
     /** If the password is wrong, throws PyException with the type InvalidPassword. */
     fun loadWallet(name: String, password: String) {
-        val prevName = walletName.value
+        val prevName = walletName
         commands.callAttr("load_wallet", name, password)
         if (prevName != null && prevName != name) {
             commands.callAttr("close_wallet", prevName)
@@ -164,6 +122,3 @@ class DaemonModel {
         }
     }
 }
-
-
-data class NetworkStatus(val localHeight: Int, val serverHeight: Int)

@@ -199,7 +199,7 @@ class AndroidCommands(commands.Commands):
     def _wallet_path(self, name=""):
         wallets_dir = join(util.user_dir(), "wallets")
         util.make_dir(wallets_dir)
-        return join(wallets_dir, name)
+        return util.standardize_path(join(wallets_dir, name))
 
 
 all_commands = commands.known_commands.copy()

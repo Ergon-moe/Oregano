@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
         // If the wallet name doesn't match, the process has probably been restarted, so
         // ignore the UI state, including all dialogs.
         stateValid = (state != null &&
-                      (state.getString("walletName") == daemonModel.walletName.value))
+                      (state.getString("walletName") == daemonModel.walletName))
         super.onCreate(if (stateValid) state else null)
 
         setContentView(R.layout.main)
@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean("cleanStart", cleanStart)
-        outState.putString("walletName", daemonModel.walletName.value)
+        outState.putString("walletName", daemonModel.walletName)
     }
 
     override fun onRestoreInstanceState(state: Bundle) {

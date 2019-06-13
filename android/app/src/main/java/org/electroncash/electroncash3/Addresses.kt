@@ -63,13 +63,15 @@ class AddressesFragment : Fragment(), MainFragment {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setupVerticalList(rvAddresses)
-        daemonModel.addresses.observe(viewLifecycleOwner, Observer { addresses ->
+        daemonUpdate.observe(viewLifecycleOwner, Observer {
+            val wallet = daemonModel.wallet
             rvAddresses.adapter =
-                if (addresses == null) null
-                else AddressesAdapter(activity!!, daemonModel.wallet!!, addresses.asList())
+                if (wallet == null) null
+                else AddressesAdapter(activity!!, wallet,
+                                      guiAddresses.callAttr("get_addresses", wallet).asList())
 
             subtitle.value = when {
-                addresses == null -> getString(R.string.no_wallet)
+                wallet == null -> getString(R.string.no_wallet)
                 rvAddresses.adapter!!.itemCount == 0 -> getString(R.string.generating_your_addresses)
                 else -> null
             }

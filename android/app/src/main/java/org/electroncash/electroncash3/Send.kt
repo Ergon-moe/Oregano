@@ -150,7 +150,7 @@ class SendPasswordDialog : PasswordDialog(runInBackground = true) {
     override fun onPassword(password: String) {
         val tx = daemonModel.makeTx(arguments!!.getString("address")!!,
                                     arguments!!.getLong("amount"), password)
-        if (daemonModel.netStatus.value == null) {
+        if (! daemonModel.isConnected()) {
             throw ToastException(R.string.not_connected)
         }
         val result = daemonModel.network.callAttr("broadcast_transaction", tx).asList()

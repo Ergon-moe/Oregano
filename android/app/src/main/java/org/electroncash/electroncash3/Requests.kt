@@ -36,8 +36,8 @@ class RequestsFragment : Fragment(), MainFragment {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setupVerticalList(rvRequests)
-        val wallet = daemonModel.wallet
         val observer = Observer<Unit> {
+            val wallet = daemonModel.wallet
             if (wallet == null) {
                 subtitle.value = getString(R.string.no_wallet)
                 rvRequests.adapter = null
@@ -54,10 +54,11 @@ class RequestsFragment : Fragment(), MainFragment {
         requestsUpdate.observe(viewLifecycleOwner, observer)
 
         btnAdd.setOnClickListener {
-            if (daemonModel.wallet!!.callAttr("is_watching_only").toBoolean()) {
+            val wallet = daemonModel.wallet!!
+            if (wallet.callAttr("is_watching_only").toBoolean()) {
                 toast(R.string.this_wallet_is_watching_only_)
             } else {
-                val address = wallet!!.callAttr("get_unused_address")
+                val address = wallet.callAttr("get_unused_address")
                 if (address == null) {
                     toast(R.string.no_more, Toast.LENGTH_LONG)
                 } else {
