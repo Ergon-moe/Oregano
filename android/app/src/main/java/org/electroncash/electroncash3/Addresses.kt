@@ -1,6 +1,5 @@
 package org.electroncash.electroncash3
 
-import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.os.Bundle
 import android.support.v4.app.Fragment
@@ -23,14 +22,6 @@ val clsNetworks by lazy { libNetworks["net"]!! }
 
 
 class AddressesFragment : Fragment(), MainFragment {
-    override val title = MutableLiveData<String>()
-    override val subtitle = MutableLiveData<String>()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        title.value = getString(R.string.addresses)
-    }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.addresses, container, false)
@@ -44,12 +35,6 @@ class AddressesFragment : Fragment(), MainFragment {
                 if (wallet == null) null
                 else AddressesAdapter(activity!!, wallet,
                                       guiAddresses.callAttr("get_addresses", wallet).asList())
-
-            subtitle.value = when {
-                wallet == null -> getString(R.string.no_wallet)
-                rvAddresses.adapter!!.itemCount == 0 -> getString(R.string.generating_your_addresses)
-                else -> null
-            }
         })
         settings.getBoolean("cashaddr_format").observe(viewLifecycleOwner, Observer {
             rvAddresses.adapter?.notifyDataSetChanged()

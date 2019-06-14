@@ -1,7 +1,6 @@
 package org.electroncash.electroncash3
 
 import android.arch.lifecycle.MediatorLiveData
-import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.os.Bundle
 import android.support.v4.app.Fragment
@@ -24,11 +23,6 @@ val requestsUpdate = MediatorLiveData<Unit>().apply { value = Unit }
 
 
 class RequestsFragment : Fragment(), MainFragment {
-    override val title = MutableLiveData<String>().apply {
-        value = app.getString(R.string.requests)
-    }
-    override val subtitle = MutableLiveData<String>()
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.requests, container, false)
@@ -39,11 +33,9 @@ class RequestsFragment : Fragment(), MainFragment {
         val observer = Observer<Unit> {
             val wallet = daemonModel.wallet
             if (wallet == null) {
-                subtitle.value = getString(R.string.no_wallet)
                 rvRequests.adapter = null
                 btnAdd.hide()
             } else {
-                subtitle.value = null
                 rvRequests.adapter = RequestsAdapter(
                     activity!!,
                     wallet.callAttr("get_sorted_requests", daemonModel.config).asList())

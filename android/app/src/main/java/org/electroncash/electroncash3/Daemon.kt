@@ -37,7 +37,10 @@ class DaemonModel {
     val wallet: PyObject?
         get() = commands.get("wallet")
     val walletName: String?
-        get() = wallet?.callAttr("basename").toString()
+        get() {
+            val wallet = this.wallet
+            return if (wallet == null) null else wallet.callAttr("basename").toString()
+        }
 
     lateinit var watchdog: Runnable
 
@@ -61,6 +64,7 @@ class DaemonModel {
 
     // This function is called from src/main/python/electroncash_gui/android/daemon.py.
     // It will sometimes be called on the main thread and sometimes on the network thread.
+    @Suppress("unused")
     fun onCallback(event: String) {
         if (EXCHANGE_CALLBACKS.contains(event)) {
             fiatUpdate.postValue(Unit)

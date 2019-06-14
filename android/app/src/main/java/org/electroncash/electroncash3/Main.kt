@@ -1,13 +1,14 @@
 package org.electroncash.electroncash3
 
 import android.app.Activity
-import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
+import android.view.Menu
+import android.view.MenuItem
 import kotlinx.android.synthetic.main.main.*
 import kotlin.properties.Delegates.notNull
 import kotlin.reflect.KClass
@@ -44,20 +45,84 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(if (stateValid) state else null)
 
         setContentView(R.layout.main)
-        navDrawer.setNavigationItemSelectedListener {
-            val activityCls = ACTIVITIES[it.itemId]
-            if (activityCls != null) {
-                startActivity(Intent(this, activityCls.java))
-            } else {
-                throw Exception("Unknown item $it")
-            }
-            drawer.closeDrawers()
-            false
-        }
+        navDrawer.setNavigationItemSelectedListener { onDrawerItemSelected(it) }
         navBottom.setOnNavigationItemSelectedListener {
             showFragment(it.itemId)
             true
         }
+
+        daemonUpdate.observe(this, Observer { updateToolbar() })
+        fiatUpdate.observe(this, Observer { updateToolbar() })
+    }
+
+    fun updateToolbar() {
+        val title = daemonModel.walletName ?: getString(R.string.no_wallet)
+
+        var subtitle: String
+        if (! daemonModel.isConnected()) {
+            subtitle = getString(R.string.offline)
+        } else {
+            val wallet = daemonModel.wallet
+            val localHeight = daemonModel.network.callAttr("get_local_height").toInt()
+            val serverHeight = daemonModel.network.callAttr("get_server_height").toInt()
+            if (localHeight < serverHeight) {
+                subtitle = "${getString(R.string.synchronizing)} $localHeight / $serverHeight"
+            } else if (wallet == null) {
+                subtitle = getString(R.string.online)
+            } else if (wallet.callAttr("is_up_to_date").toBoolean()) {
+                // get_balance returns the tuple (confirmed, unconfirmed, unmatured)
+                val balance = wallet.callAttr("get_balance").asList().get(0).toLong()
+                subtitle = "${formatSatoshis(balance)} $unitName"
+                val fiat = formatFiatAmountAndUnit(balance)
+                if (fiat != null) {
+                    subtitle += " ($fiat)"
+                }
+            } else {
+                subtitle = getString(R.string.synchronizing)
+            }
+        }
+
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            setTitle(title)
+            supportActionBar!!.setSubtitle(subtitle)
+        } else {
+            // Landscape subtitle is too small, so combine it with the title.
+            setTitle("$title – $subtitle")
+        }
+    }
+
+    fun onDrawerItemSelected(item: MenuItem): Boolean {
+        val activityCls = ACTIVITIES[item.itemId]
+        if (activityCls != null) {
+            startActivity(Intent(this, activityCls.java))
+        } else {
+            throw Exception("Unknown item $item")
+        }
+        drawer.closeDrawers()
+        return false
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        if (daemonModel.wallet != null) {
+            menuInflater.inflate(R.menu.wallet, menu)
+        }
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.menuShowSeed-> {
+                if (daemonModel.wallet!!.containsKey("get_seed")) {
+                    showDialog(this, ShowSeedPasswordDialog())
+                } else {
+                    toast(R.string.this_wallet_has_no_seed)
+                }
+            }
+            R.id.menuDelete -> showDialog(this, DeleteWalletDialog())
+            R.id.menuClose -> showDialog(this, CloseWalletDialog())
+            else -> throw Exception("Unknown item $item")
+        }
+        return true
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -94,15 +159,9 @@ class MainActivity : AppCompatActivity() {
         for (frag in supportFragmentManager.fragments) {
             if (frag is MainFragment && frag !== newFrag) {
                 ft.detach(frag)
-                frag.title.removeObservers(this)
-                frag.subtitle.removeObservers(this)
             }
         }
         ft.attach(newFrag)
-        if (newFrag is MainFragment) {
-            newFrag.title.observe(this, Observer { setTitle(it ?: "") })
-            newFrag.subtitle.observe(this, Observer { supportActionBar!!.setSubtitle(it) })
-        }
 
         // BottomNavigationView onClick is sometimes triggered after state has been saved
         // (https://github.com/Electron-Cash/Electron-Cash/issues/1091).
@@ -124,11 +183,4 @@ class MainActivity : AppCompatActivity() {
 }
 
 
-interface MainFragment {
-    // To control the title or subtitle, override these with a MutableLiveData.
-    val title: LiveData<String>
-        get() = MutableLiveData<String>().apply { value = "" }
-    val subtitle: LiveData<String>
-        get() = MutableLiveData<String>().apply { value = null }
-}
-
+interface MainFragment

@@ -16,9 +16,6 @@ import android.support.v4.app.FragmentActivity
 import android.support.v7.app.AlertDialog
 import android.text.Selection
 import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -30,60 +27,10 @@ import kotlinx.android.synthetic.main.new_wallet.*
 import kotlinx.android.synthetic.main.text_input.*
 import kotlinx.android.synthetic.main.transaction_detail.*
 import kotlinx.android.synthetic.main.wallets.*
-import org.electroncash.electroncash3.databinding.WalletsBinding
 import kotlin.math.roundToInt
 
 
 class WalletsFragment : Fragment(), MainFragment {
-    override val title = MutableLiveData<String>()
-    override val subtitle = MutableLiveData<String>()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
-        daemonUpdate.observe(this, Observer {
-            if (daemonModel.isConnected()) {
-                title.value = getString(R.string.online)
-                val localHeight = daemonModel.network.callAttr("get_local_height").toInt()
-                val serverHeight = daemonModel.network.callAttr("get_server_height").toInt()
-                subtitle.value = if (localHeight < serverHeight) {
-                    "${getString(R.string.synchronizing)} $localHeight / $serverHeight"
-                } else {
-                    "${getString(R.string.height)} $localHeight"
-                }
-            } else {
-                title.value = getString(R.string.offline)
-                subtitle.value = getString(R.string.cannot_send)
-            }
-        })
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.wallets, menu)
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        if (daemonModel.wallet == null) {
-            menu.clear()
-        }
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.menuShowSeed-> {
-                if (daemonModel.wallet!!.containsKey("get_seed")) {
-                    showDialog(activity!!, ShowSeedPasswordDialog())
-                } else {
-                    toast(R.string.this_wallet_has_no_seed)
-                }
-            }
-            R.id.menuDelete -> showDialog(activity!!, DeleteWalletDialog())
-            R.id.menuClose -> showDialog(activity!!, CloseWalletDialog())
-            else -> throw Exception("Unknown item $item")
-        }
-        return true
-    }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.wallets, container, false)
@@ -108,7 +55,6 @@ class WalletsFragment : Fragment(), MainFragment {
             }
             activity!!.invalidateOptionsMenu()
         })
-        fiatUpdate.observe(viewLifecycleOwner, Observer { updateHeader() })
 
         btnSend.setOnClickListener {
             if (daemonModel.wallet!!.callAttr("is_watching_only").toBoolean()) {
@@ -123,28 +69,17 @@ class WalletsFragment : Fragment(), MainFragment {
         }
     }
 
+    // TODO remove header
     fun updateHeader() {
         tvBalance.text = ""
+        tvBalanceUnit.text = ""
         tvFiat.text = ""
 
         val wallet = daemonModel.wallet
         if (wallet == null) {
             tvWalletName.text = getString(R.string.no_wallet)
-            tvBalanceUnit.text = getString(R.string.touch_to_load)
         } else {
             tvWalletName.text = daemonModel.walletName
-            if (wallet.callAttr("is_up_to_date").toBoolean()) {
-                // get_balance returns the tuple (confirmed, unconfirmed, unmatured)
-                val balance = wallet.callAttr("get_balance").asList().get(0).toLong()
-                tvBalance.text = formatSatoshis(balance)
-                tvBalanceUnit.text = unitName
-                val fiat = formatFiatAmountAndUnit(balance)
-                if (fiat != null) {
-                    tvFiat.text = "($fiat)"
-                }
-            } else {
-                tvBalanceUnit.text = getString(R.string.synchronizing)
-            }
         }
     }
 }
