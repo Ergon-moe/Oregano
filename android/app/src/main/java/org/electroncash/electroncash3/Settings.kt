@@ -1,11 +1,10 @@
 package org.electroncash.electroncash3
 
-import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
-import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.support.v4.app.DialogFragment
+import android.support.v7.app.AppCompatActivity
 import android.support.v7.preference.EditTextPreference
 import android.support.v7.preference.ListPreference
 import android.support.v7.preference.Preference
@@ -53,11 +52,16 @@ fun setDefaultValue(sp: SharedPreferences, key: String, default: String) {
 }
 
 
-class SettingsFragment : PreferenceFragmentCompat(), MainFragment {
-    override val title = MutableLiveData<String>().apply {
-        value = app.getString(R.string.settings)
+class SettingsActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        supportFragmentManager.beginTransaction()
+            .replace(android.R.id.content, SettingsFragment()).commit()
     }
+}
 
+
+class SettingsFragment : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.settings, rootKey)
 
@@ -104,15 +108,6 @@ class SettingsFragment : PreferenceFragmentCompat(), MainFragment {
                     pref.summary = pref.entry
                 })
             }
-        }
-    }
-
-    override fun onPreferenceTreeClick(preference: Preference): Boolean {
-        if (preference.key == "console") {
-            startActivity(Intent(activity!!, ECConsoleActivity::class.java))
-            return true
-        } else {
-            return super.onPreferenceTreeClick(preference)
         }
     }
 

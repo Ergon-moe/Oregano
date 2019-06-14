@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentActivity
 import android.support.v7.app.AlertDialog
+import android.support.v7.app.AppCompatActivity
 import android.support.v7.preference.EditTextPreference
 import android.support.v7.preference.EditTextPreferenceDialogFragmentCompat
 import android.text.InputType
@@ -40,11 +41,16 @@ private fun updateNetwork() {
 }
 
 
-class NetworkFragment : Fragment(), MainFragment {
-    override val title = MutableLiveData<String>().apply {
-        value = app.getString(R.string.network)
+class NetworkActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        supportFragmentManager.beginTransaction()
+            .replace(android.R.id.content, NetworkFragment()).commit()
     }
+}
 
+
+class NetworkFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.network, container, false)

@@ -1,8 +1,10 @@
 package org.electroncash.electroncash3
 
+import android.app.Activity
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
+import android.content.Intent
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
@@ -11,12 +13,18 @@ import kotlin.properties.Delegates.notNull
 import kotlin.reflect.KClass
 
 
+// Drawer navigation
+val ACTIVITIES = HashMap<Int, KClass<out Activity>>().apply {
+    put(R.id.navSettings, SettingsActivity::class)
+    put(R.id.navNetwork, NetworkActivity::class)
+    put(R.id.navConsole, ECConsoleActivity::class)
+}
+
+// Bottom navigation
 val FRAGMENTS = HashMap<Int, KClass<out Fragment>>().apply {
     put(R.id.navWallets, WalletsFragment::class)
     put(R.id.navRequests, RequestsFragment::class)
     put(R.id.navAddresses, AddressesFragment::class)
-    put(R.id.navNetwork, NetworkFragment::class)
-    put(R.id.navSettings, SettingsFragment::class)
 }
 
 
@@ -35,7 +43,17 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(if (stateValid) state else null)
 
         setContentView(R.layout.main)
-        navigation.setOnNavigationItemSelectedListener {
+        navDrawer.setNavigationItemSelectedListener {
+            val activityCls = ACTIVITIES[it.itemId]
+            if (activityCls != null) {
+                startActivity(Intent(this, activityCls.java))
+            } else {
+                throw Exception("Unknown item $it")
+            }
+            drawer.closeDrawers()
+            false
+        }
+        navBottom.setOnNavigationItemSelectedListener {
             showFragment(it.itemId)
             true
         }
@@ -60,7 +78,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResumeFragments() {
         super.onResumeFragments()
-        showFragment(navigation.selectedItemId)
+        showFragment(navBottom.selectedItemId)
         if (cleanStart) {
             cleanStart = false
             if (daemonModel.wallet == null) {

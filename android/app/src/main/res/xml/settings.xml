@@ -41,10 +41,4 @@
             tools:summary="BitStamp"/>
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/advanced">
-        <Preference
-            android:key="console"
-            android:title="@string/console"/>
-    </PreferenceCategory>
-
 </PreferenceScreen>
