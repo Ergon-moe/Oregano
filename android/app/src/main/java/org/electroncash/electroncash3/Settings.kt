@@ -20,7 +20,15 @@ lateinit var settings: LivePreferences
 fun initSettings() {
     val sp = PreferenceManager.getDefaultSharedPreferences(app)
     settings = LivePreferences(sp)
+    setDefaultValues(sp)
 
+    settings.getBoolean("cashaddr_format").observeForever {
+        clsAddress.callAttr("show_cashaddr", it)
+    }
+}
+
+
+fun setDefaultValues(sp: SharedPreferences) {
     // Network
     setDefaultValue(sp, "auto_connect",
                     libNetwork.get("DEFAULT_AUTO_CONNECT")!!.toBoolean())
@@ -41,7 +49,6 @@ fun initSettings() {
     // overwrite existing values.
     PreferenceManager.setDefaultValues(app, R.xml.settings, true)
 }
-
 
 fun setDefaultValue(sp: SharedPreferences, key: String, default: Boolean) {
     if (!sp.contains(key)) sp.edit().putBoolean(key, default).apply()

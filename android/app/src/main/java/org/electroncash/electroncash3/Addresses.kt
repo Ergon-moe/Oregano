@@ -28,32 +28,7 @@ class AddressesFragment : Fragment(), MainFragment {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
         title.value = getString(R.string.addresses)
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.addresses, menu)
-        menu.findItem(R.id.menuFormat).isChecked =
-            clsAddress["FMT_UI"] == clsAddress["FMT_LEGACY"]
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        if (daemonModel.wallet == null) {
-            menu.clear()
-        }
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.menuFormat -> {
-                item.isChecked = !item.isChecked
-                clsAddress.callAttr("show_cashaddr", !item.isChecked)
-                rvAddresses.adapter?.notifyDataSetChanged()
-            }
-            else -> throw Exception("Unknown item $item")
-        }
-        return true
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -75,6 +50,9 @@ class AddressesFragment : Fragment(), MainFragment {
                 rvAddresses.adapter!!.itemCount == 0 -> getString(R.string.generating_your_addresses)
                 else -> null
             }
+        })
+        settings.getBoolean("cashaddr_format").observe(viewLifecycleOwner, Observer {
+            rvAddresses.adapter?.notifyDataSetChanged()
         })
     }
 }
