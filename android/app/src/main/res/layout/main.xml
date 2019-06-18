@@ -6,13 +6,30 @@
     android:id="@+id/drawer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity"
-    tools:openDrawer="left">
+    tools:context=".MainActivity">
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorPrimary"
+            android:minHeight="?attr/actionBarSize"
+            android:theme="?attr/actionBarTheme"
+            android:elevation="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:contentInsetStartWithNavigation="0dp"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            tools:navigationIcon="@drawable/ic_menu_24dp"
+            tools:subtitle="0.12345678 BCH (98,765.43 USD)"
+            tools:title="@string/test_wallet"
+            tools:targetApi="lollipop"/>
 
         <FrameLayout
             android:id="@+id/flContent"
@@ -21,7 +38,7 @@
             app:layout_constraintBottom_toTopOf="@+id/navBottom"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
+            app:layout_constraintTop_toBottomOf="@+id/toolbar"/>
 
         <!-- `windowBackground` provides a top border. -->
         <android.support.design.widget.BottomNavigationView

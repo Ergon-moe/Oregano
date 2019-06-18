@@ -7,6 +7,7 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
+import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import kotlinx.android.synthetic.main.main.*
@@ -36,7 +37,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(state: Bundle?) {
         // Remove splash screen: doesn't work if called after super.onCreate.
-        setTheme(R.style.AppTheme)
+        setTheme(R.style.AppTheme_NoActionBar)
 
         // If the wallet name doesn't match, the process has probably been restarted, so
         // ignore the UI state, including all dialogs.
@@ -45,6 +46,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(if (stateValid) state else null)
 
         setContentView(R.layout.main)
+        setSupportActionBar(toolbar)
+        supportActionBar!!.apply {
+            setDisplayHomeAsUpEnabled(true)
+            setHomeAsUpIndicator(R.drawable.ic_menu_24dp)
+        }
+
         navDrawer.setNavigationItemSelectedListener { onDrawerItemSelected(it) }
         navBottom.setOnNavigationItemSelectedListener {
             showFragment(it.itemId)
@@ -111,6 +118,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            android.R.id.home -> drawer.openDrawer(Gravity.START)
             R.id.menuShowSeed-> {
                 if (daemonModel.wallet!!.containsKey("get_seed")) {
                     showDialog(this, ShowSeedPasswordDialog())
