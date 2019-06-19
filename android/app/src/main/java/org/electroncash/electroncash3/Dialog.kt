@@ -14,7 +14,11 @@ import android.support.v7.app.AlertDialog
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
+import android.view.WindowManager
 import android.widget.PopupMenu
+import android.widget.Toast
+import com.chaquo.python.PyException
+import kotlinx.android.synthetic.main.password.*
 
 
 abstract class AlertDialogFragment : DialogFragment() {
@@ -115,4 +119,73 @@ abstract class ProgressDialogTask : ProgressDialogFragment() {
 
     abstract fun doInBackground()
     open fun onPostExecute() {}
+}
+
+
+abstract class PasswordDialog(val runInBackground: Boolean = false) : AlertDialogFragment() {
+    class Model : ViewModel() {
+        val result = MutableLiveData<Boolean>()
+    }
+    private val model by lazy { ViewModelProviders.of(this).get(Model::class.java) }
+
+    override fun onBuildDialog(builder: AlertDialog.Builder) {
+        builder.setTitle(R.string.password_required)
+            .setView(R.layout.password)
+            .setPositiveButton(android.R.string.ok, null)
+            .setNegativeButton(android.R.string.cancel, null)
+    }
+
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val dialog = super.onCreateDialog(savedInstanceState)
+        dialog.window!!.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+        return dialog
+    }
+
+    override fun onShowDialog(dialog: AlertDialog) {
+        val posButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+        posButton.setOnClickListener {
+            tryPassword(dialog.etPassword.text.toString())
+        }
+        dialog.etPassword.setOnEditorActionListener { _, _, _ ->
+            posButton.performClick()
+        }
+        model.result.observe(this, Observer { onResult(it) })
+    }
+
+    fun tryPassword(password: String) {
+        model.result.value = null
+        val r = Runnable {
+            try {
+                try {
+                    onPassword(password)
+                    model.result.postValue(true)
+                } catch (e: PyException) {
+                    throw if (e.message!!.startsWith("InvalidPassword"))
+                        ToastException(R.string.password_incorrect, Toast.LENGTH_SHORT) else e
+                }
+            } catch (e: ToastException) {
+                e.show()
+                model.result.postValue(false)
+            }
+        }
+        if (runInBackground) {
+            showDialog(activity!!, ProgressDialogFragment())
+            Thread(r).start()
+        } else {
+            r.run()
+        }
+    }
+
+    /** Attempt to perform the operation with the given password. If the operation fails, this
+     * method should throw either a ToastException, or an InvalidPassword PyException (most
+     * lib functions that take passwords will do this automatically). */
+    abstract fun onPassword(password: String)
+
+    private fun onResult(success: Boolean?) {
+        if (success == null) return
+        dismissDialog(activity!!, ProgressDialogFragment::class)
+        if (success) {
+            dismiss()
+        }
+    }
 }

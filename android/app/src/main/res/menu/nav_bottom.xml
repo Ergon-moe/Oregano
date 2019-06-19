@@ -2,9 +2,9 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/navWallets"
-        android:icon="@drawable/ic_wallet_24dp"
-        android:title="@string/wallets"/>
+        android:id="@+id/navTransactions"
+        android:icon="@drawable/ic_swap_horiz_24dp"
+        android:title="@string/transactions"/>
 
     <item
         android:id="@+id/navRequests"
