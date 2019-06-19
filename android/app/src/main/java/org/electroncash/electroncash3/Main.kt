@@ -120,7 +120,10 @@ class MainActivity : AppCompatActivity() {
         val loadedWalletName = daemonModel.walletName
         val menu = navDrawer.menu
         menu.clear()
-        navDrawer.inflateMenu(R.menu.nav_drawer)
+
+        // New menu items are added at the bottom regardless of their group ID, so we inflate
+        // the fixed items in two parts.
+        navDrawer.inflateMenu(R.menu.nav_drawer_1)
         for (walletName in daemonModel.listWallets()) {
             val item = menu.add(R.id.navWallets, Menu.NONE, Menu.NONE, walletName)
             item.setIcon(R.drawable.ic_wallet_24dp)
@@ -129,6 +132,7 @@ class MainActivity : AppCompatActivity() {
                 item.setChecked(true)
             }
         }
+        navDrawer.inflateMenu(R.menu.nav_drawer_2)
     }
 
     fun onDrawerItemSelected(item: MenuItem): Boolean {
