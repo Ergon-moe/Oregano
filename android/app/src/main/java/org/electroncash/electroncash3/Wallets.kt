@@ -6,7 +6,6 @@ import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProviders
-import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.os.Bundle
@@ -37,13 +36,8 @@ class WalletsFragment : Fragment(), MainFragment {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        walletPanel.setOnClickListener {
-            showDialog(activity!!, SelectWalletDialog())
-        }
         setupVerticalList(rvTransactions)
-
         daemonUpdate.observe(viewLifecycleOwner, Observer {
-            updateHeader()
             val wallet = daemonModel.wallet
             if (wallet == null) {
                 rvTransactions.adapter = null
@@ -66,51 +60,6 @@ class WalletsFragment : Fragment(), MainFragment {
             } else {
                 showDialog(activity!!, SendDialog())
             }
-        }
-    }
-
-    // TODO remove header
-    fun updateHeader() {
-        tvBalance.text = ""
-        tvBalanceUnit.text = ""
-        tvFiat.text = ""
-
-        val wallet = daemonModel.wallet
-        if (wallet == null) {
-            tvWalletName.text = getString(R.string.no_wallet)
-        } else {
-            tvWalletName.text = daemonModel.walletName
-        }
-    }
-}
-
-
-class SelectWalletDialog : AlertDialogFragment(), DialogInterface.OnClickListener {
-    val items = ArrayList<String>()
-
-    override fun onBuildDialog(builder: AlertDialog.Builder) {
-        items.addAll(daemonModel.listWallets())
-        items.add(getString(R.string.new_wallet))
-        builder.setTitle(R.string.wallets)
-            .setSingleChoiceItems(items.toTypedArray(),
-                                  items.indexOf(daemonModel.walletName), this)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (items.size == 1) {
-            onClick(dialog, 0)
-        }
-    }
-
-    override fun onClick(dialog: DialogInterface, which: Int) {
-        dismiss()
-        if (which < items.size - 1) {
-            showDialog(activity!!, OpenWalletDialog().apply { arguments = Bundle().apply {
-                putString("walletName", items[which])
-            }})
-        } else {
-            showDialog(activity!!, NewWalletDialog1())
         }
     }
 }
@@ -382,6 +331,10 @@ class OpenWalletDialog : PasswordDialog(runInBackground = true) {
 class CloseWalletDialog : ProgressDialogTask() {
     override fun doInBackground() {
         daemonModel.commands.callAttr("close_wallet")
+    }
+
+    override fun onPostExecute() {
+        (activity as MainActivity).openDrawer()
     }
 }
 

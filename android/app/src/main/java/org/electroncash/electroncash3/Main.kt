@@ -7,7 +7,6 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
-import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import kotlinx.android.synthetic.main.main.*
@@ -58,8 +57,19 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        daemonUpdate.observe(this, Observer { updateToolbar() })
+        daemonUpdate.observe(this, Observer {
+            updateToolbar()
+            updateDrawer()
+        })
         fiatUpdate.observe(this, Observer { updateToolbar() })
+    }
+
+    override fun onBackPressed() {
+        if (drawer.isDrawerOpen(navDrawer)) {
+            closeDrawer()
+        } else {
+            super.onBackPressed()
+        }
     }
 
     fun updateToolbar() {
@@ -98,14 +108,43 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun openDrawer() {
+        drawer.openDrawer(navDrawer)
+    }
+
+    fun closeDrawer() {
+        drawer.closeDrawer(navDrawer)
+    }
+
+    fun updateDrawer() {
+        val loadedWalletName = daemonModel.walletName
+        val menu = navDrawer.menu
+        menu.clear()
+        navDrawer.inflateMenu(R.menu.nav_drawer)
+        for (walletName in daemonModel.listWallets()) {
+            val item = menu.add(R.id.navWallets, Menu.NONE, Menu.NONE, walletName)
+            item.setIcon(R.drawable.ic_wallet_24dp)
+            if (walletName == loadedWalletName) {
+                item.setCheckable(true)
+                item.setChecked(true)
+            }
+        }
+    }
+
     fun onDrawerItemSelected(item: MenuItem): Boolean {
         val activityCls = ACTIVITIES[item.itemId]
         if (activityCls != null) {
             startActivity(Intent(this, activityCls.java))
+        } else if (item.itemId == R.id.navNewWallet) {
+            showDialog(this, NewWalletDialog1())
+        } else if (item.itemId == Menu.NONE) {
+            showDialog(this, OpenWalletDialog().apply { arguments = Bundle().apply {
+                putString("walletName", item.title.toString())
+            }})
         } else {
             throw Exception("Unknown item $item")
         }
-        drawer.closeDrawers()
+        closeDrawer()
         return false
     }
 
@@ -118,7 +157,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            android.R.id.home -> drawer.openDrawer(Gravity.START)
+            android.R.id.home -> openDrawer()
             R.id.menuShowSeed-> {
                 if (daemonModel.wallet!!.containsKey("get_seed")) {
                     showDialog(this, ShowSeedPasswordDialog())
@@ -156,7 +195,7 @@ class MainActivity : AppCompatActivity() {
         if (cleanStart) {
             cleanStart = false
             if (daemonModel.wallet == null) {
-                showDialog(this, SelectWalletDialog())
+                openDrawer()
             }
         }
     }

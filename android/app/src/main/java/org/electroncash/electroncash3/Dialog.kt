@@ -109,8 +109,10 @@ abstract class ProgressDialogTask : ProgressDialogFragment() {
         }
         model.finished.observe(this, Observer {
             dismiss()
+            onPostExecute()
         })
     }
 
     abstract fun doInBackground()
+    open fun onPostExecute() {}
 }
