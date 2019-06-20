@@ -154,9 +154,12 @@ class MainActivity : AppCompatActivity() {
         } else if (item.itemId == R.id.navNewWallet) {
             showDialog(this, NewWalletDialog1())
         } else if (item.itemId == Menu.NONE) {
-            showDialog(this, OpenWalletDialog().apply { arguments = Bundle().apply {
-                putString("walletName", item.title.toString())
-            }})
+            val walletName = item.title.toString()
+            if (walletName != daemonModel.walletName) {
+                showDialog(this, OpenWalletDialog().apply { arguments = Bundle().apply {
+                    putString("walletName", walletName)
+                }})
+            }
         } else {
             throw Exception("Unknown item $item")
         }
