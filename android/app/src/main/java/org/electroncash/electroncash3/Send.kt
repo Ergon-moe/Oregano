@@ -9,6 +9,9 @@ import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.widget.SeekBar
 import com.chaquo.python.PyException
 import com.chaquo.python.PyObject
@@ -37,6 +40,9 @@ class SendDialog : AlertDialogFragment() {
         if (address != null) {
             dialog.etAddress.setText(address)
             dialog.etAmount.requestFocus()
+        }
+        dialog.btnContacts.setOnClickListener {
+            showDialog(activity!!, SendContactsDialog())
         }
 
         dialog.etAmount.addTextChangedListener(object : TextWatcher {
@@ -139,6 +145,27 @@ class SendDialog : AlertDialogFragment() {
 
     val feeSpb
         get() = MIN_FEE + dialog.sbFee.progress
+}
+
+
+class SendContactsDialog : MenuDialog() {
+    val contacts = listContacts()
+
+    override fun onBuildDialog(builder: AlertDialog.Builder, menu: Menu,
+                               inflater: MenuInflater) {
+        builder.setTitle(R.string.contacts)
+        for (name in contacts.keys) {
+            menu.add(name)
+        }
+    }
+
+    override fun onMenuItemSelected(item: MenuItem) {
+        val address = contacts.get(item.title.toString())!!.callAttr("to_ui_string").toString()
+        with (findDialog(activity!!, SendDialog::class)!!) {
+            dialog.etAddress.setText(address)
+            dialog.etAmount.requestFocus()
+        }
+    }
 }
 
 

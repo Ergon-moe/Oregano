@@ -62,8 +62,13 @@ fun showDialog(activity: FragmentActivity, frag: DialogFragment) {
 }
 
 fun <T: DialogFragment> dismissDialog(activity: FragmentActivity, fragClass: KClass<T>) {
-    val frag = activity.supportFragmentManager.findFragmentByTag(fragClass.java.simpleName)
-    (frag as DialogFragment?)?.dismiss()
+    findDialog(activity, fragClass)?.dismiss()
+}
+
+fun <T: DialogFragment> findDialog(activity: FragmentActivity, fragClass: KClass<T>)
+    : DialogFragment? {
+    val tag = fragClass.java.simpleName
+    return activity.supportFragmentManager.findFragmentByTag(tag) as DialogFragment?
 }
 
 
