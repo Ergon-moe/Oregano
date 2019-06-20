@@ -7,6 +7,10 @@
         android:title="@string/close"/>
 
     <item
+        android:id="@+id/menuChangePassword"
+        android:title="@string/change_password"/>
+
+    <item
         android:id="@+id/menuShowSeed"
         android:icon="@drawable/ic_key_24dp"
         android:title="@string/show_seed"/>

@@ -1,6 +1,7 @@
 package org.electroncash.electroncash3
 
 import android.app.Activity
+import android.app.Dialog
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModel
@@ -15,10 +16,14 @@ import android.support.v7.app.AppCompatActivity
 import android.text.Selection
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import com.chaquo.python.PyException
 import com.google.zxing.integration.android.IntentIntegrator
+import kotlinx.android.synthetic.main.change_password.*
 import kotlinx.android.synthetic.main.main.*
 import kotlinx.android.synthetic.main.new_wallet.*
+import kotlinx.android.synthetic.main.new_wallet.etConfirmPassword
+import kotlinx.android.synthetic.main.new_wallet.etPassword
 import kotlinx.android.synthetic.main.text_input.*
 import kotlin.properties.Delegates.notNull
 import kotlin.reflect.KClass
@@ -177,6 +182,7 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> openDrawer()
+            R.id.menuChangePassword -> showDialog(this, ChangePasswordDialog())
             R.id.menuShowSeed-> {
                 if (daemonModel.wallet!!.containsKey("get_seed")) {
                     showDialog(this, ShowSeedPasswordDialog())
@@ -268,12 +274,7 @@ class NewWalletDialog1 : AlertDialogFragment() {
                 if (daemonModel.listWallets().contains(name)) {
                     throw ToastException(R.string.a_wallet_with_that_name_already_exists_please)
                 }
-
-                val password = dialog.etPassword.text.toString()
-                if (password.isEmpty()) throw ToastException(R.string.enter_password)
-                if (password != dialog.etConfirmPassword.text.toString()) {
-                    throw ToastException(R.string.wallet_passwords)
-                }
+                val password = confirmPassword(dialog)
 
                 val nextDialog: DialogFragment
                 val arguments = Bundle().apply {
@@ -298,6 +299,16 @@ class NewWalletDialog1 : AlertDialogFragment() {
             } catch (e: ToastException) { e.show() }
         }
     }
+}
+
+
+fun confirmPassword(dialog: Dialog): String {
+    val password = dialog.etPassword.text.toString()
+    if (password.isEmpty()) throw ToastException(R.string.enter_password)
+    if (password != dialog.etConfirmPassword.text.toString()) {
+        throw ToastException(R.string.wallet_passwords)
+    }
+    return password
 }
 
 
@@ -450,6 +461,36 @@ class CloseWalletDialog : ProgressDialogTask() {
 
     override fun onPostExecute() {
         (activity as MainActivity).openDrawer()
+    }
+}
+
+
+class ChangePasswordDialog : AlertDialogFragment() {
+    override fun onBuildDialog(builder: AlertDialog.Builder) {
+        builder.setTitle(R.string.change_password)
+            .setView(R.layout.change_password)
+            .setPositiveButton(android.R.string.ok, null)
+            .setNegativeButton(android.R.string.cancel, null)
+    }
+
+    override fun onShowDialog(dialog: AlertDialog) {
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            try {
+                val currentPassword = dialog.etCurrentPassword.text.toString()
+                val newPassword = confirmPassword(dialog)
+                try {
+                    daemonModel.wallet!!.callAttr("update_password",
+                                                  currentPassword, newPassword, true)
+                    toast(R.string.password_was)
+                    dismiss()
+                } catch (e: PyException) {
+                    throw if (e.message!!.startsWith("InvalidPassword"))
+                        ToastException(R.string.password_incorrect, Toast.LENGTH_SHORT) else e
+                }
+            } catch (e: ToastException) {
+                e.show()
+            }
+        }
     }
 }
 
