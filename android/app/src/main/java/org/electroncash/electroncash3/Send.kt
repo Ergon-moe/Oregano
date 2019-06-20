@@ -33,6 +33,12 @@ class SendDialog : AlertDialogFragment() {
     }
 
     override fun onShowDialog(dialog: AlertDialog) {
+        val address = arguments?.getString("address")
+        if (address != null) {
+            dialog.etAddress.setText(address)
+            dialog.etAmount.requestFocus()
+        }
+
         dialog.etAmount.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
@@ -67,7 +73,7 @@ class SendDialog : AlertDialogFragment() {
     fun updateUI() {
         var addrOrDummy: String
         try {
-            daemonModel.makeAddress(address)
+            makeAddress(address)
             addrOrDummy = address
         } catch (e: ToastException) {
             addrOrDummy = daemonModel.wallet!!.callAttr("dummy_address")

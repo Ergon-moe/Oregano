@@ -104,10 +104,10 @@ fun toast(resId: Int, duration: Int = Toast.LENGTH_SHORT, key: String? = null) {
 }
 
 
-fun copyToClipboard(text: CharSequence) {
+fun copyToClipboard(text: CharSequence, toastId: Int = R.string.text_copied_to_clipboard) {
     @Suppress("DEPRECATION")
     (getSystemService(ClipboardManager::class)).text = text
-    toast(R.string.text_copied_to_clipboard)
+    toast(toastId)
 }
 
 

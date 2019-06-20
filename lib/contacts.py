@@ -50,6 +50,7 @@ class Contacts(dict):
 
     def save(self):
         self.storage.put('contacts', dict(self))
+        self.storage.write()
 
     def import_file(self, path):
         count = 0

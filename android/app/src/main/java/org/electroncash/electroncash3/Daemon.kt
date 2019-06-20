@@ -113,16 +113,14 @@ class DaemonModel {
                 ToastException(R.string.insufficient_funds) else e
         }
     }
+}
 
-    fun makeAddress(addrStr: String): PyObject {
-        if (addrStr.isEmpty()) {
-            throw ToastException(R.string.enter_or)
-        }
-        try {
-            return clsAddress.callAttr("from_string", addrStr)
-        } catch (e: PyException) {
-            throw if (e.message!!.startsWith("AddressError"))
-                ToastException(R.string.invalid_address) else e
-        }
+
+fun makeAddress(addrStr: String): PyObject {
+    try {
+        return clsAddress.callAttr("from_string", addrStr)
+    } catch (e: PyException) {
+        throw if (e.message!!.startsWith("AddressError"))
+            ToastException(R.string.invalid_address) else e
     }
 }

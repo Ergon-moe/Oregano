@@ -1,6 +1,6 @@
 package org.electroncash.electroncash3
 
-import android.arch.lifecycle.MediatorLiveData
+import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.os.Bundle
 import android.support.v4.app.Fragment
@@ -19,7 +19,7 @@ import kotlinx.android.synthetic.main.request_detail.*
 import kotlinx.android.synthetic.main.requests.*
 
 
-val requestsUpdate = MediatorLiveData<Unit>().apply { value = Unit }
+val requestsUpdate = MutableLiveData<Unit>().apply { value = Unit }
 
 
 class RequestsFragment : Fragment(), MainFragment {
@@ -131,7 +131,9 @@ class RequestDialog() : AlertDialogFragment() {
     }
 
     override fun onShowDialog(dialog: AlertDialog) {
-        dialog.btnCopy.setOnClickListener { copyToClipboard(getUri()) }
+        dialog.btnCopy.setOnClickListener {
+            copyToClipboard(getUri(), R.string.request_copied)
+        }
         dialog.tvAddress.text = address.callAttr("to_ui_string").toString()
         dialog.tvUnit.text = unitName
 
