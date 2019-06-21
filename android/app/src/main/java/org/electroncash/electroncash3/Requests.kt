@@ -44,6 +44,9 @@ class RequestsFragment : Fragment(), MainFragment {
         }
         daemonUpdate.observe(viewLifecycleOwner, observer)
         requestsUpdate.observe(viewLifecycleOwner, observer)
+        settings.getString("base_unit").observe(viewLifecycleOwner, Observer {
+            rvRequests.adapter?.notifyDataSetChanged()
+        })
 
         btnAdd.setOnClickListener {
             val wallet = daemonModel.wallet!!

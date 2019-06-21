@@ -967,7 +967,8 @@ class Abstract_Wallet(PrintError):
 
         return h2
 
-    def export_history(self, domain=None, from_timestamp=None, to_timestamp=None, fx=None, show_addresses=False):
+    def export_history(self, domain=None, from_timestamp=None, to_timestamp=None, fx=None,
+                       show_addresses=False, decimal_point=8):
         from .util import timestamp_to_datetime
         h = self.get_history(domain)
         out = []
@@ -981,8 +982,9 @@ class Abstract_Wallet(PrintError):
                 'height':height,
                 'confirmations':conf,
                 'timestamp':timestamp,
-                'value': format_satoshis(value, is_diff=True) if value is not None else '--',
-                'balance': format_satoshis(balance)
+                'value': (format_satoshis(value, decimal_point=decimal_point, is_diff=True)
+                          if value is not None else '--'),
+                'balance': format_satoshis(balance, decimal_point=decimal_point)
             }
             if item['height']>0:
                 date_str = format_time(timestamp) if timestamp is not None else _("unverified")

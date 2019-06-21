@@ -22,16 +22,18 @@ import java.util.*
 import kotlin.reflect.KClass
 
 
-val UNIT_BCH = 100000000L
-val UNIT_MBCH = 100000L
-var unitSize = UNIT_BCH  // TODO: make unit configurable
-var unitName = "BCH"     //
-
 val libBitcoin by lazy { libMod("bitcoin") }
 val libUtil by lazy { libMod("util") }
 
 
-fun toSatoshis(s: String, unit: Long = unitSize) : Long {
+// See Settings.kt
+var unitName = ""
+var unitPlaces = 0
+val UNIT_BCH = 8
+
+
+fun toSatoshis(s: String, places: Int = unitPlaces) : Long {
+    val unit = Math.pow(10.0, places.toDouble())
     if (s.isEmpty()) {
         throw ToastException(R.string.enter_amount)
     }
@@ -43,9 +45,9 @@ fun toSatoshis(s: String, unit: Long = unitSize) : Long {
 }
 
 // We use Locale.US to be consistent with lib/exchange_rate.py, which is also locale-insensitive.
-fun formatSatoshis(amount: Long, unit: Long = unitSize): String {
-    val places = Math.log10(unit.toDouble()).toInt()
-    var result = "%.${places}f".format(Locale.US, amount.toDouble() / unit).trimEnd('0')
+fun formatSatoshis(amount: Long, places: Int = unitPlaces): String {
+    val unit = Math.pow(10.0, places.toDouble())
+    var result = "%.${places}f".format(Locale.US, amount / unit).trimEnd('0')
     if (result.endsWith(".")) {
         result += "0"
     }

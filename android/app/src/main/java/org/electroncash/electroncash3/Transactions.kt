@@ -10,6 +10,7 @@ import android.support.v7.app.AlertDialog
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.chaquo.python.Kwarg
 import com.chaquo.python.PyObject
 import kotlinx.android.synthetic.main.transaction_detail.*
 import kotlinx.android.synthetic.main.transactions.*
@@ -24,18 +25,8 @@ class TransactionsFragment : Fragment(), MainFragment {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setupVerticalList(rvTransactions)
-        daemonUpdate.observe(viewLifecycleOwner, Observer {
-            val wallet = daemonModel.wallet
-            if (wallet == null) {
-                rvTransactions.adapter = null
-                btnSend.hide()
-            } else {
-                rvTransactions.adapter = TransactionsAdapter(
-                    activity!!, wallet.callAttr("export_history").asList())
-                btnSend.show()
-            }
-            activity!!.invalidateOptionsMenu()
-        })
+        daemonUpdate.observe(viewLifecycleOwner, Observer { update() })
+        settings.getString("base_unit").observe(viewLifecycleOwner, Observer { update() })
 
         btnSend.setOnClickListener {
             if (daemonModel.wallet!!.callAttr("is_watching_only").toBoolean()) {
@@ -47,6 +38,19 @@ class TransactionsFragment : Fragment(), MainFragment {
             } else {
                 showDialog(activity!!, SendDialog())
             }
+        }
+    }
+
+    fun update() {
+        val wallet = daemonModel.wallet
+        if (wallet == null) {
+            rvTransactions.adapter = null
+            btnSend.hide()
+        } else {
+            rvTransactions.adapter = TransactionsAdapter(
+                activity!!, wallet.callAttr("export_history",
+                                            Kwarg("decimal_point", unitPlaces)).asList())
+            btnSend.show()
         }
     }
 }

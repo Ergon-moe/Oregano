@@ -78,6 +78,7 @@ class MainActivity : AppCompatActivity() {
             updateToolbar()
             updateDrawer()
         })
+        settings.getString("base_unit").observe(this, Observer { updateToolbar() })
         fiatUpdate.observe(this, Observer { updateToolbar() })
     }
 

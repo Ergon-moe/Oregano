@@ -25,6 +25,10 @@ fun initSettings() {
     settings.getBoolean("cashaddr_format").observeForever {
         clsAddress.callAttr("show_cashaddr", it)
     }
+    settings.getString("base_unit").observeForever {
+        unitName = it!!
+        unitPlaces = libUtil.get("base_units")!!.callAttr("get", it)!!.toInt()
+    }
 }
 
 
@@ -73,6 +77,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.settings, rootKey)
 
         // Appearance
+        setEntries("base_unit", py.builtins.callAttr("list", libUtil.get("base_units")!!))
         setEntries("block_explorer", libWeb.callAttr("BE_sorted_list"))
 
         // Fiat
