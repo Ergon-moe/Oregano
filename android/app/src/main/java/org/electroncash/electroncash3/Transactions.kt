@@ -1,6 +1,7 @@
 package org.electroncash.electroncash3
 
 import android.annotation.SuppressLint
+import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.graphics.drawable.Drawable
 import android.os.Bundle
@@ -17,6 +18,9 @@ import kotlinx.android.synthetic.main.transactions.*
 import kotlin.math.roundToInt
 
 
+val transactionsUpdate = MutableLiveData<Unit>().apply { value = Unit }
+
+
 class TransactionsFragment : Fragment(), MainFragment {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
@@ -26,6 +30,7 @@ class TransactionsFragment : Fragment(), MainFragment {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setupVerticalList(rvTransactions)
         daemonUpdate.observe(viewLifecycleOwner, Observer { update() })
+        transactionsUpdate.observe(viewLifecycleOwner, Observer { update() })
         settings.getString("base_unit").observe(viewLifecycleOwner, Observer { update() })
 
         btnSend.setOnClickListener {
@@ -71,7 +76,7 @@ class TransactionsAdapter(val activity: FragmentActivity, val transactions: List
     override fun onBindViewHolder(holder: BoundViewHolder<TransactionModel>, position: Int) {
         super.onBindViewHolder(holder, position)
         holder.itemView.setOnClickListener {
-            val txid = holder.item.get("txid").toString()
+            val txid = holder.item.get("txid")
             val tx = daemonModel.wallet!!.get("transactions")!!.callAttr("get", txid)
             if (tx == null) {  // Can happen during wallet sync.
                 toast(R.string.transaction_not)
@@ -83,17 +88,17 @@ class TransactionsAdapter(val activity: FragmentActivity, val transactions: List
 }
 
 class TransactionModel(val txExport: Map<PyObject, PyObject>) {
-    fun get(key: String) = txExport.get(PyObject.fromJava(key))!!
+    fun get(key: String) = txExport.get(PyObject.fromJava(key))!!.toString()
 
     fun getIcon(): Drawable {
         return app.resources.getDrawable(
-            if (get("value").toString()[0] == '+') R.drawable.ic_add_24dp
+            if (get("value")[0] == '+') R.drawable.ic_add_24dp
             else R.drawable.ic_remove_24dp)!!
     }
 
     @SuppressLint("StringFormatMatches")
     fun getConfirmationsStr(): String {
-        val confirmations = get("confirmations").toInt()
+        val confirmations = Integer.parseInt(get("confirmations"))
         return when {
             confirmations <= 0 -> ""
             confirmations > 6 -> app.getString(R.string.confirmed)
@@ -112,7 +117,17 @@ class TransactionDialog() : AlertDialogFragment() {
 
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         builder.setView(R.layout.transaction_detail)
-            .setPositiveButton(R.string.ok, null)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.ok, {_, _ ->
+                // Avoid doing a full update if the label hasn't changed, because this
+                // currently scrolls the list back to the top.
+                val newLabel = dialog.etDescription.text.toString()
+                if (newLabel != wallet.callAttr("get_label", txid).toString()) {
+                    wallet.callAttr("set_label", txid, newLabel)
+                    wallet.get("storage")!!.callAttr("write")
+                    transactionsUpdate.setValue(Unit)
+                }
+            })
     }
 
     override fun onShowDialog(dialog: AlertDialog) {
@@ -127,7 +142,7 @@ class TransactionDialog() : AlertDialogFragment() {
         dialog.tvTimestamp.text = if (timestamp == 0L) getString(R.string.Unknown)
                                   else libUtil.callAttr("format_time", timestamp).toString()
 
-        dialog.tvStatus.text = txInfo.get(1).toString()
+        dialog.tvStatus.text = txInfo.get(1)!!.toString()
 
         val size = tx.callAttr("estimated_size").toInt()
         dialog.tvSize.text = getString(R.string.bytes, size)
@@ -141,5 +156,7 @@ class TransactionDialog() : AlertDialogFragment() {
                                               getString(R.string.sat_byte, feeSpb),
                                               formatSatoshis(fee), unitName)
         }
+
+        dialog.etDescription.setText(txInfo.get(2)!!.toString())
     }
 }

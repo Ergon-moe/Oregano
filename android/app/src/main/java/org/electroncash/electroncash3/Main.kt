@@ -75,6 +75,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         daemonUpdate.observe(this, Observer {
+            invalidateOptionsMenu()
             updateToolbar()
             updateDrawer()
         })

@@ -74,6 +74,7 @@
     </style>
     <style name="Description">
         <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">end</item>
     </style>
     <style name="Value">
         <item name="android:singleLine">true</item>
