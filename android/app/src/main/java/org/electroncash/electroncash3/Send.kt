@@ -13,13 +13,12 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.widget.SeekBar
+import android.widget.Toast
 import com.chaquo.python.PyException
 import com.chaquo.python.PyObject
 import com.google.zxing.integration.android.IntentIntegrator
 import kotlinx.android.synthetic.main.amount_box.*
 import kotlinx.android.synthetic.main.send.*
-import org.json.JSONException
-import org.json.JSONObject
 
 
 val MIN_FEE = 1
@@ -120,6 +119,10 @@ class SendDialog : AlertDialogFragment() {
                 if (amount != null) {
                     dialog.etAmount.setText(formatSatoshis(amount.toLong()))
                 }
+                val description = parsed.callAttr("get", "message")
+                if (description != null) {
+                    dialog.etDescription.setText(description.toString())
+                }
             } catch (e: PyException) {
                 dialog.etAddress.setText(result.contents)
             }
@@ -135,6 +138,7 @@ class SendDialog : AlertDialogFragment() {
             showDialog(activity!!, SendPasswordDialog().apply { arguments = Bundle().apply {
                 putString("address", address)
                 putLong("amount", amount)
+                putString("description", this@SendDialog.dialog.etDescription.text.toString())
             }})
         } catch (e: ToastException) { e.show() }
         // Don't dismiss this dialog yet: the user might want to come back to it.
@@ -171,13 +175,13 @@ class SendContactsDialog : MenuDialog() {
 
 class SendPasswordDialog : PasswordDialog(runInBackground = true) {
     class Model : ViewModel() {
-        val result = MutableLiveData<ServerError>()
+        val result = MutableLiveData<List<PyObject>>()
     }
     private val model by lazy { ViewModelProviders.of(this).get(Model::class.java) }
 
     override fun onShowDialog(dialog: AlertDialog) {
         super.onShowDialog(dialog)
-        model.result.observe(this, Observer { onResult(it) })
+        model.result.observe(this, Observer { onResult(it!!) })
     }
 
     override fun onPassword(password: String) {
@@ -186,52 +190,24 @@ class SendPasswordDialog : PasswordDialog(runInBackground = true) {
         if (! daemonModel.isConnected()) {
             throw ToastException(R.string.not_connected)
         }
-        val result = daemonModel.network.callAttr("broadcast_transaction", tx).asList()
-        if (result.get(0).toBoolean()) {
-            model.result.postValue(null)
-        } else {
-            val err = ServerError(result.get(1).toString())
-            if (err.isClean) {
-                throw ToastException(err.message)
-            } else {
-                model.result.postValue(err)
-            }
-        }
+        model.result.postValue(
+            daemonModel.network.callAttr("broadcast_transaction", tx).asList())
     }
 
-    fun onResult(err: ServerError?) {
-        dismissDialog(activity!!, SendDialog::class)
-        if (err == null) {
+    fun onResult(result: List<PyObject>) {
+        val success = result.get(0).toBoolean()
+        if (success) {
+            dismissDialog(activity!!, SendDialog::class)
             toast(R.string.payment_sent)
+            val txid = result.get(1).toString()
+            setTxDescription(txid, arguments!!.getString("description")!!)
         } else {
-            showDialog(activity!!, MessageDialog(
-                getString(R.string.error),
-                err.message + "\n\n" + getString(R.string.the_app)))
-        }
-    }
-}
-
-class ServerError(input: String) {
-    var message: String = input
-
-    // If isClean is true, the server rejected the transaction, so leave the dialog open and
-    // give the user a chance to fix it. If isClean is false, we can't tell whether the
-    // transaction went through or not, so close the dialog and show a warning.
-    var isClean = false
-
-    init {
-        val reError = Regex("^error: (.*)")
-        if (message.contains(reError)) {
-            message = message.replace(reError, "$1")
-            try {
-                message = JSONObject(message).getString("message")
-                isClean = true
-                val reRules = Regex("^(the transaction was rejected by network rules).\n\n(.*)\n.*")
-                if (message.contains(reRules)) {
-                    // Remove the raw transaction dump (see electrumx/server/session.py).
-                    message = message.replace(reRules, "$1: $2").capitalize()
-                }
-            } catch (e: JSONException) {}
+            var message = result.get(1).toString()
+            val reError = Regex("^error: (.*)")
+            if (message.contains(reError)) {
+                message = message.replace(reError, "$1")
+            }
+            toast(message, Toast.LENGTH_LONG)
         }
     }
 }
