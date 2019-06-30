@@ -17,6 +17,7 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.PopupMenu
 import android.widget.Toast
+import java.lang.ClassCastException
 import java.lang.IllegalArgumentException
 import java.util.*
 import kotlin.reflect.KClass
@@ -57,7 +58,7 @@ fun formatSatoshis(amount: Long, places: Int = unitPlaces): String {
 
 fun showDialog(activity: FragmentActivity, frag: DialogFragment) {
     val fm = activity.supportFragmentManager
-    val tag = frag.javaClass.simpleName
+    val tag = frag::class.java.name
     if (fm.findFragmentByTag(tag) == null) {
         frag.show(fm, tag)
     }
@@ -67,19 +68,33 @@ fun <T: DialogFragment> dismissDialog(activity: FragmentActivity, fragClass: KCl
     findDialog(activity, fragClass)?.dismiss()
 }
 
-fun <T: DialogFragment> findDialog(activity: FragmentActivity, fragClass: KClass<T>)
-    : DialogFragment? {
-    val tag = fragClass.java.simpleName
-    return activity.supportFragmentManager.findFragmentByTag(tag) as DialogFragment?
+fun <T: DialogFragment> findDialog(activity: FragmentActivity, fragClass: KClass<T>) : T? {
+    val tag = fragClass.java.name
+    val frag = activity.supportFragmentManager.findFragmentByTag(tag)
+    if (frag == null) {
+        return null
+    } else if (frag::class != fragClass) {
+        throw ClassCastException(
+            "Expected ${fragClass.java.name}, got ${frag::class.java.name}")
+    } else {
+        @Suppress("UNCHECKED_CAST")
+        return frag as T?
+    }
 }
 
 
 // Since error messages are likely to be surprising, set the default duration to long.
-class ToastException(message: String, val duration: Int = Toast.LENGTH_LONG)
-    : Exception(message) {
+class ToastException(message: String?, cause: Throwable?, val duration: Int = Toast.LENGTH_LONG)
+    : Exception(message, cause) {
+
+    constructor(message: String?, duration: Int = Toast.LENGTH_LONG)
+        : this(message, null, duration)
 
     constructor(resId: Int, duration: Int = Toast.LENGTH_LONG)
         : this(app.getString(resId), duration)
+
+    constructor(cause: Throwable, duration: Int = Toast.LENGTH_LONG)
+        : this(cause.message, cause, duration)
 
     fun show() { toast(message!!, duration) }
 }

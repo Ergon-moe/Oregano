@@ -216,6 +216,36 @@ class MainActivity : AppCompatActivity() {
         super.onPostCreate(if (stateValid) state else null)
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val intent = getIntent()
+        if (intent != null) {
+            val uri = intent.data
+            if (uri != null) {
+                if (daemonModel.wallet == null) {
+                    toast(R.string.to_proceed, Toast.LENGTH_LONG)
+                } else {
+                    val dialog = findDialog(this, SendDialog::class)
+                    if (dialog != null) {
+                        dialog.onUri(uri.toString())
+                    } else {
+                        showDialog(this, SendDialog().apply {
+                            arguments = Bundle().apply {
+                                putString("uri", uri.toString())
+                            }
+                        })
+                    }
+                }
+            }
+            setIntent(null)
+        }
+    }
+
     override fun onResumeFragments() {
         super.onResumeFragments()
         showFragment(navBottom.selectedItemId)

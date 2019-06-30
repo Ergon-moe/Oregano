@@ -5,6 +5,7 @@ import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.text.Editable
@@ -40,6 +41,11 @@ class SendDialog : AlertDialogFragment() {
             dialog.etAddress.setText(address)
             dialog.etAmount.requestFocus()
         }
+        val uri = arguments?.getString("uri")
+        if (uri != null) {
+            onUri(uri)
+        }
+
         dialog.btnContacts.setOnClickListener {
             showDialog(activity!!, SendContactsDialog())
         }
@@ -106,28 +112,38 @@ class SendDialog : AlertDialogFragment() {
         dialog.tvFeeLabel.setText(feeLabel)
     }
 
+    // Receives the result of a QR scan.
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
         if (result != null && result.contents != null) {
-            try {
-                val parsed = libWeb.callAttr("parse_URI", result.contents)!!
-                val address = parsed.callAttr("get", "address")
-                if (address != null) {
-                    dialog.etAddress.setText(address.toString())
-                }
-                val amount = parsed.callAttr("get", "amount")
-                if (amount != null) {
-                    dialog.etAmount.setText(formatSatoshis(amount.toLong()))
-                }
-                val description = parsed.callAttr("get", "message")
-                if (description != null) {
-                    dialog.etDescription.setText(description.toString())
-                }
-            } catch (e: PyException) {
-                dialog.etAddress.setText(result.contents)
-            }
+            onUri(result.contents)
         } else {
             super.onActivityResult(requestCode, resultCode, data)
+        }
+    }
+
+    fun onUri(uri: String) {
+        try {
+            val parsed: PyObject
+            try {
+                parsed = libWeb.callAttr("parse_URI", uri)!!
+            } catch (e: PyException) {
+                throw ToastException(e)
+            }
+            val address = parsed.callAttr("get", "address")
+            if (address != null) {
+                dialog.etAddress.setText(address.toString())
+            }
+            val amount = parsed.callAttr("get", "amount")
+            if (amount != null) {
+                dialog.etAmount.setText(formatSatoshis(amount.toLong()))
+            }
+            val description = parsed.callAttr("get", "message")
+            if (description != null) {
+                dialog.etDescription.setText(description.toString())
+            }
+        } catch (e: ToastException) {
+            e.show()
         }
     }
 
@@ -160,6 +176,13 @@ class SendContactsDialog : MenuDialog() {
         builder.setTitle(R.string.contacts)
         for (name in contacts.keys) {
             menu.add(name)
+        }
+    }
+
+    override fun onShowDialog(dialog: AlertDialog) {
+        if (contacts.isEmpty()) {
+            toast(R.string.you_dont, Toast.LENGTH_LONG)
+            dismiss()
         }
     }
 
