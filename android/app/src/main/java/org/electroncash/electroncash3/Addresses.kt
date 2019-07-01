@@ -67,10 +67,17 @@ class AddressModel(val wallet: PyObject, val addr: PyObject) {
     val addrString
         get() = addr.callAttr("to_ui_string").toString()
 
+    val status
+        get() = app.getString(if (history.isEmpty()) R.string.unused
+                              else if (balance > 0) R.string.balance
+                              else R.string.used)
+
     // get_addr_balance returns the tuple (confirmed, unconfirmed, unmatured)
     val balance
-        get() = formatSatoshis(wallet.callAttr("get_addr_balance", addr)
-                                   .asList().get(0).toLong())
+        get() = wallet.callAttr("get_addr_balance", addr).asList().get(0).toLong()
+
+    val history
+        get() =  wallet.callAttr("get_address_history", addr).asList()
 
     val type
         get() = app.getString(if (wallet.callAttr("is_change", addr).toBoolean())

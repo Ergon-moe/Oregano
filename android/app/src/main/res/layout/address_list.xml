@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+        <import type="org.electroncash.electroncash3.UtilKt"/>
         <variable
             name="model"
             type="org.electroncash.electroncash3.AddressModel"/>
@@ -36,9 +37,10 @@
             android:id="@+id/tvStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/balance"
+            android:text="@{model.status}"
             app:layout_constraintBaseline_toBaselineOf="@+id/tvBalance"
-            app:layout_constraintStart_toStartOf="@+id/tvAddress"/>
+            app:layout_constraintStart_toStartOf="@+id/tvAddress"
+            tools:text="@string/balance"/>
 
         <TextView
             android:id="@+id/tvBalance"
@@ -52,7 +54,7 @@
             android:layout_marginStart="6dp"
             android:layout_marginTop="4dp"
             android:singleLine="true"
-            android:text="@{model.balance}"
+            android:text="@{model.balance > 0 ? UtilKt.formatSatoshis(model.balance) : ``}"
             android:textAppearance="@style/Medium"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/tvType"
