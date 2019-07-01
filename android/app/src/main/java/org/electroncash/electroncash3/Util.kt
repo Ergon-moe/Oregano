@@ -55,6 +55,10 @@ fun formatSatoshis(amount: Long, places: Int = unitPlaces): String {
     return result
 }
 
+fun formatSatoshisAndUnit(amount: Long): String {
+    return "${formatSatoshis(amount)} $unitName"
+}
+
 
 fun showDialog(activity: FragmentActivity, frag: DialogFragment) {
     val fm = activity.supportFragmentManager

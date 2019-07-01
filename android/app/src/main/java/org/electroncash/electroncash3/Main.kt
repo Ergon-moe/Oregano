@@ -108,7 +108,7 @@ class MainActivity : AppCompatActivity() {
             } else if (wallet.callAttr("is_up_to_date").toBoolean()) {
                 // get_balance returns the tuple (confirmed, unconfirmed, unmatured)
                 val balance = wallet.callAttr("get_balance").asList().get(0).toLong()
-                subtitle = "${formatSatoshis(balance)} $unitName"
+                subtitle = formatSatoshisAndUnit(balance)
                 val fiat = formatFiatAmountAndUnit(balance)
                 if (fiat != null) {
                     subtitle += " ($fiat)"

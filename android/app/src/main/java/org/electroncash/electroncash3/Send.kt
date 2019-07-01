@@ -107,7 +107,7 @@ class SendDialog : AlertDialogFragment() {
                 tx = daemonModel.makeTx(addrOrDummy, amountBoxGet(dialog), unsigned = true)
             }
             val fee = tx.callAttr("get_fee").toLong()
-            feeLabel += " (${formatSatoshis(fee)} $unitName)"
+            feeLabel += " (${formatSatoshisAndUnit(fee)})"
         } catch (e: ToastException) {}
         dialog.tvFeeLabel.setText(feeLabel)
     }
