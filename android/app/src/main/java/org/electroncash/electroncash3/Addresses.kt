@@ -33,8 +33,7 @@ class AddressesFragment : Fragment(), MainFragment {
             val wallet = daemonModel.wallet
             rvAddresses.adapter =
                 if (wallet == null) null
-                else AddressesAdapter(activity!!, wallet,
-                                      guiAddresses.callAttr("get_addresses", wallet).asList())
+                else AddressesAdapter(activity!!, wallet)
         })
         settings.getBoolean("cashaddr_format").observe(viewLifecycleOwner, Observer {
             rvAddresses.adapter?.notifyDataSetChanged()
@@ -43,9 +42,10 @@ class AddressesFragment : Fragment(), MainFragment {
 }
 
 
-class AddressesAdapter(val activity: FragmentActivity, val wallet: PyObject,
-                       val addresses: List<PyObject>)
-    : BoundAdapter<AddressModel>(R.layout.address) {
+class AddressesAdapter(val activity: FragmentActivity, val wallet: PyObject)
+    : BoundAdapter<AddressModel>(R.layout.address_list) {
+
+    val addresses = wallet.callAttr("get_addresses").asList()
 
     override fun getItem(position: Int): AddressModel {
         return AddressModel(wallet, addresses.get(position))
@@ -64,11 +64,17 @@ class AddressesAdapter(val activity: FragmentActivity, val wallet: PyObject,
 }
 
 class AddressModel(val wallet: PyObject, val addr: PyObject) {
-    val type
-        get() = guiAddresses.callAttr("addr_type", wallet, addr).toInt()
-
     val addrString
         get() = addr.callAttr("to_ui_string").toString()
+
+    // get_addr_balance returns the tuple (confirmed, unconfirmed, unmatured)
+    val balance
+        get() = formatSatoshis(wallet.callAttr("get_addr_balance", addr)
+                                   .asList().get(0).toLong())
+
+    val type
+        get() = app.getString(if (wallet.callAttr("is_change", addr).toBoolean())
+                                  R.string.change else R.string.receiving)
 }
 
 

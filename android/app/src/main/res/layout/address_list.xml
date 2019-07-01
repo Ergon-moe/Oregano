@@ -33,15 +33,41 @@
             tools:text="@string/test_address"/>
 
         <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/balance"
+            app:layout_constraintBaseline_toBaselineOf="@+id/tvBalance"
+            app:layout_constraintStart_toStartOf="@+id/tvAddress"/>
+
+        <TextView
+            android:id="@+id/tvBalance"
+            style="@style/Value"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginLeft="6dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="4dp"
+            android:singleLine="true"
+            android:text="@{model.balance}"
+            android:textAppearance="@style/Medium"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/tvType"
+            app:layout_constraintStart_toEndOf="@+id/tvStatus"
+            app:layout_constraintTop_toBottomOf="@+id/tvAddress"
+            tools:text="@string/test_value"/>
+
+        <TextView
             android:id="@+id/tvType"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="4dp"
-            android:text="@{@stringArray/address_type[model.type]}"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:text="@{model.type}"
+            app:layout_constraintBaseline_toBaselineOf="@+id/tvBalance"
             app:layout_constraintEnd_toEndOf="@+id/tvAddress"
-            app:layout_constraintTop_toBottomOf="@+id/tvAddress"
             tools:text="@string/receiving"/>
+
     </android.support.constraint.ConstraintLayout>
 </layout>
