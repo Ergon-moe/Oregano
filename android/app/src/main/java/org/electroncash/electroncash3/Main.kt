@@ -412,7 +412,7 @@ class NewWalletSeedDialog : NewWalletDialog2() {
 class NewWalletImportDialog : NewWalletDialog2() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         super.onBuildDialog(builder)
-        builder.setNeutralButton(R.string.scan_qr, null)
+        builder.setNeutralButton(R.string.qr_code, null)
     }
 
     override fun onShowDialog(dialog: AlertDialog) {
@@ -468,7 +468,7 @@ class DeleteWalletDialog : AlertDialogFragment() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         val walletName = daemonModel.walletName
         val message = getString(R.string.do_you_want_to_delete, walletName) + "\n\n" +
-                      getString(R.string.if_your_wallet)
+                      getString(R.string.if_your)
         builder.setTitle(R.string.delete_wallet)
             .setMessage(message)
             .setPositiveButton(android.R.string.ok) { _, _ ->

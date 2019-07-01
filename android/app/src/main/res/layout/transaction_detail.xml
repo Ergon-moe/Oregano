@@ -69,7 +69,7 @@
                 android:id="@+id/textView18"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="ID"
+                android:text="@string/id"
                 app:layout_constraintBaseline_toBaselineOf="@+id/tvTxid"
                 app:layout_constraintStart_toStartOf="parent"/>
 

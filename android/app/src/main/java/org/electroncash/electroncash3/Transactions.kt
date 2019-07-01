@@ -35,7 +35,7 @@ class TransactionsFragment : Fragment(), MainFragment {
 
         btnSend.setOnClickListener {
             if (daemonModel.wallet!!.callAttr("is_watching_only").toBoolean()) {
-                toast(R.string.this_wallet_is_watching_only_)
+                toast(R.string.this_wallet_is)
             } else if (daemonModel.wallet!!.callAttr("get_receiving_addresses")
                        .asList().isEmpty()) {
                 // At least one receiving address is needed to call wallet.dummy_address.
@@ -101,7 +101,6 @@ class TransactionModel(val txExport: Map<PyObject, PyObject>) {
         val confirmations = Integer.parseInt(get("confirmations"))
         return when {
             confirmations <= 0 -> ""
-            confirmations > 6 -> app.getString(R.string.confirmed)
             else -> app.getString(R.string.___confirmations, confirmations)
         }
     }
@@ -117,8 +116,8 @@ class TransactionDialog() : AlertDialogFragment() {
 
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         builder.setView(R.layout.transaction_detail)
-            .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.ok, {_, _ ->
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(android.R.string.ok, {_, _ ->
                 // Avoid doing a full update if the label hasn't changed, because this
                 // currently scrolls the list back to the top.
                 val newLabel = dialog.etDescription.text.toString()
@@ -130,7 +129,7 @@ class TransactionDialog() : AlertDialogFragment() {
 
     override fun onShowDialog(dialog: AlertDialog) {
         dialog.btnExplore.setOnClickListener { exploreTransaction(activity!!, txid) }
-        dialog.btnCopy.setOnClickListener { copyToClipboard(txid) }
+        dialog.btnCopy.setOnClickListener { copyToClipboard(txid, R.string.transaction_id) }
 
         val tx = wallet.get("transactions")!!.callAttr("get", txid)!!
         val txInfo = wallet.callAttr("get_tx_info", tx).asList()

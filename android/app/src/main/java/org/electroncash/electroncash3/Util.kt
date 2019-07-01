@@ -35,9 +35,6 @@ val UNIT_BCH = 8
 
 fun toSatoshis(s: String, places: Int = unitPlaces) : Long {
     val unit = Math.pow(10.0, places.toDouble())
-    if (s.isEmpty()) {
-        throw ToastException(R.string.enter_amount)
-    }
     try {
         return Math.round(s.toDouble() * unit)
     } catch (e: NumberFormatException) {
@@ -130,10 +127,12 @@ fun toast(resId: Int, duration: Int = Toast.LENGTH_SHORT, key: String? = null) {
 }
 
 
-fun copyToClipboard(text: CharSequence, toastId: Int = R.string.text_copied_to_clipboard) {
+fun copyToClipboard(text: CharSequence, what: Int? = null) {
     @Suppress("DEPRECATION")
     (getSystemService(ClipboardManager::class)).text = text
-    toast(toastId)
+    val message = if (what == null) app.getString(R.string.text_copied)
+                  else app.getString(R.string.___copied, app.getString(what))
+    toast(message)
 }
 
 

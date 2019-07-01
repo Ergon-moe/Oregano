@@ -101,7 +101,7 @@ class ContactDialog : AlertDialogFragment() {
             setView(R.layout.contact_detail)
             setNegativeButton(android.R.string.cancel, null)
             setPositiveButton(android.R.string.ok, null)
-            setNeutralButton(if (existingContact == null) R.string.scan_qr
+            setNeutralButton(if (existingContact == null) R.string.qr_code
                              else R.string.delete,
                              null)
         }
@@ -121,7 +121,7 @@ class ContactDialog : AlertDialogFragment() {
             with(dialog.etAddress) {
                 setText(contact.addrUiString)
                 setFocusable(false)
-                setOnClickListener { copyToClipboard(text, R.string.address_copied) }
+                setOnClickListener { copyToClipboard(text, R.string.address) }
             }
             dialog.btnExplore.setOnClickListener {
                 exploreAddress(activity!!, contact.addrUiString)

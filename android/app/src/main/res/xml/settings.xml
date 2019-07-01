@@ -36,7 +36,7 @@
     <PreferenceCategory android:title="@string/fiat">
         <SwitchPreference
             android:key="use_exchange_rate"
-            android:title="@string/enabled"
+            android:title="@string/enable"
             tools:defaultValue="true"/>
         <ListPreference
             android:dependency="use_exchange_rate"

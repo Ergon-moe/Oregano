@@ -98,10 +98,10 @@
             android:id="@+id/tvStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text='@{model.confirmationsStr}'
             app:layout_constraintBaseline_toBaselineOf="@+id/tvBalance"
             app:layout_constraintEnd_toEndOf="@+id/tvTimestamp"
-            android:text='@{model.confirmationsStr}'
-            tools:text="3 confirmations"/>
+            tools:text="1234 confirmations"/>
 
         <TextView
             android:id="@+id/tvDescription"

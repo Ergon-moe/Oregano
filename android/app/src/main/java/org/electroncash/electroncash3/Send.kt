@@ -5,7 +5,6 @@ import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.text.Editable
@@ -32,7 +31,7 @@ class SendDialog : AlertDialogFragment() {
             .setView(R.layout.send)
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(android.R.string.ok, null)
-            .setNeutralButton(R.string.scan_qr, null)
+            .setNeutralButton(R.string.qr_code, null)
     }
 
     override fun onShowDialog(dialog: AlertDialog) {

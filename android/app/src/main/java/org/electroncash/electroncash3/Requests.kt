@@ -51,7 +51,7 @@ class RequestsFragment : Fragment(), MainFragment {
         btnAdd.setOnClickListener {
             val wallet = daemonModel.wallet!!
             if (wallet.callAttr("is_watching_only").toBoolean()) {
-                toast(R.string.this_wallet_is_watching_only_)
+                toast(R.string.this_wallet_is)
             } else {
                 val address = wallet.callAttr("get_unused_address")
                 if (address == null) {
@@ -135,7 +135,7 @@ class RequestDialog() : AlertDialogFragment() {
 
     override fun onShowDialog(dialog: AlertDialog) {
         dialog.btnCopy.setOnClickListener {
-            copyToClipboard(getUri(), R.string.request_copied)
+            copyToClipboard(getUri(), R.string.request_uri)
         }
         dialog.tvAddress.text = address.callAttr("to_ui_string").toString()
         dialog.tvUnit.text = unitName
