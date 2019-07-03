@@ -222,7 +222,8 @@ class SendPasswordDialog : PasswordDialog(runInBackground = true) {
             dismissDialog(activity!!, SendDialog::class)
             toast(R.string.payment_sent)
             val txid = result.get(1).toString()
-            setTxDescription(txid, arguments!!.getString("description")!!)
+            setDescription(txid, arguments!!.getString("description")!!)
+            transactionsUpdate.setValue(Unit)
         } else {
             var message = result.get(1).toString()
             val reError = Regex("^error: (.*)")

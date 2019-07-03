@@ -177,7 +177,7 @@ class RequestDialog() : AlertDialogFragment() {
             wallet.callAttr(
                 "add_payment_request",
                 wallet.callAttr("make_payment_request", address, amount, description),
-                daemonModel.config, Kwarg("set_address_label", false))
+                daemonModel.config)
             requestsUpdate.setValue(Unit)
             dismiss()
         } catch (e: ToastException) { e.show() }

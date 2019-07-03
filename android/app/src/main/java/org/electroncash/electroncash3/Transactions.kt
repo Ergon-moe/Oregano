@@ -118,11 +118,12 @@ class TransactionDialog() : AlertDialogFragment() {
         builder.setView(R.layout.transaction_detail)
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(android.R.string.ok, {_, _ ->
-                // Avoid doing a full update if the label hasn't changed, because this
+                // Avoid calling transactionsUpdate if the label hasn't changed, because it
                 // currently scrolls the list back to the top.
                 val newLabel = dialog.etDescription.text.toString()
                 if (newLabel != wallet.callAttr("get_label", txid).toString()) {
-                    setTxDescription(txid, newLabel)
+                    setDescription(txid, newLabel)
+                    transactionsUpdate.setValue(Unit)
                 }
             })
     }
@@ -156,12 +157,4 @@ class TransactionDialog() : AlertDialogFragment() {
 
         dialog.etDescription.setText(txInfo.get(2)!!.toString())
     }
-}
-
-
-fun setTxDescription(txid: String, description: String) {
-    val wallet = daemonModel.wallet!!
-    wallet.callAttr("set_label", txid, description)
-    wallet.get("storage")!!.callAttr("write")
-    transactionsUpdate.setValue(Unit)
 }

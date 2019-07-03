@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+        <import type="android.view.View"/>
         <import type="org.electroncash.electroncash3.UtilKt"/>
         <variable
             name="model"
@@ -26,7 +27,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
             android:singleLine="true"
-            android:text="@{model.addrString}"
+            android:text="@{model.uiString}"
             android:textAppearance="@style/Medium"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -60,6 +61,7 @@
             app:layout_constraintEnd_toStartOf="@+id/tvType"
             app:layout_constraintStart_toEndOf="@+id/tvStatus"
             app:layout_constraintTop_toBottomOf="@+id/tvAddress"
+            app:layout_constraintVertical_bias="0.0"
             tools:text="@string/test_value"/>
 
         <TextView
@@ -70,6 +72,22 @@
             app:layout_constraintBaseline_toBaselineOf="@+id/tvBalance"
             app:layout_constraintEnd_toEndOf="@+id/tvAddress"
             tools:text="@string/receiving"/>
+
+        <TextView
+            android:id="@+id/tvDescription"
+            style="@style/Description"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="4dp"
+            android:text="@{model.description}"
+            android:textAppearance="@style/Medium"
+            android:visibility="@{model.description.isEmpty() ? View.GONE: View.VISIBLE}"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@+id/tvType"
+            app:layout_constraintStart_toStartOf="@+id/tvStatus"
+            app:layout_constraintTop_toBottomOf="@+id/tvStatus"
+            tools:text="@string/lorem"/>
 
     </android.support.constraint.ConstraintLayout>
 </layout>

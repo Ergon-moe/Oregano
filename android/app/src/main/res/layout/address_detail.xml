@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical">
 
     <android.support.constraint.ConstraintLayout
@@ -21,21 +21,35 @@
             android:layout_marginEnd="@dimen/fab_dialog_margin_right"
             android:layout_marginRight="@dimen/fab_dialog_margin_right"
             android:layout_marginTop="20dp"
-            android:text="@string/requests"
-            app:layout_constraintEnd_toStartOf="@+id/btnCopy"
+            android:maxLines="3"
+            android:singleLine="false"
+            android:text="@string/address"
+            app:layout_constraintEnd_toStartOf="@+id/btnExplore"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/btnExplore"
+            style="@style/FAB.Dialog"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/fab_dialog_margin_bottom"
+            android:layout_marginEnd="@dimen/fab_dialog_margin_right"
+            android:layout_marginRight="@dimen/fab_dialog_margin_right"
+            android:layout_marginTop="@dimen/fab_dialog_margin_top"
+            android:clickable="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnCopy"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_browser_24dp"/>
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/btnCopy"
             style="@style/FAB.Dialog"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/fab_dialog_margin_bottom"
-            android:layout_marginTop="@dimen/fab_dialog_margin_top"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/btnExplore"
             app:srcCompat="@drawable/ic_copy_24dp"/>
 
     </android.support.constraint.ConstraintLayout>
@@ -43,9 +57,9 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
         android:layout_marginLeft="24dp"
-        android:layout_marginRight="24dp">
+        android:layout_marginRight="24dp"
+        android:layout_weight="1">
 
         <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
@@ -66,13 +80,12 @@
                 tools:srcCompat="@drawable/qr_request"/>
 
             <TextView
-                android:id="@+id/textView14"
+                android:id="@+id/textView18"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
                 android:text="@string/address"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/imgQR"/>
+                app:layout_constraintBaseline_toBaselineOf="@+id/tvAddress"
+                app:layout_constraintStart_toStartOf="parent"/>
 
             <TextView
                 android:id="@+id/tvAddress"
@@ -80,41 +93,61 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="6dp"
                 android:layout_marginStart="6dp"
+                android:layout_marginTop="12dp"
                 android:textAppearance="@style/Medium"
-                app:layout_constraintBaseline_toBaselineOf="@+id/textView14"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/textView14"
+                app:layout_constraintStart_toEndOf="@+id/barrier5"
+                app:layout_constraintTop_toBottomOf="@+id/imgQR"
                 tools:text="@string/test_address"/>
 
-            <include
-                android:id="@+id/incAmount"
-                layout="@layout/amount_box"
-                android:layout_width="0dp"
+            <TextView
+                android:id="@+id/textView14"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                app:layout_constraintEnd_toEndOf="@+id/tvAddress"
-                app:layout_constraintStart_toStartOf="@+id/textView14"
-                app:layout_constraintTop_toBottomOf="@+id/tvAddress"/>
+                android:text="@string/type"
+                app:layout_constraintBaseline_toBaselineOf="@+id/tvType"
+                app:layout_constraintStart_toStartOf="@+id/textView18"/>
 
             <TextView
-                android:id="@+id/textView13"
+                android:id="@+id/tvType"
+                style="@style/Address"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="6dp"
+                android:layout_marginStart="6dp"
+                android:layout_marginTop="6dp"
+                android:textAppearance="@style/Medium"
+                app:layout_constraintEnd_toEndOf="@+id/tvAddress"
+                app:layout_constraintStart_toEndOf="@+id/barrier5"
+                app:layout_constraintTop_toBottomOf="@+id/tvAddress"
+                tools:text="@string/receiving"/>
+
+            <TextView
+                android:id="@+id/textView22"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:text="@string/description"
-                app:layout_constraintStart_toStartOf="@+id/incAmount"
-                app:layout_constraintTop_toBottomOf="@+id/incAmount"/>
+                app:layout_constraintStart_toStartOf="@+id/textView14"
+                app:layout_constraintTop_toBottomOf="@+id/tvType"/>
 
             <EditText
                 android:id="@+id/etDescription"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:singleLine="true"
-                app:layout_constraintEnd_toEndOf="@+id/incAmount"
-                app:layout_constraintHorizontal_bias="1.0"
-                app:layout_constraintStart_toStartOf="@+id/textView13"
-                app:layout_constraintTop_toBottomOf="@+id/textView13"
+                app:layout_constraintEnd_toEndOf="@+id/tvType"
+                app:layout_constraintStart_toStartOf="@+id/textView22"
+                app:layout_constraintTop_toBottomOf="@+id/textView22"
                 tools:text="@string/lorem"/>
+
+            <android.support.constraint.Barrier
+                android:id="@+id/barrier5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:barrierDirection="right"
+                app:constraint_referenced_ids="textView14,textView18"
+                tools:layout_editor_absoluteX="336dp"/>
 
         </android.support.constraint.ConstraintLayout>
     </ScrollView>

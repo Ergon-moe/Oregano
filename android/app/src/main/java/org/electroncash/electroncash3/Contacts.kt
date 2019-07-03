@@ -124,7 +124,7 @@ class ContactDialog : AlertDialogFragment() {
                 setOnClickListener { copyToClipboard(text, R.string.address) }
             }
             dialog.btnExplore.setOnClickListener {
-                exploreAddress(activity!!, contact.addrUiString)
+                exploreAddress(activity!!, contact.addr)
             }
             dialog.btnSend.setOnClickListener {
                 dismiss()
