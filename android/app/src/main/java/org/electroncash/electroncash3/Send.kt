@@ -10,7 +10,6 @@ import android.support.v7.app.AlertDialog
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.Menu
-import android.view.MenuInflater
 import android.view.MenuItem
 import android.widget.SeekBar
 import android.widget.Toast
@@ -21,8 +20,7 @@ import kotlinx.android.synthetic.main.amount_box.*
 import kotlinx.android.synthetic.main.send.*
 
 
-val MIN_FEE = 1
-val MAX_FEE = 10
+val MIN_FEE = 1  // sat/byte
 
 
 class SendDialog : AlertDialogFragment() {
@@ -63,9 +61,8 @@ class SendDialog : AlertDialogFragment() {
 
         with (dialog.sbFee) {
             // setMin is not available until API level 26, so values are offset by MIN_FEE.
-            progress = (daemonModel.config.callAttr("fee_per_kb").toInt() / 1000
-                        - MIN_FEE)
-            max = MAX_FEE - MIN_FEE
+            progress = (daemonModel.config.callAttr("fee_per_kb").toInt() / 1000) - MIN_FEE
+            max = (daemonModel.config.callAttr("max_fee_rate").toInt() / 1000) - MIN_FEE
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                     daemonModel.config.callAttr("set_key", "fee_per_kb", feeSpb * 1000)
