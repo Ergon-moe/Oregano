@@ -191,16 +191,16 @@ class MenuAdapter(context: Context, val menu: Menu)
     }
 
     constructor(context: Context, menuId: Int)
-        : this(context, inflateMenu(context, menuId))
+        : this(context, inflateMenu(menuId))
 
     override fun getItemId(position: Int): Long {
         return menu.getItem(position).itemId.toLong()
     }
 }
 
-fun inflateMenu(context: Context, menuId: Int) : Menu {
-    val menu = PopupMenu(context, null).menu
-    MenuInflater(context).inflate(menuId, menu)
+fun inflateMenu(menuId: Int) : Menu {
+    val menu = PopupMenu(app, null).menu
+    MenuInflater(app).inflate(menuId, menu)
     return menu
 }
 

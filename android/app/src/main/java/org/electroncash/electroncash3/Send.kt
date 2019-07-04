@@ -170,8 +170,7 @@ class SendDialog : AlertDialogFragment() {
 class SendContactsDialog : MenuDialog() {
     val contacts = listContacts()
 
-    override fun onBuildDialog(builder: AlertDialog.Builder, menu: Menu,
-                               inflater: MenuInflater) {
+    override fun onBuildDialog(builder: AlertDialog.Builder, menu: Menu) {
         builder.setTitle(R.string.contacts)
         for (name in contacts.keys) {
             menu.add(name)

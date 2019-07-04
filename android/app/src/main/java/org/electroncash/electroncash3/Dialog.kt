@@ -67,7 +67,7 @@ class MessageDialog() : AlertDialogFragment() {
 abstract class MenuDialog : AlertDialogFragment() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         val menu = PopupMenu(app, null).menu
-        onBuildDialog(builder, menu, MenuInflater(app))
+        onBuildDialog(builder, menu)
         val items = Array(menu.size()) {
             menu.getItem(it).title
         }
@@ -76,8 +76,7 @@ abstract class MenuDialog : AlertDialogFragment() {
         }
     }
 
-    abstract fun onBuildDialog(builder: AlertDialog.Builder, menu: Menu,
-                               inflater: MenuInflater)
+    abstract fun onBuildDialog(builder: AlertDialog.Builder, menu: Menu)
     abstract fun onMenuItemSelected(item: MenuItem)
 }
 

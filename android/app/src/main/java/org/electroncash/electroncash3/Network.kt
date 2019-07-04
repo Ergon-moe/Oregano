@@ -122,10 +122,9 @@ class IfaceDialog() : MenuDialog() {
     }
     val address by lazy { arguments!!.getString("address")!! }
 
-    override fun onBuildDialog(builder: AlertDialog.Builder, menu: Menu,
-                               inflater: MenuInflater) {
+    override fun onBuildDialog(builder: AlertDialog.Builder, menu: Menu) {
         builder.setTitle(address)
-        inflater.inflate(R.menu.iface, menu)
+        MenuInflater(app).inflate(R.menu.iface, menu)
     }
 
     override fun onMenuItemSelected(item: MenuItem) {

@@ -21,6 +21,7 @@
     <string name="lorem">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
         eiusmod</string>
 
+    <!-- See lib/paymentrequest.py. -->
     <string-array name="payment_status">
         <item>@string/pending</item>
         <item>@string/expired</item>
