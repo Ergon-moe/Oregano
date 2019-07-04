@@ -8,17 +8,18 @@ import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProviders
+import android.content.DialogInterface
 import android.os.Bundle
 import android.support.v4.app.DialogFragment
 import android.support.v7.app.AlertDialog
 import android.view.Menu
-import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.WindowManager
 import android.widget.PopupMenu
 import android.widget.Toast
 import com.chaquo.python.PyException
 import kotlinx.android.synthetic.main.password.*
+import java.lang.IllegalArgumentException
 
 
 abstract class AlertDialogFragment : DialogFragment() {
@@ -68,11 +69,27 @@ abstract class MenuDialog : AlertDialogFragment() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         val menu = PopupMenu(app, null).menu
         onBuildDialog(builder, menu)
-        val items = Array(menu.size()) {
-            menu.getItem(it).title
+
+        val items = ArrayList<CharSequence>()
+        var checkedItem: Int? = null
+        for (i in 0 until menu.size()) {
+            val item = menu.getItem(i)
+            items.add(item.title)
+            if (item.isChecked) {
+                if (checkedItem != null) {
+                    throw IllegalArgumentException("Menu has multiple checked items")
+                }
+                checkedItem = i
+            }
         }
-        builder.setItems(items) { _, index ->
+
+        val listener = DialogInterface.OnClickListener { _, index ->
             onMenuItemSelected(menu.getItem(index))
+        }
+        if (checkedItem == null) {
+            builder.setItems(items.toTypedArray(), listener)
+        } else {
+            builder.setSingleChoiceItems(items.toTypedArray(), checkedItem, listener)
         }
     }
 
