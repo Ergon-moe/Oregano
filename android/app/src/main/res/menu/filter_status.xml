@@ -5,16 +5,18 @@
         android:id="@+id/filterAll"
         android:title="@string/all"/>
 
+    <!-- Because addresses are listed oldest-first, they will appear roughly in this order. -->
+
     <item
-        android:id="@+id/filterUnused"
-        android:title="@string/unused"/>
+        android:id="@+id/filterUsed"
+        android:title="@string/used"/>
 
     <item
         android:id="@+id/filterFunded"
         android:title="@string/funded"/>
 
     <item
-        android:id="@+id/filterUsed"
-        android:title="@string/used"/>
+        android:id="@+id/filterUnused"
+        android:title="@string/unused"/>
 
 </menu>

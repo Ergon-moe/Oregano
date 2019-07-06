@@ -94,7 +94,7 @@ class MainActivity : AppCompatActivity() {
     fun updateToolbar() {
         val title = daemonModel.walletName ?: getString(R.string.no_wallet)
 
-        var subtitle: String
+        val subtitle: String
         if (! daemonModel.isConnected()) {
             subtitle = getString(R.string.offline)
         } else {
@@ -108,11 +108,7 @@ class MainActivity : AppCompatActivity() {
             } else if (wallet.callAttr("is_up_to_date").toBoolean()) {
                 // get_balance returns the tuple (confirmed, unconfirmed, unmatured)
                 val balance = wallet.callAttr("get_balance").asList().get(0).toLong()
-                subtitle = formatSatoshisAndUnit(balance)
-                val fiat = formatFiatAmountAndUnit(balance)
-                if (fiat != null) {
-                    subtitle += " ($fiat)"
-                }
+                subtitle = formatSatoshisAndFiat(balance)
             } else {
                 subtitle = getString(R.string.synchronizing)
             }

@@ -10,6 +10,7 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -144,9 +145,13 @@ fun <T: Any> getSystemService(kcls: KClass<T>): T {
 
 fun setupVerticalList(rv: RecyclerView) {
     rv.layoutManager = LinearLayoutManager(rv.context)
-    rv.addItemDecoration(DividerItemDecoration(rv.context, DividerItemDecoration.VERTICAL))
 
+    // Dialog theme has listDivider set to null, so use the base app theme instead.
+    rv.addItemDecoration(
+        DividerItemDecoration(ContextThemeWrapper(rv.context, R.style.AppTheme),
+                              DividerItemDecoration.VERTICAL))
 }
+
 
 // Based on https://medium.com/google-developers/android-data-binding-recyclerview-db7c40d9f0e4
 abstract class BoundAdapter<Model: Any>(val layoutId: Int)
