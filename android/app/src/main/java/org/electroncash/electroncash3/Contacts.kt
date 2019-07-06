@@ -134,7 +134,9 @@ class ContactDialog : AlertDialogFragment() {
                     }
                 })
             }
-            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { onDelete() }
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                showDialog(activity!!, DeleteContactDialog(contact.addrStorageString))
+            }
         }
     }
 
@@ -160,11 +162,24 @@ class ContactDialog : AlertDialogFragment() {
             dismiss()
         } catch (e: ToastException) { e.show() }
     }
+}
 
-    fun onDelete() {
-        contacts.callAttr("pop", existingContact!!.addrStorageString)
-        contactsUpdate.setValue(Unit)
-        dismiss()
+
+class DeleteContactDialog() : AlertDialogFragment() {
+    constructor(address: String) : this() {
+        arguments = Bundle().apply { putString("address", address) }
+    }
+
+    override fun onBuildDialog(builder: AlertDialog.Builder) {
+        builder.setTitle(R.string.confirm_delete)
+            .setMessage(R.string.are_you_sure_you_wish_to_delete)
+            .setPositiveButton(R.string.delete) { _, _ ->
+                daemonModel.wallet!!.get("contacts")!!.callAttr(
+                    "pop", arguments!!.getString("address")!!)
+                contactsUpdate.setValue(Unit)
+                findDialog(activity!!, ContactDialog::class)!!.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
     }
 }
 

@@ -462,15 +462,25 @@ class NewWalletImportDialog : NewWalletDialog2() {
 
 class DeleteWalletDialog : AlertDialogFragment() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
-        val walletName = daemonModel.walletName
-        val message = getString(R.string.do_you_want_to_delete, walletName) + "\n\n" +
-                      getString(R.string.if_your)
-        builder.setTitle(R.string.delete_wallet)
+        val message = getString(R.string.do_you_want_to_delete, daemonModel.walletName) +
+                      "\n\n" + getString(R.string.if_your)
+        builder.setTitle(R.string.confirm_delete)
             .setMessage(message)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                daemonModel.commands.callAttr("delete_wallet", walletName)
+            .setPositiveButton(R.string.delete) { _, _ ->
+                showDialog(activity!!, DeleteWalletProgress())
             }
             .setNegativeButton(android.R.string.cancel, null)
+    }
+}
+
+
+class DeleteWalletProgress : ProgressDialogTask() {
+    override fun doInBackground() {
+        daemonModel.commands.callAttr("delete_wallet", daemonModel.walletName)
+    }
+
+    override fun onPostExecute() {
+        (activity as MainActivity).openDrawer()
     }
 }
 

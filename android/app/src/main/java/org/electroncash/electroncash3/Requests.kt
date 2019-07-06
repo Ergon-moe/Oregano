@@ -57,7 +57,7 @@ class RequestsFragment : Fragment(), MainFragment {
                     toast(R.string.no_more, Toast.LENGTH_LONG)
                 } else {
                     showDialog(activity!!,
-                               RequestDialog(address.callAttr("to_ui_string").toString()))
+                               RequestDialog(address.callAttr("to_storage_string").toString()))
                 }
             }
         }
@@ -127,7 +127,7 @@ class RequestDialog() : AlertDialogFragment() {
             setNegativeButton(android.R.string.cancel, null)
             setPositiveButton(android.R.string.ok, null)
             if (existingRequest != null) {
-                setNeutralButton(R.string.delete, { _, _ -> onDelete() })
+                setNeutralButton(R.string.delete, null)
             }
         }
     }
@@ -150,10 +150,15 @@ class RequestDialog() : AlertDialogFragment() {
         fiatUpdate.observe(this, Observer { updateUI() })
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener { onOK() }
 
-        if (existingRequest != null && savedInstanceState == null) {
-            val model = RequestModel(existingRequest)
-            dialog.etAmount.setText(model.amount)
-            dialog.etDescription.setText(model.description)
+        if (existingRequest != null) {
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                showDialog(activity!!, DeleteRequestDialog(address))
+            }
+            if (savedInstanceState == null) {
+                val model = RequestModel(existingRequest)
+                dialog.etAmount.setText(model.amount)
+                dialog.etDescription.setText(model.description)
+            }
         }
     }
 
@@ -182,12 +187,28 @@ class RequestDialog() : AlertDialogFragment() {
         } catch (e: ToastException) { e.show() }
     }
 
-    private fun onDelete() {
-        wallet.callAttr("remove_payment_request", address, daemonModel.config)
-        requestsUpdate.setValue(Unit)
-        dismiss()
-    }
-
     val description
         get() = dialog.etDescription.text.toString()
+}
+
+
+class DeleteRequestDialog() : AlertDialogFragment() {
+    constructor(addr: PyObject) : this() {
+        arguments = Bundle().apply {
+            putString("address", addr.callAttr("to_storage_string").toString())
+        }
+    }
+
+    override fun onBuildDialog(builder: AlertDialog.Builder) {
+        builder.setTitle(R.string.confirm_delete)
+            .setMessage(R.string.are_you_sure_you_wish_to_proceed)
+            .setPositiveButton(R.string.delete) { _, _ ->
+                daemonModel.wallet!!.callAttr("remove_payment_request",
+                                              makeAddress(arguments!!.getString("address")!!),
+                                              daemonModel.config)
+                requestsUpdate.setValue(Unit)
+                findDialog(activity!!, RequestDialog::class)!!.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+    }
 }
