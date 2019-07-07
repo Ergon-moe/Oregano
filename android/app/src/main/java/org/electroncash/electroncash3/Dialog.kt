@@ -177,7 +177,7 @@ abstract class PasswordDialog(val runInBackground: Boolean = false) : AlertDialo
                     model.result.postValue(true)
                 } catch (e: PyException) {
                     throw if (e.message!!.startsWith("InvalidPassword"))
-                        ToastException(R.string.password_incorrect, Toast.LENGTH_SHORT) else e
+                        ToastException(R.string.Password_Incorrect, Toast.LENGTH_SHORT) else e
                 }
             } catch (e: ToastException) {
                 e.show()
@@ -194,7 +194,7 @@ abstract class PasswordDialog(val runInBackground: Boolean = false) : AlertDialo
 
     /** Attempt to perform the operation with the given password. If the operation fails, this
      * method should throw either a ToastException, or an InvalidPassword PyException (most
-     * lib functions that take passwords will do this automatically). */
+     * Python functions that take passwords will do this automatically). */
     abstract fun onPassword(password: String)
 
     private fun onResult(success: Boolean?) {

@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.support.v4.app.DialogFragment
 import android.support.v7.app.AlertDialog
 import android.text.Selection
+import android.view.View
 import com.chaquo.python.Kwarg
 import com.chaquo.python.PyException
 import com.google.zxing.integration.android.IntentIntegrator
@@ -129,7 +130,8 @@ class NewWalletSeedDialog : NewWalletDialog2() {
     override fun onCreateWallet(name: String, password: String, input: String) {
         try {
             daemonModel.commands.callAttr(
-                "create", name, password, Kwarg("seed", input))
+                "create", name, password, Kwarg("seed", input),
+                Kwarg("passphrase", dialog.etPassphrase.text.toString()))
         } catch (e: PyException) {
             if (e.message!!.startsWith("InvalidSeed")) {
                 throw ToastException(R.string.the_seed_you_entered_does_not_appear)
@@ -206,6 +208,21 @@ fun setupSeedDialog(fragment: DialogFragment) {
             tvPrompt.setText(seedAdvice(seed))
             etInput.setText(seed)
             etInput.setFocusable(false)
+        }
+
+        val passphrase = fragment.arguments!!.getString("passphrase")
+        if (passphrase == null) {
+            // Import or generate
+            passphrasePanel.visibility = View.VISIBLE
+            tvPassphrasePrompt.setText(R.string.please_enter_your_seed_derivation)
+        } else {
+            // Display
+            if (passphrase.isNotEmpty()) {
+                passphrasePanel.visibility = View.VISIBLE
+                tvPassphrasePrompt.setText(R.string.passphrase)
+                etPassphrase.setText(passphrase)
+                etPassphrase.setFocusable(false)
+            }
         }
     }
 }

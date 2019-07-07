@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
+<android.support.constraint.ConstraintLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
 
     <TextView
         android:id="@+id/tvPrompt"
@@ -24,13 +28,45 @@
         android:id="@+id/etInput"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
         android:fontFamily="sans-serif"
         android:inputType="textMultiLine|textVisiblePassword"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/tvPrompt"
         app:layout_constraintStart_toStartOf="@+id/tvPrompt"
         app:layout_constraintTop_toBottomOf="@+id/tvPrompt"
-        app:layout_constraintVertical_bias="0.0"
-        tools:text="@string/lorem"/>
+        tools:text="@string/test_seed"/>
+
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/passphrasePanel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@+id/etInput"
+        app:layout_constraintStart_toStartOf="@+id/etInput"
+        app:layout_constraintTop_toBottomOf="@+id/etInput"
+        tools:visibility="visible">
+
+        <TextView
+            android:id="@+id/tvPassphrasePrompt"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="@string/please_enter_your_seed_derivation"/>
+
+        <EditText
+            android:id="@+id/etPassphrase"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif"
+            android:inputType="textVisiblePassword"
+            app:layout_constraintEnd_toEndOf="@+id/tvPassphrasePrompt"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvPassphrasePrompt"/>
+
+    </android.support.constraint.ConstraintLayout>
+
 </android.support.constraint.ConstraintLayout>
+
+</ScrollView>

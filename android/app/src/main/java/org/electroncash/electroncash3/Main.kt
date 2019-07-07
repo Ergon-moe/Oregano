@@ -334,7 +334,7 @@ class ChangePasswordDialog : AlertDialogFragment() {
                     dismiss()
                 } catch (e: PyException) {
                     throw if (e.message!!.startsWith("InvalidPassword"))
-                        ToastException(R.string.password_incorrect, Toast.LENGTH_SHORT) else e
+                        ToastException(R.string.Password_Incorrect, Toast.LENGTH_SHORT) else e
                 }
             } catch (e: ToastException) {
                 e.show()
@@ -349,6 +349,7 @@ class ShowSeedPasswordDialog : PasswordDialog() {
         val keystore = daemonModel.wallet!!.callAttr("get_keystore")!!
         showDialog(activity!!, SeedDialog().apply { arguments = Bundle().apply {
             putString("seed", keystore.callAttr("get_seed", password).toString())
+            putString("passphrase", keystore.callAttr("get_passphrase", password).toString())
         }})
     }
 }

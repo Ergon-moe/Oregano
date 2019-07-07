@@ -140,7 +140,7 @@ class AndroidCommands(commands.Commands):
             self.wallet = None
             self.network.trigger_callback("wallet_updated", self.wallet)
 
-    def create(self, name, password, seed=None, addresses=None, privkeys=None):
+    def create(self, name, password, seed=None, passphrase="", addresses=None, privkeys=None):
         """Create or restore a new wallet"""
         path = self._wallet_path(name)
         if exists(path):
@@ -155,7 +155,7 @@ class AndroidCommands(commands.Commands):
             if seed is None:
                 seed = self.make_seed()
                 print("Your wallet generation seed is:\n\"%s\"" % seed)
-            storage.put('keystore', keystore.from_seed(seed, "", False).dump())
+            storage.put('keystore', keystore.from_seed(seed, passphrase, False).dump())
             wallet = Standard_Wallet(storage)
 
         wallet.update_password(None, password, True)
