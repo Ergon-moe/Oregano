@@ -14,6 +14,10 @@
             android:id="@+id/navConsole"
             android:icon="@drawable/ic_chevron_right_24dp"
             android:title="@string/console"/>
+        <item
+            android:id="@+id/navAbout"
+            android:icon="@drawable/ic_info_24dp"
+            android:title="@string/about"/>
     </group>
 
 

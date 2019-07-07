@@ -8,8 +8,10 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
+import android.text.method.LinkMovementMethod
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.TextView
 import android.widget.Toast
 import com.chaquo.python.PyException
 import kotlinx.android.synthetic.main.change_password.*
@@ -152,6 +154,8 @@ class MainActivity : AppCompatActivity() {
                     putString("walletName", walletName)
                 }})
             }
+        } else if (item.itemId == R.id.navAbout) {
+            showDialog(this, AboutDialog())
         } else {
             throw Exception("Unknown item $item")
         }
@@ -275,6 +279,22 @@ class MainActivity : AppCompatActivity() {
                 .add(flContent.id, frag, tag).commitNowAllowingStateLoss()
             return frag
         }
+    }
+}
+
+
+class AboutDialog : AlertDialogFragment() {
+    override fun onBuildDialog(builder: AlertDialog.Builder) {
+        with (builder) {
+            val version = app.packageManager.getPackageInfo(app.packageName, 0).versionName
+            setTitle(getString(R.string.app_name) + " " + version)
+            setMessage(R.string.about_dialog)
+        }
+    }
+
+    override fun onShowDialog(dialog: AlertDialog) {
+        dialog.findViewById<TextView>(android.R.id.message)!!.movementMethod =
+            LinkMovementMethod.getInstance()
     }
 }
 
