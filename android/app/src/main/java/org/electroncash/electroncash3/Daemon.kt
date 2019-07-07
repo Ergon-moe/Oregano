@@ -79,10 +79,6 @@ class DaemonModel {
         return commands.callAttr("list_wallets").asList().map { it.toString() }
     }
 
-    fun createWallet(name: String, password: String, kwargName: String, kwargValue: String) {
-        commands.callAttr("create", name, password, Kwarg(kwargName, kwargValue))
-    }
-
     /** If the password is wrong, throws PyException with the type InvalidPassword. */
     fun loadWallet(name: String, password: String) {
         val prevName = walletName
