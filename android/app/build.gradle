@@ -18,7 +18,8 @@ android {
         applicationId "org.electroncash.wallet"
         minSdkVersion 16
 
-        // Before increasing this to 28, all dialogs must have <requestFocus/> tags
+        // Before increasing this to 28, all layouts must be reviewed to see whether they need
+        // <requestFocus/> tags
         // (https://developer.android.com/about/versions/pie/android-9.0-changes-28#focus).
         targetSdkVersion 26
 

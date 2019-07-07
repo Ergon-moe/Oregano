@@ -10,4 +10,7 @@
     <item android:id="@+id/menuImport"
         android:title="@string/import_addresses_or"/>
 
+    <item android:id="@+id/menuImportMaster"
+        android:title="@string/use_a_master"/>
+
 </menu>

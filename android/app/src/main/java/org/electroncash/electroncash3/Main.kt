@@ -159,9 +159,13 @@ class MainActivity : AppCompatActivity() {
         return false
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        if (daemonModel.wallet != null) {
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        val wallet = daemonModel.wallet
+        if (wallet != null) {
             menuInflater.inflate(R.menu.wallet, menu)
+            if (!wallet.callAttr("has_seed").toBoolean()) {
+                menu.findItem(R.id.menuShowSeed).isEnabled = false
+            }
         }
         return true
     }

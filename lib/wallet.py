@@ -1797,7 +1797,7 @@ class Simple_Wallet(Abstract_Wallet):
     def update_password(self, old_pw, new_pw, encrypt=False):
         if old_pw is None and self.has_password():
             raise InvalidPassword()
-        if self.keystore is not None:
+        if self.keystore is not None and self.keystore.can_change_password():
             self.keystore.update_password(old_pw, new_pw)
             self.save_keystore()
         self.storage.set_password(new_pw, encrypt)

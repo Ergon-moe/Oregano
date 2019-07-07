@@ -18,6 +18,9 @@ import kotlinx.android.synthetic.main.new_wallet.*
 import kotlinx.android.synthetic.main.new_wallet_2.*
 
 
+val libKeystore by lazy { libMod("keystore") }
+
+
 class NewWalletDialog1 : AlertDialogFragment() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         builder.setTitle(R.string.new_wallet)
@@ -54,6 +57,8 @@ class NewWalletDialog1 : AlertDialogFragment() {
                     arguments.putString("seed", seed)
                 } else if (walletType == R.id.menuImport) {
                     nextDialog = NewWalletImportDialog()
+                } else if (walletType == R.id.menuImportMaster) {
+                    nextDialog = NewWalletImportMasterDialog()
                 } else {
                     throw Exception("Unknown item: ${dialog.spnType.selectedItem}")
                 }
@@ -192,6 +197,40 @@ class NewWalletImportDialog : NewWalletDialog2() {
             Selection.setSelection(text, text.length)
         } else {
             super.onActivityResult(requestCode, resultCode, data)
+        }
+    }
+}
+
+
+class NewWalletImportMasterDialog : NewWalletDialog2() {
+    override fun onBuildDialog(builder: AlertDialog.Builder) {
+        super.onBuildDialog(builder)
+        builder.setNeutralButton(R.string.qr_code, null)
+    }
+
+    override fun onShowDialog(dialog: AlertDialog) {
+        super.onShowDialog(dialog)
+        dialog.tvPrompt.setText(getString(R.string.to_create_a_watching) + " " +
+                                getString(R.string.to_create_a_spending))
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { scanQR(this) }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
+        if (result != null && result.contents != null) {
+            dialog.etInput.setText(result.contents)
+            dialog.etInput.setSelection(result.contents.length)
+        } else {
+            super.onActivityResult(requestCode, resultCode, data)
+        }
+    }
+
+    override fun onCreateWallet(name: String, password: String, input: String) {
+        val key = input.trim()
+        if (libKeystore.callAttr("is_bip32_key", key).toBoolean()) {
+            daemonModel.commands.callAttr("create", name, password, Kwarg("master", key))
+        } else {
+            throw ToastException(R.string.please_specify)
         }
     }
 }
