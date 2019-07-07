@@ -24,6 +24,17 @@ val MIN_FEE = 1  // sat/byte
 
 
 class SendDialog : AlertDialogFragment() {
+    init {
+        if (daemonModel.wallet!!.callAttr("is_watching_only").toBoolean()) {
+            throw ToastException(R.string.this_wallet_is)
+        } else if (daemonModel.wallet!!.callAttr("get_receiving_addresses")
+                   .asList().isEmpty()) {
+            // At least one receiving address is needed to call wallet.dummy_address.
+            throw ToastException(
+                R.string.electron_cash_is_generating_your_addresses__please_wait_)
+        }
+    }
+
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         builder.setTitle(R.string.send)
             .setView(R.layout.send)

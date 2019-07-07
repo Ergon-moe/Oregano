@@ -127,12 +127,14 @@ class ContactDialog : AlertDialogFragment() {
                 exploreAddress(activity!!, contact.addr)
             }
             dialog.btnSend.setOnClickListener {
-                dismiss()
-                showDialog(activity!!, SendDialog().apply {
-                    arguments = Bundle().apply {
-                        putString("address", contact.addrUiString)
-                    }
-                })
+                try {
+                    showDialog(activity!!, SendDialog().apply {
+                        arguments = Bundle().apply {
+                            putString("address", contact.addrUiString)
+                        }
+                    })
+                    dismiss()
+                } catch (e: ToastException) { e.show() }
             }
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
                 showDialog(activity!!, DeleteContactDialog(contact.addrStorageString))

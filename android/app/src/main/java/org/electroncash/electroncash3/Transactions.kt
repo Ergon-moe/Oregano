@@ -34,15 +34,9 @@ class TransactionsFragment : Fragment(), MainFragment {
         settings.getString("base_unit").observe(viewLifecycleOwner, Observer { update() })
 
         btnSend.setOnClickListener {
-            if (daemonModel.wallet!!.callAttr("is_watching_only").toBoolean()) {
-                toast(R.string.this_wallet_is)
-            } else if (daemonModel.wallet!!.callAttr("get_receiving_addresses")
-                       .asList().isEmpty()) {
-                // At least one receiving address is needed to call wallet.dummy_address.
-                toast(R.string.electron_cash_is_generating_your_addresses__please_wait_)
-            } else {
+            try {
                 showDialog(activity!!, SendDialog())
-            }
+            } catch (e: ToastException) { e.show() }
         }
     }
 

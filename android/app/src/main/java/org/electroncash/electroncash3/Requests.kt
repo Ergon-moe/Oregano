@@ -11,7 +11,6 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import com.chaquo.python.PyObject
 import kotlinx.android.synthetic.main.amount_box.*
 import kotlinx.android.synthetic.main.request_detail.*
@@ -48,18 +47,12 @@ class RequestsFragment : Fragment(), MainFragment {
         })
 
         btnAdd.setOnClickListener {
-            val wallet = daemonModel.wallet!!
-            if (wallet.callAttr("is_watching_only").toBoolean()) {
-                toast(R.string.this_wallet_is)
-            } else {
-                val address = wallet.callAttr("get_unused_address")
-                if (address == null) {
-                    toast(R.string.no_more, Toast.LENGTH_LONG)
-                } else {
-                    showDialog(activity!!,
-                               RequestDialog(address.callAttr("to_storage_string").toString()))
-                }
-            }
+            try {
+                val address = daemonModel.wallet!!.callAttr("get_unused_address")
+                              ?: throw ToastException(R.string.no_more)
+                showDialog(activity!!,
+                           RequestDialog(address.callAttr("to_storage_string").toString()))
+            } catch (e: ToastException) { e.show() }
         }
     }
 }
@@ -105,6 +98,13 @@ class RequestModel(val request: PyObject) {
 class RequestDialog() : AlertDialogFragment() {
     var savedInstanceState: Bundle? = null
     val wallet by lazy { daemonModel.wallet!! }
+
+    init {
+        if (wallet.callAttr("is_watching_only").toBoolean()) {
+            throw ToastException(R.string.this_wallet_is)
+        }
+    }
+
     val address by lazy {
         clsAddress.callAttr("from_string", arguments!!.getString("address"))
     }

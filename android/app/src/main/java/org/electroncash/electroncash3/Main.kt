@@ -218,16 +218,19 @@ class MainActivity : AppCompatActivity() {
             if (uri != null) {
                 if (daemonModel.wallet == null) {
                     toast(R.string.to_proceed, Toast.LENGTH_LONG)
+                    openDrawer()
                 } else {
                     val dialog = findDialog(this, SendDialog::class)
                     if (dialog != null) {
                         dialog.onUri(uri.toString())
                     } else {
-                        showDialog(this, SendDialog().apply {
-                            arguments = Bundle().apply {
-                                putString("uri", uri.toString())
-                            }
-                        })
+                        try {
+                            showDialog(this, SendDialog().apply {
+                                arguments = Bundle().apply {
+                                    putString("uri", uri.toString())
+                                }
+                            })
+                        } catch (e: ToastException) { e.show() }
                     }
                 }
             }
