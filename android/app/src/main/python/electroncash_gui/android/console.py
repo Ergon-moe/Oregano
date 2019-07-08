@@ -140,8 +140,8 @@ class AndroidCommands(commands.Commands):
             self.wallet = None
             self.network.trigger_callback("wallet_updated", self.wallet)
 
-    def create(self, name, password, seed=None, passphrase="", master=None, addresses=None,
-               privkeys=None):
+    def create(self, name, password, seed=None, passphrase="", bip39_derivation=None,
+               master=None, addresses=None, privkeys=None):
         """Create or restore a new wallet"""
         path = self._wallet_path(name)
         if exists(path):
@@ -153,13 +153,16 @@ class AndroidCommands(commands.Commands):
         elif privkeys is not None:
             wallet = ImportedPrivkeyWallet.from_text(storage, privkeys)
         else:
-            if master is not None:
+            if bip39_derivation is not None:
+                ks = keystore.from_bip39_seed(seed, passphrase, bip39_derivation)
+            elif master is not None:
                 ks = keystore.from_master_key(master)
             else:
                 if seed is None:
                     seed = self.make_seed()
                     print("Your wallet generation seed is:\n\"%s\"" % seed)
                 ks = keystore.from_seed(seed, passphrase, False)
+
             storage.put('keystore', ks.dump())
             wallet = Standard_Wallet(storage)
 

@@ -130,13 +130,31 @@ class NewWalletSeedDialog : NewWalletDialog2() {
     override fun onShowDialog(dialog: AlertDialog) {
         super.onShowDialog(dialog)
         setupSeedDialog(this)
+        if (arguments!!.getString("seed") == null) {  // Restore from seed
+            dialog.bip39Panel.visibility = View.VISIBLE
+            dialog.swBip39.setOnCheckedChangeListener { view, isChecked ->
+                dialog.etDerivation.isEnabled = isChecked
+            }
+        }
     }
 
     override fun onCreateWallet(name: String, password: String, input: String) {
         try {
+            val derivation: String?
+            if (dialog.swBip39.isChecked) {
+                derivation = dialog.etDerivation.text.toString()
+                if (!libBitcoin.callAttr("is_bip32_derivation", derivation).toBoolean()) {
+                    throw ToastException(R.string.derivation_invalid)
+                }
+            } else {
+                derivation = null
+            }
+
             daemonModel.commands.callAttr(
-                "create", name, password, Kwarg("seed", input),
-                Kwarg("passphrase", dialog.etPassphrase.text.toString()))
+                "create", name, password,
+                Kwarg("seed", input),
+                Kwarg("passphrase", dialog.etPassphrase.text.toString()),
+                Kwarg("bip39_derivation", derivation))
         } catch (e: PyException) {
             if (e.message!!.startsWith("InvalidSeed")) {
                 throw ToastException(R.string.the_seed_you_entered_does_not_appear)

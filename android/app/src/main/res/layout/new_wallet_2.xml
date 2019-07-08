@@ -67,6 +67,51 @@
 
     </android.support.constraint.ConstraintLayout>
 
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/bip39Panel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@+id/passphrasePanel"
+        app:layout_constraintStart_toStartOf="@+id/passphrasePanel"
+        app:layout_constraintTop_toBottomOf="@+id/passphrasePanel"
+        tools:visibility="visible">
+
+        <CheckBox
+            android:id="@+id/swBip39"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/bip39_seed"
+            app:layout_constraintBaseline_toBaselineOf="@+id/etDerivation"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <EditText
+            android:id="@+id/etDerivation"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:enabled="false"
+            android:fontFamily="sans-serif"
+            android:hint="@string/derivation"
+            android:inputType="textVisiblePassword"
+            android:text="@string/default_bip39_derivation"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/swBip39"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+        <TextView
+            android:id="@+id/textView21"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/if_you_are"
+            app:layout_constraintEnd_toEndOf="@+id/etDerivation"
+            app:layout_constraintStart_toStartOf="@+id/swBip39"
+            app:layout_constraintTop_toBottomOf="@+id/etDerivation"/>
+
+    </android.support.constraint.ConstraintLayout>
+
 </android.support.constraint.ConstraintLayout>
 
 </ScrollView>
