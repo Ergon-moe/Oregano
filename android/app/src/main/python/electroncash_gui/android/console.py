@@ -8,7 +8,8 @@ from os.path import exists, join
 import pkg_resources
 import unittest
 
-from electroncash import commands, daemon, keystore, simple_config, storage, util, version
+from electroncash import commands, daemon, keystore, simple_config, storage, util
+from electroncash.i18n import _
 from electroncash.storage import WalletStorage
 from electroncash.wallet import (ImportedAddressWallet, ImportedPrivkeyWallet, Standard_Wallet,
                                  Wallet)
@@ -32,8 +33,11 @@ class AndroidConsole(InteractiveConsole):
     def interact(self):
         try:
             InteractiveConsole.interact(
-                self, banner=(f"Electron Cash {version.PACKAGE_VERSION}\n"
-                              f"Type 'help' for available commands and variables."))
+                self, banner=(
+                    _("WARNING!") + "\n" +
+                    _("Do not enter code here that you don't understand. Executing the wrong "
+                      "code could lead to your coins being irreversibly lost.") + "\n" +
+                    "Type 'help' for available commands and variables."))
         except SystemExit:
             pass
 
