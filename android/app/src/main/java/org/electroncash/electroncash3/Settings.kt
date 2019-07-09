@@ -40,6 +40,10 @@ fun setDefaultValues(sp: SharedPreferences) {
     // the same effect of making the daemon choose a random server.
     setDefaultValue(sp, "server", "")
 
+    // Transactions
+    setDefaultValue(sp, "confirmed_only",
+                    libWallet.get("DEFAULT_CONFIRMED_ONLY")!!.toBoolean())
+
     // Appearance
     setDefaultValue(sp, "block_explorer", libWeb.get("DEFAULT_EXPLORER")!!.toString())
 

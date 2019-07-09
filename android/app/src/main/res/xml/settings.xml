@@ -17,6 +17,12 @@
             android:dependency="auto_connect"/>
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/transactions">
+        <SwitchPreference
+            android:key="confirmed_only"
+            android:title="@string/spend_only_confirmed_coins"/>
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="@string/appearance">
         <SwitchPreference
             android:key="cashaddr_format"
@@ -36,8 +42,7 @@
     <PreferenceCategory android:title="@string/fiat">
         <SwitchPreference
             android:key="use_exchange_rate"
-            android:title="@string/enable"
-            tools:defaultValue="true"/>
+            android:title="@string/enable"/>
         <ListPreference
             android:dependency="use_exchange_rate"
             android:key="currency"

@@ -19,6 +19,7 @@ import kotlinx.android.synthetic.main.new_wallet_2.*
 
 
 val libKeystore by lazy { libMod("keystore") }
+val libWallet by lazy { libMod("wallet") }
 
 
 class NewWalletDialog1 : AlertDialogFragment() {
