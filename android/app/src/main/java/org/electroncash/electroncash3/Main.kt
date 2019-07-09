@@ -167,6 +167,8 @@ class MainActivity : AppCompatActivity() {
         val wallet = daemonModel.wallet
         if (wallet != null) {
             menuInflater.inflate(R.menu.wallet, menu)
+            menu.findItem(R.id.menuUseChange)!!.isChecked =
+                wallet.get("use_change")!!.toBoolean()
             if (!wallet.callAttr("has_seed").toBoolean()) {
                 menu.findItem(R.id.menuShowSeed).isEnabled = false
             }
@@ -177,6 +179,13 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> openDrawer()
+            R.id.menuUseChange -> {
+                item.isChecked = !item.isChecked
+                daemonModel.wallet!!.put("use_change", item.isChecked)
+                val storage = daemonModel.wallet!!.get("storage")!!
+                storage.callAttr("put", "use_change", item.isChecked)
+                storage.callAttr("write")
+            }
             R.id.menuChangePassword -> showDialog(this, ChangePasswordDialog())
             R.id.menuShowSeed-> {
                 if (daemonModel.wallet!!.containsKey("get_seed")) {
