@@ -6,7 +6,6 @@ import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.os.Bundle
-import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
 import android.text.Editable
 import android.text.TextWatcher
@@ -53,19 +52,19 @@ class SendDialog : AlertDialogFragment() {
     }
 
     override fun onShowDialog(dialog: AlertDialog) {
-        val address = arguments?.getString("address")
-        if (address != null) {
-            dialog.etAddress.setText(address)
-            dialog.etAmount.requestFocus()
+        if (arguments != null) {
+            val address = arguments!!.getString("address")
+            if (address != null) {
+                dialog.etAddress.setText(address)
+                dialog.etAmount.requestFocus()
+            }
+            val uri = arguments!!.getString("uri")
+            if (uri != null) {
+                onUri(uri)
+            }
+            arguments = null
         }
-        val uri = arguments?.getString("uri")
-        if (uri != null) {
-            onUri(uri)
-        }
-
-        dialog.btnContacts.setOnClickListener {
-            showDialog(activity!!, SendContactsDialog())
-        }
+        setPaymentRequest(model.paymentRequest)
 
         dialog.etAmount.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -169,59 +168,49 @@ class SendDialog : AlertDialogFragment() {
                 throw ToastException(e)
             }
 
-            resetUI()
             val r = parsed.callAttr("get", "r")
             if (r != null) {
                 showDialog(activity!!, GetPaymentRequestDialog(this, r.toString()))
             } else {
-                val address = parsed.callAttr("get", "address")
-                if (address != null) {
-                    dialog.etAddress.setText(address.toString())
-                }
-                val amount = parsed.callAttr("get", "amount")
-                if (amount != null) {
-                    dialog.etAmount.setText(formatSatoshis(amount.toLong()))
-                }
-                val description = parsed.callAttr("get", "message")
-                if (description != null) {
-                    dialog.etDescription.setText(description.toString())
-                }
+                setPaymentRequest(null)
+                dialog.etAddress.setText(parsed.callAttr("get", "address")?.toString() ?: "")
+                val amount = parsed.callAttr("get", "amount")?.toLong()
+                dialog.etAmount.setText(if (amount != null) formatSatoshis(amount) else "")
+                dialog.btnMax.isChecked = false
+                dialog.etDescription.setText(parsed.callAttr("get", "message")?.toString()
+                                             ?: "")
             }
         } catch (e: ToastException) {
             e.show()
         }
     }
 
-    fun onPaymentRequest(pr: PyObject) {
+    fun setPaymentRequest(pr: PyObject?) {
         model.paymentRequest = pr
-        with (dialog.etAddress) {
-            setText(pr.callAttr("get_requestor").toString())
-            setBackgroundColor(ContextCompat.getColor(app, R.color.verified))
-            setFocusable(false)
-        }
-        dialog.btnContacts.setEnabled(false)
-        with (dialog.etAmount) {
-            setText(formatSatoshis(pr.callAttr("get_amount").toLong()))
-            setFocusable(false)
-        }
-        with (dialog.btnMax) {
-            setEnabled(false)
-            setChecked(false)
-        }
-        dialog.etDescription.setText(pr.callAttr("get_memo").toString())
-    }
+        with (dialog) {
+            for (et in listOf(etAddress, etAmount, etDescription)) {
+                if (pr == null) {
+                    et.setFocusableInTouchMode(true)  // setFocusable(true) isn't good enough.
+                } else {
+                    et.setFocusable(false)
+                }
+            }
+            if (pr != null) {
+                etAddress.setText(pr.callAttr("get_requestor").toString())
+                etAmount.setText(formatSatoshis(pr.callAttr("get_amount").toLong()))
+                etDescription.setText(pr.callAttr("get_memo").toString())
+            }
 
-    fun resetUI() {
-        model.paymentRequest = null
-        for (et in listOf(dialog.etAddress, dialog.etAmount, dialog.etDescription)) {
-            et.setText("")
-            et.setFocusableInTouchMode(true)  // Reverses setFocusable(false)
-        }
-        dialog.etAddress.setBackground(dialog.etDescription.getBackground())
-        dialog.btnContacts.setEnabled(true)
-        with (dialog.btnMax) {
-            setEnabled(true)
-            setChecked(false)
+            btnContacts.setImageResource(if (pr == null) R.drawable.ic_person_24dp
+                                         else R.drawable.ic_check_24dp)
+            btnContacts.setOnClickListener {
+                if (pr == null) {
+                    showDialog(activity!!, SendContactsDialog())
+                } else {
+                    toast(pr.callAttr("get_verify_status").toString(), Toast.LENGTH_LONG)
+                }
+            }
+            btnMax.setEnabled(pr == null)
         }
     }
 
@@ -258,7 +247,7 @@ class GetPaymentRequestDialog() : ProgressDialogTask<PyObject?>() {
 
     override fun onPostExecute(result: PyObject?) {
         if (result != null) {
-            (targetFragment as SendDialog).onPaymentRequest(result)
+            (targetFragment as SendDialog).setPaymentRequest(result)
         }
     }
 }
