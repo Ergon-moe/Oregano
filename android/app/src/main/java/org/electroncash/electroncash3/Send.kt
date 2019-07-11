@@ -5,6 +5,8 @@ import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
+import android.os.Bundle
+import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
 import android.text.Editable
 import android.text.TextWatcher
@@ -12,6 +14,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.SeekBar
 import android.widget.Toast
+import com.chaquo.python.Kwarg
 import com.chaquo.python.PyException
 import com.chaquo.python.PyObject
 import com.google.zxing.integration.android.IntentIntegrator
@@ -19,10 +22,17 @@ import kotlinx.android.synthetic.main.amount_box.*
 import kotlinx.android.synthetic.main.send.*
 
 
+val libPaymentRequest by lazy { libMod("paymentrequest") }
+
 val MIN_FEE = 1  // sat/byte
 
 
 class SendDialog : AlertDialogFragment() {
+    class Model : ViewModel() {
+        var paymentRequest: PyObject? = null
+    }
+    val model by lazy { ViewModelProviders.of(this).get(Model::class.java) }
+
     init {
         if (daemonModel.wallet!!.callAttr("is_watching_only").toBoolean()) {
             throw ToastException(R.string.this_wallet_is)
@@ -111,19 +121,26 @@ class SendDialog : AlertDialogFragment() {
     }
 
     fun makeUnsignedTransaction(allowDummy: Boolean = false): PyObject {
-        val addr = try {
-            makeAddress(dialog.etAddress.text.toString())
-        } catch (e: ToastException) {
-            if (allowDummy) daemonModel.wallet!!.callAttr("dummy_address")
-            else throw e
+        val outputs: PyObject
+        val pr = model.paymentRequest
+        if (pr != null) {
+            outputs = pr.callAttr("get_outputs")
+        } else {
+            val addr = try {
+                makeAddress(dialog.etAddress.text.toString())
+            } catch (e: ToastException) {
+                if (allowDummy) daemonModel.wallet!!.callAttr("dummy_address")
+                else throw e
+            }
+            val output = py.builtins.callAttr(
+                "tuple", arrayOf(libBitcoin.get("TYPE_ADDRESS"), addr,
+                                 if (dialog.btnMax.isChecked) "!" else amountBoxGet(dialog)))
+            outputs = py.builtins.callAttr("list", arrayOf(output))
         }
 
         val wallet = daemonModel.wallet!!
-        val inputs = wallet.callAttr("get_spendable_coins", null, daemonModel.config)
-        val output = py.builtins.callAttr(
-            "tuple", arrayOf(libBitcoin.get("TYPE_ADDRESS"), addr,
-                             if (dialog.btnMax.isChecked) "!" else amountBoxGet(dialog)))
-        val outputs = py.builtins.callAttr("list", arrayOf(output))
+        val inputs = wallet.callAttr("get_spendable_coins", null, daemonModel.config,
+                                     Kwarg("isInvoice", pr != null))
         try {
             return wallet.callAttr("make_unsigned_transaction", inputs, outputs,
                                    daemonModel.config)
@@ -151,20 +168,60 @@ class SendDialog : AlertDialogFragment() {
             } catch (e: PyException) {
                 throw ToastException(e)
             }
-            val address = parsed.callAttr("get", "address")
-            if (address != null) {
-                dialog.etAddress.setText(address.toString())
-            }
-            val amount = parsed.callAttr("get", "amount")
-            if (amount != null) {
-                dialog.etAmount.setText(formatSatoshis(amount.toLong()))
-            }
-            val description = parsed.callAttr("get", "message")
-            if (description != null) {
-                dialog.etDescription.setText(description.toString())
+
+            resetUI()
+            val r = parsed.callAttr("get", "r")
+            if (r != null) {
+                showDialog(activity!!, GetPaymentRequestDialog(this, r.toString()))
+            } else {
+                val address = parsed.callAttr("get", "address")
+                if (address != null) {
+                    dialog.etAddress.setText(address.toString())
+                }
+                val amount = parsed.callAttr("get", "amount")
+                if (amount != null) {
+                    dialog.etAmount.setText(formatSatoshis(amount.toLong()))
+                }
+                val description = parsed.callAttr("get", "message")
+                if (description != null) {
+                    dialog.etDescription.setText(description.toString())
+                }
             }
         } catch (e: ToastException) {
             e.show()
+        }
+    }
+
+    fun onPaymentRequest(pr: PyObject) {
+        model.paymentRequest = pr
+        with (dialog.etAddress) {
+            setText(pr.callAttr("get_requestor").toString())
+            setBackgroundColor(ContextCompat.getColor(app, R.color.verified))
+            setFocusable(false)
+        }
+        dialog.btnContacts.setEnabled(false)
+        with (dialog.etAmount) {
+            setText(formatSatoshis(pr.callAttr("get_amount").toLong()))
+            setFocusable(false)
+        }
+        with (dialog.btnMax) {
+            setEnabled(false)
+            setChecked(false)
+        }
+        dialog.etDescription.setText(pr.callAttr("get_memo").toString())
+    }
+
+    fun resetUI() {
+        model.paymentRequest = null
+        for (et in listOf(dialog.etAddress, dialog.etAmount, dialog.etDescription)) {
+            et.setText("")
+            et.setFocusableInTouchMode(true)  // Reverses setFocusable(false)
+        }
+        dialog.etAddress.setBackground(dialog.etDescription.getBackground())
+        dialog.btnContacts.setEnabled(true)
+        with (dialog.btnMax) {
+            setEnabled(true)
+            setChecked(false)
         }
     }
 
@@ -174,6 +231,35 @@ class SendDialog : AlertDialogFragment() {
             showDialog(activity!!, SendPasswordDialog(this))
         } catch (e: ToastException) { e.show() }
         // Don't dismiss this dialog yet: the user might want to come back to it.
+    }
+}
+
+
+class GetPaymentRequestDialog() : ProgressDialogTask<PyObject?>() {
+    constructor(sendDialog: SendDialog, url: String) : this() {
+        setTargetFragment(sendDialog, 0)
+        arguments = Bundle().apply { putString("url", url) }
+    }
+
+    override fun doInBackground(): PyObject? {
+        val pr = libPaymentRequest.callAttr("get_payment_request",
+                                            arguments!!.getString("url")!!)
+        try {
+            if (!pr.callAttr("verify", daemonModel.wallet!!.get("contacts")!!).toBoolean()) {
+                throw ToastException(pr.get("error").toString())
+            }
+            checkExpired(pr)
+            return pr
+        } catch (e: ToastException) {
+            e.show()
+            return null
+        }
+    }
+
+    override fun onPostExecute(result: PyObject?) {
+        if (result != null) {
+            (targetFragment as SendDialog).onPaymentRequest(result)
+        }
     }
 }
 
@@ -223,12 +309,20 @@ class SendPasswordDialog() : PasswordDialog(runInBackground = true) {
     }
 
     override fun onPassword(password: String) {
-        daemonModel.wallet!!.callAttr("sign_transaction", tx, password)
+        val wallet = daemonModel.wallet!!
+        wallet.callAttr("sign_transaction", tx, password)
         if (! daemonModel.isConnected()) {
             throw ToastException(R.string.not_connected)
         }
-        model.result.postValue(
-            daemonModel.network.callAttr("broadcast_transaction", tx).asList())
+        val pr = sendDialog.model.paymentRequest
+        val result = if (pr != null) {
+            checkExpired(pr)
+            val refundAddr = wallet.callAttr("get_receiving_addresses").asList().get(0)
+            pr.callAttr("send_payment", tx.toString(), refundAddr)
+        } else {
+            daemonModel.network.callAttr("broadcast_transaction", tx)
+        }
+        model.result.postValue(result.asList())
     }
 
     fun onResult(result: List<PyObject>) {
@@ -236,8 +330,8 @@ class SendPasswordDialog() : PasswordDialog(runInBackground = true) {
         if (success) {
             sendDialog.dismiss()
             toast(R.string.payment_sent)
-            val txid = result.get(1).toString()
-            setDescription(txid, sendDialog.dialog.etDescription.text.toString())
+            setDescription(tx.callAttr("txid").toString(),
+                           sendDialog.dialog.etDescription.text.toString())
             transactionsUpdate.setValue(Unit)
         } else {
             var message = result.get(1).toString()
@@ -247,5 +341,12 @@ class SendPasswordDialog() : PasswordDialog(runInBackground = true) {
             }
             toast(message, Toast.LENGTH_LONG)
         }
+    }
+}
+
+
+private fun checkExpired(pr: PyObject) {
+    if (pr.callAttr("has_expired").toBoolean()) {
+        throw ToastException(R.string.payment_request_has)
     }
 }

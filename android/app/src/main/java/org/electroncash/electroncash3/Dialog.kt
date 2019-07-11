@@ -112,10 +112,10 @@ open class ProgressDialogFragment : DialogFragment() {
 }
 
 
-abstract class ProgressDialogTask : ProgressDialogFragment() {
+abstract class ProgressDialogTask<Result> : ProgressDialogFragment() {
     class Model : ViewModel() {
         val started = MutableLiveData<Unit>()
-        val finished = MutableLiveData<Unit>()
+        val finished = MutableLiveData<Any?>()
     }
     private val model by lazy { ViewModelProviders.of(this).get(Model::class.java) }
 
@@ -123,18 +123,18 @@ abstract class ProgressDialogTask : ProgressDialogFragment() {
         if (model.started.value == null) {
             model.started.value = Unit
             Thread {
-                doInBackground()
-                model.finished.postValue(Unit)
+                model.finished.postValue(doInBackground())
             }.start()
         }
         model.finished.observe(this, Observer {
             dismiss()
-            onPostExecute()
+            @Suppress("UNCHECKED_CAST")
+            onPostExecute(it as Result)
         })
     }
 
-    abstract fun doInBackground()
-    open fun onPostExecute() {}
+    abstract fun doInBackground(): Result
+    open fun onPostExecute(result: Result) {}
 }
 
 

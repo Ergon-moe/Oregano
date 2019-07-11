@@ -230,7 +230,7 @@ class MainActivity : AppCompatActivity() {
             val uri = intent.data
             if (uri != null) {
                 if (daemonModel.wallet == null) {
-                    toast(R.string.to_proceed, Toast.LENGTH_LONG)
+                    toast(R.string.no_wallet_is, Toast.LENGTH_LONG)
                     openDrawer()
                 } else {
                     val dialog = findDialog(this, SendDialog::class)
@@ -321,12 +321,12 @@ class DeleteWalletDialog : AlertDialogFragment() {
     }
 }
 
-class DeleteWalletProgress : ProgressDialogTask() {
+class DeleteWalletProgress : ProgressDialogTask<Unit>() {
     override fun doInBackground() {
         daemonModel.commands.callAttr("delete_wallet", daemonModel.walletName)
     }
 
-    override fun onPostExecute() {
+    override fun onPostExecute(result: Unit) {
         (activity as MainActivity).openDrawer()
     }
 }
@@ -339,12 +339,12 @@ class OpenWalletDialog : PasswordDialog(runInBackground = true) {
 }
 
 
-class CloseWalletDialog : ProgressDialogTask() {
+class CloseWalletDialog : ProgressDialogTask<Unit>() {
     override fun doInBackground() {
         daemonModel.commands.callAttr("close_wallet")
     }
 
-    override fun onPostExecute() {
+    override fun onPostExecute(result: Unit) {
         (activity as MainActivity).openDrawer()
     }
 }
