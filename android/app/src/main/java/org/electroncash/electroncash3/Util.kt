@@ -31,7 +31,6 @@ val libUtil by lazy { libMod("util") }
 // See Settings.kt
 var unitName = ""
 var unitPlaces = 0
-val UNIT_BCH = 8
 
 
 fun toSatoshis(s: String, places: Int = unitPlaces) : Long {

@@ -1,7 +1,6 @@
 package org.electroncash.electroncash3
 
 import android.arch.lifecycle.MutableLiveData
-import com.chaquo.python.Kwarg
 import com.chaquo.python.PyException
 import com.chaquo.python.PyObject
 import com.chaquo.python.Python
@@ -85,28 +84,6 @@ class DaemonModel {
         commands.callAttr("load_wallet", name, password)
         if (prevName != null && prevName != name) {
             commands.callAttr("close_wallet", prevName)
-        }
-    }
-
-    fun makeTx(address: String, amount: Long?, password: String? = null,
-               unsigned: Boolean = false): PyObject {
-        makeAddress(address)
-
-        val amountStr: String
-        if (amount == null) {
-            amountStr = "!"
-        } else {
-            if (amount <= 0) throw ToastException(R.string.Invalid_amount)
-            amountStr = formatSatoshis(amount, UNIT_BCH)
-        }
-
-        val outputs = arrayOf(arrayOf(address, amountStr))
-        try {
-            return commands.callAttr("_mktx", outputs, Kwarg("password", password),
-                                     Kwarg("unsigned", unsigned))
-        } catch (e: PyException) {
-            throw if (e.message!!.startsWith("NotEnoughFunds"))
-                ToastException(R.string.insufficient_funds) else e
         }
     }
 }
