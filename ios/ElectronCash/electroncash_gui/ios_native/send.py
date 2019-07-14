@@ -357,7 +357,7 @@ class SendVC(SendBase):
     def onQRBut_(self, but) -> None:
         def DoIt() -> None:
             if not QRCodeReader.isAvailable:
-                utils.show_alert(self, _("QR Not Avilable"), _("The camera is not available for reading QR codes"))
+                utils.show_alert(self, _("QR Not Available"), _("The camera is not available for reading QR codes"))
             else:
                 self.qr = QRCodeReader.new().autorelease()
                 self.qrvc = QRCodeReaderViewController.readerWithCancelButtonTitle_codeReader_startScanningAtLoad_showSwitchCameraButton_showTorchButton_("Cancel",self.qr,True,False,False)
@@ -580,7 +580,12 @@ class SendVC(SendBase):
     def getPayToAddress(self) -> ObjCInstance:
         pr = get_PR(self)
         if pr:
-            return ns_from_py(pr.get_address())
+            try:
+                return ns_from_py(pr.get_address())
+            except AttributeError as e:
+                # invalid/expired payment requests sometimes have no outputs Attribute
+                # See #1503.
+                print("Invalid payment request:", repr(e))
         return ns_from_py(self.payTo.text)
 
 

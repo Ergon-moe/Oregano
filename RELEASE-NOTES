@@ -532,3 +532,60 @@ and there is no warning message.
   You can now send payments to people via their openalias eg user@domain.net
   (requires they set up a DNS TXT record).  See https://openalias.org/#implement
   (Axel Gembe)
+* AppImage: 100% deterministic builds now. (Axel Gembe)
+* AppImage: "Open in block explorer" now works (Axel Gembe)
+* Windows: We figured out what was causing the anti-virus false positives on
+  our recent releases and took steps to reduce the possibility of AV false
+  positives going forward. (cculianu, Axel Gembe)
+* CashShuffle: Fix #1223 - Finally resolved the "dead menu actions" bug where
+  sometimes after bringing up the CashShuffle settings, hotkeys and File->menu
+  actions would no longer respond. (cculianu, Axel Gembe)
+* Quotes/Fiat Exchange Rate: The "historical rates" code was buggy and prone
+  to "no data" being shown even when the server we get the quotes from has
+  data. Bug #1448. This has now been fully fixed and made unbuggy. (cculianu)
+* Export Wallet History: Fix #1459 - The Wallet -> Export History facility now
+  always exports fiat history data if "Fiat History" is enabled in preferences.
+  Note also that the history export is now sorted in descending order by date,
+  like the history tab default sort order.  (cculianu)
+* Update checker: Made the "new version available!" notification less obtrusive:
+  it now posts a message to the system tray popup as well as just creating a
+  new status bar icon you can click on to respond to the notification at your
+  leisure.  Hopefully this will tempt fewer people to turn off the notifications
+  (cculianu)
+* Preferences pane: Split up the "Transactions" tab in the preferences to
+  "per-wallet" and "app-global" sections to more clearly communicate in the UI
+  which of the options are global and which are per-wallet. Closes issue #1427
+  (cculianu)
+* Preferences pane: Added a new option "notify when receiving funds" which
+  is on by default and if unchecked, allows you to no longer receive system
+  tray notifications on tx's. This is a per-wallet setting. Closes issue #1451
+  (cculianu)
+* Tx Send Confirmation: Added a new button to the tx send confirmation dialog
+  "Copy link" which copies the link to the tx on the configured block explorer.
+  Issue #1464 (cculianu)
+* AppImage builds have been made SIGNIFICANTLY smaller. Here's to faster
+  downloads and peppier startup times, hooray! In addition, the macOS .dmg build
+  and the Windows .exe builds have been made slightly smaller. (Axel Gembe)
+* Cash Address Toggle: Replaced icon with a much nicer one. (Leandro Di Marco)
+* Cash Address Toggle: After a reddit poll was conducted, we decided to make it
+  possible to disable the cash address status bar button in the GUI. It's on
+  by default, but can be disabled in Preferences -> General. In addition, the
+  Preferences -> General tab has been laid out slightly differently. (cculianu)
+* Improved system tray icon and other assorted icons for high DPI. (Axel Gembe)
+* Various build system fixes and bugs fixed. (Axel Gembe)
+
+# Release 4.0.8
+
+* Localization: The app now defaults to the system language on Windows, Mac and
+  generic Unix for new installs.  The preferences dialog has also been improved
+  to bring the General tab to the front and make the language picker contain
+  translated language names. #1477 (Axel Gembe, cculianu, Alexander Schlarb)
+* Fix #1473: Omit bitcoincash: prefix from legacy address in receive tab QR
+  image if no parameters are filled-in other than 'address'. This allows users
+  to quickly use the receive tab to scan a QR image from a mobile wallet that
+  doesn't know about bitcoincash:. Note that if the receive tab has parameters
+  filled in eg: description, amount, etc, then the receive request becomes a
+  URI and it will have the bitcoincash: prefix prepended, even if using legacy
+  address mode. (cculianu)
+* Ledger: Fix #1479: 2FA Dialog with Legacy devices and multiple outputs was
+  crashy due to a small programming error. Fixed. (Axel Gembe)

@@ -23,8 +23,6 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import webbrowser
-
 from .util import *
 import electroncash.web as web
 from electroncash.i18n import _
@@ -45,24 +43,26 @@ TX_ICONS = [
     "confirmed.svg",
 ]
 
-
 class HistoryList(MyTreeWidget):
     filter_columns = [2, 3, 4]  # Date, Description, Amount
     statusIcons = {}
+    default_sort = MyTreeWidget.SortSpec(0, Qt.AscendingOrder)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         super().__init__(parent, self.create_menu, [], 3, deferred_updates=True)
         self.refresh_headers()
         self.setColumnHidden(1, True)
-        self.setSortingEnabled(True)
-        self.sortByColumn(0, Qt.AscendingOrder)
         # force attributes to always be defined, even if None, at construction.
         self.wallet = self.parent.wallet
+        self.cleaned_up = False
 
         self.monospaceFont = QFont(MONOSPACE_FONT)
         self.withdrawalBrush = QBrush(QColor("#BC1E1E"))
         self.invoiceIcon = QIcon(":icons/seal")
         self._item_cache = Weak.ValueDictionary()
+
+    def clean_up(self):
+        self.cleaned_up = True
 
     def refresh_headers(self):
         headers = ['', '', _('Date'), _('Description') , _('Amount'), _('Balance')]
@@ -77,7 +77,7 @@ class HistoryList(MyTreeWidget):
 
     @rate_limited(1.0, classlevel=True, ts_after=True) # We rate limit the history list refresh no more than once every second, app-wide
     def update(self):
-        if self.wallet and (not self.wallet.thread or not self.wallet.thread.isRunning()):
+        if self.cleaned_up:
             # short-cut return if window was closed and wallet is stopped
             return
         super().update()
@@ -183,11 +183,25 @@ class HistoryList(MyTreeWidget):
         if not self.wallet: return # can happen on startup if this is called before self.on_update()
         item = self._item_cache.get(tx_hash)
         if item:
+            idx = self.invisibleRootItem().indexOfChild(item)
+            was_cur = False
+            if idx > -1:
+                # We must take the child out of the view when updating.
+                # This is because otherwise for widgets with many thousands of
+                # items, this method becomes *horrendously* slow (500ms per
+                # call!)... but doing this hack makes it fast (~1ms per call).
+                was_cur = self.currentItem() is item
+                self.invisibleRootItem().takeChild(idx)
             status, status_str = self.wallet.get_tx_status(tx_hash, height, conf, timestamp)
             icon = self._get_icon_for_status(status)
             if icon: item.setIcon(0, icon)
             item.setData(0, SortableTreeWidgetItem.DataRole, (status, conf))
             item.setText(2, status_str)
+            if idx > -1:
+                # Now, put the item back again
+                self.invisibleRootItem().insertChild(idx, item)
+                if was_cur:
+                    self.setCurrentItem(item)
         elif self.should_defer_update_incr():
             return False
         return bool(item)  # indicate to client code whether an actual update occurred
@@ -231,7 +245,7 @@ class HistoryList(MyTreeWidget):
         if pr_key:
             menu.addAction(self.invoiceIcon, _("View invoice"), lambda: self.parent.show_invoice(pr_key))
         if tx_URL:
-            menu.addAction(_("View on block explorer"), lambda: webbrowser.open(tx_URL))
+            menu.addAction(_("View on block explorer"), lambda: webopen(tx_URL))
 
         run_hook("history_list_context_menu_setup", self, menu, item, tx_hash)  # Plugins can modify menu
 

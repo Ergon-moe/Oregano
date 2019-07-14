@@ -1,4 +1,4 @@
-import ecdsa, threading, time, queue
+import ecdsa, threading, time, queue, traceback, sys
 from collections import namedtuple
 from electroncash.bitcoin import deserialize_privkey, regenerate_key, EC_KEY, generator_secp256k1, number_to_string
 from electroncash.address import Address
@@ -207,13 +207,16 @@ class ProtocolThread(threading.Thread, PrintError):
                 self.logger.send(ERR_BAD_SERVER_PREFIX + ": " + str(e))
                 return
             except BaseException as e:
-                self.print_error("Exception in 'run': {}".format(str(e)))
+                self.print_error("Exception in 'run': {}".format(repr(e)))
                 self.logger.send(err)
                 return
             if not self.done.is_set():
                 self.start_protocol()
         except AbortProtocol as e:
             self.print_error(repr(e))
+            self.logger.send("Error: {}".format(e))
+        except Exception as e:
+            self.print_error("Unexpected exception in 'run'; traceback follows:\n{}".format(traceback.format_exc()))
             self.logger.send("Error: {}".format(e))
         finally:
             self.logger.send("Exit: Scale '{}' Coin '{}'".format(self.scale, self.coin))
@@ -511,9 +514,9 @@ class BackgroundShufflingThread(threading.Thread, PrintError):
         if now - self._last_delayed_unreserve_check > self._delayed_unreserve_check_interval:
             self._last_delayed_unreserve_check = now
             ct = 0
-            with self.wallet.lock, self.wallet.transaction_lock:
-                # We use the above 2 locks to ensure GUI or other threads don't
-                # touch the addresses_cashshuffle_reserved set while we mutate it.
+            with self.wallet.lock:
+                # We use the lock to ensure GUI or other threads don't touch
+                # the addresses_cashshuffle_reserved set while we mutate it.
                 # This code path is executed very infrequently so it's not really
                 # a huge hit.
                 for addr, ts in self._delayed_unreserve_addresses.copy().items():
@@ -597,7 +600,7 @@ class BackgroundShufflingThread(threading.Thread, PrintError):
 
     def _unreserve_addresses(self):
         ''' Normally called from our thread context but may be called from other threads after joining this thread '''
-        with self.wallet.lock, self.wallet.transaction_lock:
+        with self.wallet.lock:
             l = len(self.wallet._addresses_cashshuffle_reserved)
             self.wallet._addresses_cashshuffle_reserved.clear()
             if l: self.print_error("Freed {} reserved addresses".format(l))
@@ -636,7 +639,7 @@ class BackgroundShufflingThread(threading.Thread, PrintError):
                 # gaps in the change addresses will be a rare occurrence.
             was_fake_change_addr = thr.change_addr == self._dummy_address
             need_to_discard_change_if_errored = not was_fake_change_addr
-            with self.wallet.lock, self.wallet.transaction_lock:
+            with self.wallet.lock:
                 if need_to_discard_change_if_errored and thr.protocol and not thr.protocol.did_use_change:
                     # The reserved change output address was definitely not used.
                     # Immediately unreserve this change_addr so that it doesn't
@@ -816,7 +819,7 @@ class BackgroundShufflingThread(threading.Thread, PrintError):
         else:
             name = utxo_name_or_dict
         # name must be an str at this point!
-        with self.wallet.lock, self.wallet.transaction_lock:
+        with self.wallet.lock:
             return name in self._coins_busy_shuffling
 
     def is_wallet_ready(self):
@@ -857,7 +860,7 @@ class BackgroundShufflingThread(threading.Thread, PrintError):
         if self.stop_flg.is_set() or self._paused: return
         need_refresh = False
         shufchg_saved = self.wallet._shuffle_change_shared_with_others.copy()
-        with self.wallet.lock, self.wallet.transaction_lock:
+        with self.wallet.lock:
             if self.is_wallet_ready():
                 try:
                     #TODO FIXME XXX -- perhaps also add a mechanism to detect when coins that are in the queue or are being shuffled get reorged or spent

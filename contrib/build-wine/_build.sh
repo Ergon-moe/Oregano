@@ -17,6 +17,8 @@ set -e
 
 git checkout "$to_build" || fail "Could not branch or tag $to_build"
 
+GIT_COMMIT_HASH=$(git rev-parse HEAD)
+
 info "Clearing $here/build and $here/dist..."
 rm "$here"/build/* -fr
 rm "$here"/dist/* -fr
@@ -136,9 +138,13 @@ prepare_wine() {
         LIBUSB_URL='https://github.com/cculianu/Electron-Cash-Build-Tools/releases/download/v1.0/libusb-1.0.21.7z'
         LIBUSB_SHA256=acdde63a40b1477898aee6153f9d91d1a2e8a5d93f832ca8ab876498f3a6d2b8
 
+        PYINSTALLER_REPO='https://github.com/EchterAgo/pyinstaller.git'
+        PYINSTALLER_COMMIT=d1cdd726d6a9edc70150d5302453fb90fdd09bf2
+
         ## These settings probably don't need change
         export WINEPREFIX=/opt/wine64
         #export WINEARCH='win32'
+        export WINEDEBUG=-all
 
         PYHOME=c:/python$PYTHON_VERSION  # NB: PYTON_VERSION comes from ../base.sh
         PYTHON="wine $PYHOME/python.exe -OO -B"
@@ -157,23 +163,14 @@ prepare_wine() {
 
         cd tmp
 
-        #NB: Use NOPGP=1 env var to skip this verify pgp keys stuff (for developer testing without having to wait)
-        if [ -z "$NOPGP" ]; then
-            # note: you might need "sudo apt-get install dirmngr" for the following
-            # keys from https://www.python.org/downloads/#pubkeys
-            info "Downloading Python dev keyring (may take a few minutes)..."
-            KEYRING_PYTHON_DEV=keyring-electroncash-build-python-dev.gpg
-            KEY_SERVERS="keyserver.ubuntu.com keyserver.pgp.com pgp.mit.edu"
-            got1=""
-            # Try a bunch of PGP servers. The fastest one is usually the ubuntu one...
-            for key_server in $KEY_SERVERS; do
-                info "Downloading from ${key_server}..."
-                gpg -v --no-default-keyring --keyring $KEYRING_PYTHON_DEV --keyserver $key_server --recv-keys 531F072D39700991925FED0C0EDDC5F26A45C816 26DEA9D4613391EF3E25C9FF0A5B101836580288 CBC547978A3964D14B9AB36A6AF053F07D9DC8D2 C01E1CAD5EA2C4F0B8E3571504C367C218ADD4FF 12EF3DC38047DA382D18A5B999CDEA9DA4135B38 8417157EDBE73D9EAC1E539B126EB563A74B06BF DBBF2EEBF925FAADCF1F3FFFD9866941EA5BBD71 2BA0DB82515BBB9EFFAC71C5C9BE28DEE6DF025C 0D96DF4D4110E5C43FBFB17F2D347EA6AA65421D C9B104B3DD3AA72D7CCB1066FB9921286F5E1540 97FC712E4C024BBEA48A61ED3A5CA953F73C700D 7ED10B6531D7C8E1BC296021FC624643487034E5 && got1=1 && break
-            done
-            if [ -z "$got1" ]; then
-                fail "Failed to download PGP keys."
-            fi
-        fi
+        # note: you might need "sudo apt-get install dirmngr" for the following
+        # if the verification fails you might need to get more keys from python.org
+        # keys from https://www.python.org/downloads/#pubkeys
+        info "Importing Python dev keyring (may take a few minutes)..."
+        KEYRING_PYTHON_DEV=keyring-electroncash-build-python-dev.gpg
+        gpg -v --no-default-keyring --keyring $KEYRING_PYTHON_DEV --import \
+            "$here"/pgp/7ed10b6531d7c8e1bc296021fc624643487034e5.asc \
+            || fail "Failed to import Python release signing keys"
 
         info "Installing Python ..."
         # Install Python
@@ -181,7 +178,7 @@ prepare_wine() {
             info "Installing $msifile..."
             wget "https://www.python.org/ftp/python/$PYTHON_VERSION/win32/${msifile}.msi"
             wget "https://www.python.org/ftp/python/$PYTHON_VERSION/win32/${msifile}.msi.asc"
-            [ -z "$NOPGP" ] && verify_signature "${msifile}.msi.asc" $KEYRING_PYTHON_DEV
+            verify_signature "${msifile}.msi.asc" $KEYRING_PYTHON_DEV
             wine msiexec /i "${msifile}.msi" /qb TARGETDIR=C:/python$PYTHON_VERSION || fail "Failed to install Python component: ${msifile}"
         done
 
@@ -193,17 +190,36 @@ prepare_wine() {
         # need for pyinstaller and other parts of the build.  Using a hashed
         # requirements file hardens the build against dependency attacks.
         info "Installing build requirements from requirements-wine-build.txt ..."
-        $PYTHON -m pip install -I -r $here/requirements-wine-build.txt || fail "Failed to install build requirements"
+        $PYTHON -m pip install --no-warn-script-location -I -r $here/requirements-wine-build.txt || fail "Failed to install build requirements"
 
-        info "Installing Packages from requirements-binaries ..."
-        $PYTHON -m pip install -r ../../deterministic-build/requirements-binaries.txt || fail "Failed to install requirements-binaries"
+        info "Compiling PyInstaller bootloader with AntiVirus False-Positive Protection™ ..."
+        mkdir pyinstaller
+        (
+            cd pyinstaller
+            # Shallow clone
+            git init
+            git remote add origin $PYINSTALLER_REPO
+            git fetch --depth 1 origin $PYINSTALLER_COMMIT
+            git checkout FETCH_HEAD
+            rm -fv PyInstaller/bootloader/Windows-*/run*.exe || true  # Make sure EXEs that came with repo are deleted -- we rebuild them and need to detect if build failed
+            echo "const char *ec_tag = \"tagged by Electron-Cash@$GIT_COMMIT_HASH\";" >> ./bootloader/src/pyi_main.c
+            pushd bootloader
+            # If switching to 64-bit Windows, edit CC= below
+            python3 ./waf all CC=i686-w64-mingw32-gcc CFLAGS="-Wno-stringop-overflow -static"
+            # Note: it's possible for the EXE to not be there if the build
+            # failed but didn't return exit status != 0 to the shell (waf bug?);
+            # So we need to do this to make sure the EXE is actually there.
+            # If we switch to 64-bit, edit this path below.
+            popd
+            [ -e PyInstaller/bootloader/Windows-32bit/runw.exe ] || fail "Could not find runw.exe in target dir!"
+        ) || fail "PyInstaller bootloader build failed"
+        info "Installing PyInstaller ..."
+        $PYTHON -m pip install --no-warn-script-location ./pyinstaller || fail "PyInstaller install failed"
 
         wine "C:/python$PYTHON_VERSION/scripts/pyinstaller.exe" -v || fail "Pyinstaller installed but cannot be run."
 
-        #The below has been commented-out as our requirements-wine-build.txt already handles this
-        #info "Upgrading setuptools ..."
-        # Upgrade setuptools (so Electron-Cash can be installed later)
-        #$PYTHON -m pip install setuptools --upgrade
+        info "Installing Packages from requirements-binaries ..."
+        $PYTHON -m pip install --no-warn-script-location -r ../../deterministic-build/requirements-binaries.txt || fail "Failed to install requirements-binaries"
 
         info "Installing NSIS ..."
         # Install NSIS installer
@@ -218,20 +234,10 @@ prepare_wine() {
         mkdir -p $WINEPREFIX/drive_c/tmp
         cp libusb/MS32/dll/libusb-1.0.dll $WINEPREFIX/drive_c/tmp/ || fail "Could not copy libusb.dll to its destination"
 
-        # Install UPX
-        #wget -O upx.zip "https://downloads.sourceforge.net/project/upx/upx/3.08/upx308w.zip"
-        #unzip -o upx.zip
-        #cp upx*/upx.exe .
-
         # libsecp256k1 & libzbar
         mkdir -p $WINEPREFIX/drive_c/tmp
         cp "$here"/../secp256k1/libsecp256k1.dll $WINEPREFIX/drive_c/tmp/ || fail "Could not copy libsecp to its destination"
         cp "$here"/../zbar/libzbar-0.dll $WINEPREFIX/drive_c/tmp/ || fail "Could not copy libzbar to its destination"
-
-
-        info "Copying DLLs needed by Pyinstaller ..."
-        # add dlls needed for pyinstaller:
-        cp $WINEPREFIX/drive_c/python$PYTHON_VERSION/Lib/site-packages/PyQt5/Qt/bin/* $WINEPREFIX/drive_c/python$PYTHON_VERSION/
 
         popd
 
@@ -258,6 +264,7 @@ build_the_app() {
         NAME_ROOT=$PACKAGE  # PACKAGE comes from ../base.sh
         # These settings probably don't need any change
         export WINEPREFIX=/opt/wine64
+        export WINEDEBUG=-all
         export PYTHONDONTWRITEBYTECODE=1
 
         PYHOME=c:/python$PYTHON_VERSION
@@ -286,8 +293,8 @@ build_the_app() {
 
         # Install frozen dependencies
         info "Installing frozen dependencies ..."
-        $PYTHON -m pip install -r "$here"/../deterministic-build/requirements.txt || fail "Failed to install requirements"
-        $PYTHON -m pip install -r "$here"/../deterministic-build/requirements-hw.txt || fail "Failed to install requirements-hw"
+        $PYTHON -m pip install --no-warn-script-location -r "$here"/../deterministic-build/requirements.txt || fail "Failed to install requirements"
+        $PYTHON -m pip install --no-warn-script-location -r "$here"/../deterministic-build/requirements-hw.txt || fail "Failed to install requirements-hw"
 
         pushd $WINEPREFIX/drive_c/electroncash
         $PYTHON setup.py install || fail "Failed setup.py install"

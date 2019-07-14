@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Electrum - lightweight Bitcoin client
 # Copyright (C) 2012 thomasv@gitorious
@@ -23,12 +24,30 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import signal, sys, traceback, gc, os
+import signal, sys, traceback, gc, os, shutil
 
 try:
     import PyQt5
 except Exception:
-    sys.exit("Error: Could not import PyQt5 on Linux systems, you may try 'sudo apt-get install python3-pyqt5'")
+    if sys.platform.startswith('win'):
+        msg = ("\n\nError: Could not import PyQt5.\n"
+               "If you are running the release .exe, this is a bug (please"
+               " contact the developers in that case).\n"
+               "If you are running from source, then you may try this from the command-line:\n\n"
+               "    python -m pip install pyqt5\n\n")
+    elif sys.platform.startswith('darw'):
+        msg = ("\n\nError: Could not import PyQt5.\n"
+               "If you are running the release .app, this is a bug (please"
+               " contact the developers in that case).\n"
+               "If you are running from source, then you may try this from the command-line:\n\n"
+               "    python3 -m pip install --user -I pyqt5\n\n")
+    else:
+        msg = ("\n\nError: Could not import PyQt5.\n"
+               "You may try:\n\n"
+               "    python3 -m pip install --user -I pyqt5\n\n"
+               "Or, if on Linux Ubuntu, Debian, etc:\n\n"
+               "    sudo apt-get install python3-pyqt5\n\n")
+    sys.exit(msg)
 
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -41,6 +60,7 @@ from electroncash.util import (UserCancelled, PrintError, print_error,
                                standardize_path, finalization_print_error, Weak,
                                get_new_wallet_name)
 from electroncash import version
+from electroncash.address import Address
 
 from .installwizard import InstallWizard, GoBack
 
@@ -54,6 +74,9 @@ from .update_checker import UpdateChecker
 
 class ElectrumGui(QObject, PrintError):
     new_window_signal = pyqtSignal(str, object)
+    update_available_signal = pyqtSignal(bool)
+    cashaddr_toggled_signal = pyqtSignal()  # app-wide signal for when cashaddr format is toggled. This used to live in each ElectrumWindow instance but it was recently refactored to here.
+    cashaddr_status_button_hidden_signal = pyqtSignal(bool)  # app-wide signal for when cashaddr toggle button is hidden from the status bar
 
     instance = None
 
@@ -62,6 +85,13 @@ class ElectrumGui(QObject, PrintError):
         assert __class__.instance is None, "ElectrumGui is a singleton, yet an instance appears to already exist! FIXME!"
         __class__.instance = self
         set_language(config.get('language'))
+
+        if sys.platform in ('win32', 'cygwin'):
+            # TODO: Make using FreeType on Windows configurable
+            # Use FreeType for font rendering on Windows. This fixes rendering of the Schnorr
+            # sigil and allows us to load the Noto Color Emoji font if needed.
+            os.environ['QT_QPA_PLATFORM'] = 'windows:fontengine=freetype'
+
         # Uncomment this call to verify objects are being properly
         # GC-ed when windows are closed
         #if daemon.network:
@@ -101,13 +131,16 @@ class ElectrumGui(QObject, PrintError):
         self.plugins = plugins
         self.windows = []
         self.app = QApplication(sys.argv)
+        self.new_version_available = None
         self._set_icon()
         self._exit_if_required_pyqt_is_missing()  # This may immediately exit the app if missing required PyQt5 modules.
+        self._load_fonts()
         self.app.installEventFilter(self)
         self.timer = QTimer(self); self.timer.setSingleShot(False); self.timer.setInterval(500) #msec
         self.gc_timer = QTimer(self); self.gc_timer.setSingleShot(True); self.gc_timer.timeout.connect(ElectrumGui.gc); self.gc_timer.setInterval(500) #msec
         self.nd = None
         self._last_active_window = None  # we remember the last activated ElectrumWindow as a Weak.ref
+        Address.show_cashaddr(self.is_cashaddr())
         # Dark Theme -- ideally set this before any widgets are created.
         self.set_dark_theme_if_needed()
         # /
@@ -121,7 +154,7 @@ class ElectrumGui(QObject, PrintError):
         # /
         self.update_checker = UpdateChecker()
         self.update_checker_timer = QTimer(self); self.update_checker_timer.timeout.connect(self.on_auto_update_timeout); self.update_checker_timer.setSingleShot(False)
-        self.update_checker.got_new_version.connect(lambda x: self.show_update_checker(parent=None, skip_check=True))
+        self.update_checker.got_new_version.connect(self.on_new_version)
         # init tray
         self.dark_icon = self.config.get("dark_icon", False)
         self.tray = QSystemTrayIcon(self.tray_icon(), self)
@@ -154,16 +187,18 @@ class ElectrumGui(QObject, PrintError):
         This is because some Linux systems break up PyQt5 into multiple
         subpackages, and for instance PyQt5 QtSvg is its own package, and it
         may be missing.
-
-        This happens on Linux mint.  See #1436. '''
+        '''
         try:
             from PyQt5 import QtSvg
         except ImportError:
             # Closes #1436 -- Some "Run from source" Linux users lack QtSvg
             # (partial PyQt5 install)
-            msg = _("A required Qt module, QtSvg was not found. Please fully install all of PyQt5 5.11 or above to resolve this issue.")
+            msg = _("A required Qt module, QtSvg was not found. Please fully install all of PyQt5 5.12 or above to resolve this issue.")
             if sys.platform == 'linux':
-                msg += "\n\n" + _("On Linux, you may try:\n\npython3 -m pip install --user -I pyqt5")
+                msg += "\n\n" + _("On Linux, you may try:\n\n    python3 -m pip install --user -I pyqt5")
+                if shutil.which('apt'):
+                    msg += "\n\n" + _("On Debian-based distros, you can run:\n\n    sudo apt install python3-pyqt5.qtsvg")
+
             QMessageBox.critical(None, _("QtSvg Missing"), msg)  # this works even if app is not exec_() yet.
             self.app.exit(1)
             sys.exit(msg)
@@ -242,9 +277,22 @@ class ElectrumGui(QObject, PrintError):
         else:
             # Unconditionally set this on all other platforms as it can only
             # help and never harm, and is always available.
-            icon = QIcon(":icons/electron.ico")
+            icon = QIcon(":icons/electron.svg")
         if icon:
             self.app.setWindowIcon(icon)
+
+    def _load_fonts(self):
+        # Only load the emoji font on Linux and Windows
+        if sys.platform not in ('linux', 'win32', 'cygwin'):
+            return
+
+        # TODO: Check if we already have the needed emojis
+        # TODO: Allow the user to download a full color emoji set
+
+        emojis_ttf_path = os.path.join(os.path.dirname(__file__), 'data', 'emojis.ttf')
+
+        if QFontDatabase.addApplicationFont(emojis_ttf_path) < 0:
+            self.print_error('failed to add unicode emoji font to application fonts')
 
     def eventFilter(self, obj, event):
         ''' This event filter allows us to open bitcoincash: URIs on macOS '''
@@ -283,9 +331,9 @@ class ElectrumGui(QObject, PrintError):
 
     def tray_icon(self):
         if self.dark_icon:
-            return QIcon(':icons/electron_dark_icon.png')
+            return QIcon(':icons/electron_dark_icon.svg')
         else:
-            return QIcon(':icons/electron_light_icon.png')
+            return QIcon(':icons/electron_light_icon.svg')
 
     def toggle_tray_icon(self):
         self.dark_icon = not self.dark_icon
@@ -348,9 +396,10 @@ class ElectrumGui(QObject, PrintError):
         closed.'''
         if not new_focus_widget:
             return
-        window = QWidget.window(new_focus_widget)  # call base class because some widgets may actually override 'window' with Python attributes.
-        if isinstance(window, ElectrumWindow):
-            self._last_active_window = Weak.ref(window)
+        if isinstance(new_focus_widget, QWidget):
+            window = QWidget.window(new_focus_widget)  # call base class because some widgets may actually override 'window' with Python attributes.
+            if isinstance(window, ElectrumWindow):
+                self._last_active_window = Weak.ref(window)
 
     def start_new_window(self, path, uri):
         '''Raises the window for the wallet if it is open. Otherwise
@@ -486,6 +535,15 @@ class ElectrumGui(QObject, PrintError):
                 wizard.init_network(self.daemon.network)
                 wizard.terminate()
 
+    def on_new_version(self, newver):
+        ''' Called by the auto update check mechanism to notify
+        that a new version is available.  We propagate the signal out
+        using our own update_available_signal as well as post a message
+        to the system tray. '''
+        self.new_version_available = newver
+        self.update_available_signal.emit(True)
+        self.notify(_("A new version of Electron Cash is available: {}").format(newver))
+
     def show_update_checker(self, parent, *, skip_check = False):
         if self.warn_if_no_network(parent):
             return
@@ -508,7 +566,7 @@ class ElectrumGui(QObject, PrintError):
         if first_run:
             interval = 10.0*1e3 # do it very soon (in 10 seconds)
         else:
-            interval = 3600.0*1e3 # once per hour (in ms)
+            interval = 4.0*3600.0*1e3 # once every 4 hours (in ms)
         self.update_checker_timer.start(interval)
         self.print_error("Auto update check: interval set to {} seconds".format(interval//1e3))
 
@@ -646,6 +704,66 @@ class ElectrumGui(QObject, PrintError):
         # aboutToQuit is emitted (but following this, it should be emitted)
         if qApp.quitOnLastWindowClosed():
             qApp.quit()
+
+    def notify(self, message):
+        ''' Display a message in the system tray popup notification. On macOS
+        this is the GROWL thing. On Windows it's a balloon popup from the system
+        tray. On Linux it's usually a banner in the top of the screen.'''
+        if self.tray:
+            try:
+                # this requires Qt 5.9
+                self.tray.showMessage("Electron Cash", message, QIcon(":icons/electron.svg"), 20000)
+            except TypeError:
+                self.tray.showMessage("Electron Cash", message, QSystemTrayIcon.Information, 20000)
+
+    def is_cashaddr(self):
+        return bool(self.config.get('show_cashaddr', True))
+
+    def toggle_cashaddr(self, on = None):
+        was = self.is_cashaddr()
+        if on is None:
+            on = not was
+        else:
+            on = bool(on)
+        self.config.set_key('show_cashaddr', on)
+        Address.show_cashaddr(on)
+        if was != on:
+            self.cashaddr_toggled_signal.emit()
+
+    def is_cashaddr_status_button_hidden(self):
+        return bool(self.config.get('hide_cashaddr_button', False))
+
+    def set_cashaddr_status_button_hidden(self, b):
+        b = bool(b)
+        was = self.is_cashaddr_status_button_hidden()
+        if was != b:
+            self.config.set_key('hide_cashaddr_button', bool(b))
+            self.cashaddr_status_button_hidden_signal.emit(b)
+
+    def test_emoji_fonts(self) -> bool:
+        ''' Returns True if we can render all of the emoji fonts we need,
+        False otherwise. This needs to be called after the QApplication has
+        already been instantiated, which is why it's an instance method. Even
+        though this contains a loop over many characters we need, it ends up
+        having the following performance: first run is ~130 msec, subsequent
+        runs are ~10 msec total (on moderate hardware).'''
+        from electroncash import cashacct
+        #from . import network_dialog as nd
+
+        fontm = QFontMetrics(QFont())
+        fontm_mono = QFontMetrics(QFont(MONOSPACE_FONT))
+
+        emojis = set(cashacct.emoji_list)
+        # Note the below characters are not emojis, so they do not need to
+        # be included in this test. The rationale is these characters for
+        # the network dialog are not 100% critical to the UI, and they also
+        # are not in the solution we will recommend:install NotoColorEmoji.ttf.
+        # Uncomment if you wish to also check for these characters, however.
+        #emojis |= set(ord(ch) for ch in nd.ServerFlag.Symbol + nd.ServerFlag.UnSymbol if ch)
+        for uval in emojis:
+            if not fontm.inFontUcs4(uval) or not fontm_mono.inFontUcs4(uval):
+                return False
+        return True
 
     def main(self):
         try:

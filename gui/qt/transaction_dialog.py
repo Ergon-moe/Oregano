@@ -34,15 +34,17 @@ from PyQt5.QtWidgets import *
 
 from electroncash.address import Address, PublicKey, ScriptOutput
 from electroncash.bitcoin import base_encode
-from electroncash.i18n import _
+from electroncash.i18n import _, ngettext
 from electroncash.plugins import run_hook
+from electroncash import web
+from electroncash import cashacct
 
 from electroncash.util import bfh, Weak, PrintError
 from .util import *
 
 dialogs = []  # Otherwise python randomly garbage collects the dialogs...
 
-if sys.platform.lower().startswith('win'):
+if False:
     # NB: on Qt for Windows the 'ⓢ' symbol looks aliased and bad. So we do this
     # for windows.
     SCHNORR_SIGIL = "(S)"
@@ -80,6 +82,9 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
         self.cashaddr_signal_slots = []
         self._dl_pct = None
         self._closed = False
+        self.tx_hash = self.tx._txid(self.tx.raw) if self.tx.raw else None
+        self.tx_height = self.wallet.get_tx_height(self.tx_hash)[0] or None
+        self.block_hash = None
 
         self.setMinimumWidth(750)
         self.setWindowTitle(_("Transaction"))
@@ -108,6 +113,24 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
         vbox.addWidget(self.size_label)
         self.fee_label = QLabel()
         vbox.addWidget(self.fee_label)
+
+        for l in (self.tx_desc, self.status_label, self.date_label, self.amount_label, self.size_label, self.fee_label):
+            # make these labels selectable by mouse in case user wants to copy-paste things in tx dialog
+            l.setTextInteractionFlags(l.textInteractionFlags() | Qt.TextSelectableByMouse)
+
+        def open_be_url(link):
+            if link:
+                try:
+                    kind, thing = link.split(':')
+                    url = web.BE_URL(self.main_window.config, kind, thing)
+                except:
+                    url = None
+                if url:
+                    webopen( url )
+                else:
+                    self.show_error(_('Unable to open in block explorer. Please be sure your block explorer is configured correctly in preferences.'))
+
+        self.status_label.linkActivated.connect(open_be_url)
 
         self.add_io(vbox)
 
@@ -143,6 +166,10 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
         hbox.addStretch(1)
         hbox.addLayout(Buttons(*self.buttons))
         vbox.addLayout(hbox)
+
+        if self.tx_height:
+            # this avoids downloading the block_height info if we already have it.
+            self.tx.ephemeral['block_height'] = self.tx_height
 
         self.throttled_update_sig.connect(self.throttled_update, Qt.QueuedConnection)
         self.initiate_fetch_input_data(True)
@@ -195,7 +222,8 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
 
 
     def got_verified_tx(self, event, args):
-        if event == 'verified' and args[0] == self.tx.txid():
+        if ( (event == 'verified2' and args[1] == self.tx_hash)
+                or (event == 'ca_verified_tx' and args[1].txid == self.tx_hash) ):
             self.update()
 
     def update_tx_if_in_wallet(self):
@@ -229,7 +257,7 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
                 try: parent.labels_updated_signal.disconnect(self.update_tx_if_in_wallet)
                 except TypeError: pass
                 for slot in self.cashaddr_signal_slots:
-                    try: parent.cashaddr_toggled_signal.disconnect(slot)
+                    try: parent.gui_object.cashaddr_toggled_signal.disconnect(slot)
                     except TypeError: pass
                 self.cashaddr_signal_slots = []
 
@@ -286,7 +314,7 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
         fileName = self.main_window.getSaveFileName(_("Select where to save your signed transaction"), name, "*.txn")
         if fileName:
             tx_dict = self.tx.as_dict()
-            with open(fileName, "w+") as f:
+            with open(fileName, "w+", encoding='utf-8') as f:
                 f.write(json.dumps(tx_dict, indent=4) + '\n')
             self.show_message(_("Transaction saved successfully"))
             self.saved = True
@@ -313,6 +341,8 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
         base_unit = self.main_window.base_unit()
         format_amount = self.main_window.format_amount
         tx_hash, status, label, can_broadcast, amount, fee, height, conf, timestamp, exp_n = self.wallet.get_tx_info(self.tx)
+        self.tx_height = height or self.tx.ephemeral.get('block_height') or None
+        self.tx_hash = tx_hash
         desc = label or desc
         size = self.tx.estimated_size()
         self.broadcast_button.setEnabled(can_broadcast)
@@ -327,7 +357,13 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
         else:
             self.tx_desc.setText(_("Description") + ': ' + desc)
             self.tx_desc.show()
-        self.status_label.setText(_('Status:') + ' ' + status)
+
+        if self.tx_height and tx_hash:
+            status_extra = '&nbsp;&nbsp;( ' + _("Mined in block") + f': <a href="tx:{tx_hash}">{self.tx_height}</a>' + ' )'
+        else:
+            status_extra = ''
+
+        self.status_label.setText(_('Status:') + ' ' + status + status_extra)
 
         if timestamp:
             time_str = datetime.datetime.fromtimestamp(timestamp).isoformat(' ')[:-3]
@@ -345,11 +381,12 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
             amount_str = _("Amount received:") + ' %s'% format_amount(amount) + ' ' + base_unit
         else:
             amount_str = _("Amount sent:") + ' %s'% format_amount(-amount) + ' ' + base_unit
-        size_str = _("Size:") + ' %d bytes'% size
+        size_str = _("Size: {size} bytes").format(size=size)
         fee_str = _("Fee") + ": "
         if fee is not None:
-            fee_str += format_amount(fee) + ' ' + base_unit
-            fee_str += '  ( %s ) '%  self.main_window.format_fee_rate(fee/size*1000)
+            fee_str = _("Fee: {fee_amount} {fee_unit} ( {fee_rate} )")
+            fee_str = fee_str.format(fee_amount=format_amount(fee), fee_unit=base_unit,
+                                     fee_rate=self.main_window.format_fee_rate(fee/size*1000))
             dusty_fee = self.tx.ephemeral.get('dust_to_fee', 0)
             if dusty_fee:
                 fee_str += ' <font color=#999999>' + (_("( %s in dust was added to fee )") % format_amount(dusty_fee)) + '</font>'
@@ -364,7 +401,8 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
         run_hook('transaction_dialog_update', self)
 
     def is_fetch_input_data(self):
-        return bool(self.wallet.network and self.main_window.config.get('fetch_input_data', False))
+        # default on if network.auto_connect is True, otherwise use config value.
+        return bool(self.wallet.network and self.main_window.config.get('fetch_input_data', self.wallet.network.auto_connect))
 
     def set_fetch_input_data(self, b):
         self.main_window.config.set_key('fetch_input_data', bool(b))
@@ -382,7 +420,11 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
         hbox = QHBoxLayout()
         hbox.setContentsMargins(0,0,0,0)
 
-        hbox.addWidget(QLabel(_("Inputs") + ' (%d)'%len(self.tx.inputs())))
+        num_inputs = len(self.tx.inputs())
+        inputs_lbl_text = ngettext("Input", "Inputs ({num_inputs})", num_inputs)
+        if num_inputs > 1:
+            inputs_lbl_text = inputs_lbl_text.format(num_inputs=num_inputs)
+        hbox.addWidget(QLabel(inputs_lbl_text))
 
 
         hbox.addSpacerItem(QSpacerItem(20, 0))  # 20 px padding
@@ -423,7 +465,12 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
         hbox = QHBoxLayout()
         hbox.setContentsMargins(0,0,0,0)
         vbox.addLayout(hbox)
-        hbox.addWidget(QLabel(_("Outputs") + ' (%d)'%len(self.tx.outputs())))
+
+        num_outputs = len(self.tx.outputs())
+        outputs_lbl_text = ngettext("Output", "Outputs ({num_outputs})", num_outputs)
+        if num_outputs > 1:
+            outputs_lbl_text = outputs_lbl_text.format(num_outputs=num_outputs)
+        hbox.addWidget(QLabel(outputs_lbl_text))
 
         box_char = "█"
         self.recv_legend = QLabel("<font color=" + ColorScheme.GREEN.as_color(background=True).name() + ">" + box_char + "</font> = " + _("Receiving Address"))
@@ -450,7 +497,7 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
         o_text.setReadOnly(True)
         vbox.addWidget(o_text)
         self.cashaddr_signal_slots.append(self.update_io)
-        self.main_window.cashaddr_toggled_signal.connect(self.update_io)
+        self.main_window.gui_object.cashaddr_toggled_signal.connect(self.update_io)
         self.update_io()
 
     def update_io(self):
@@ -524,12 +571,52 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
 
         o_text.clear()
         cursor = o_text.textCursor()
+        ca_script = None
+        opret_ct = 0
         for i, tup in enumerate(self.tx.outputs()):
+            my_addr_in_script = None
             typ, addr, v = tup
             for fmt in (ext, rec, chg, lnk):
                 fmt.setAnchorNames([f"output {i}"])  # anchor name for this line (remember input#); used by context menu creation
+            # CashAccounts support
+            if isinstance(addr, ScriptOutput) and addr.is_opreturn():
+                opret_ct += 1
+                if isinstance(addr, cashacct.ScriptOutput):
+                    ca_script = addr
+                    my_addr_in_script = (self.wallet.is_mine(ca_script.address) and ca_script.address) or None
+                    if not addr.is_complete() and self.tx_hash and self.tx_height and self.tx_height >= cashacct.activation_height:
+                        # The below will fail and return None if the height is less than
+                        # networks.net.VERIFICATION_BLOCK_HEIGHT - 146 and if we lack
+                        # this header.
+                        # This is not catastrophic -- it just means the ScriptOutput
+                        # won't be as pretty with the emoji and collision_hash.
+                        # In many cases however we will have the header if the
+                        # CashAccounts tx being viewed was verified by us.
+                        self.block_hash = self.block_hash or self.wallet.get_block_hash(self.tx_height) or None
+                        if self.block_hash:
+                            # make it complete right away if we have the block_hash for pretty UI printing a few lines below...
+                            ca_script.make_complete(block_height=self.tx_height, block_hash=self.block_hash, txid=self.tx_hash)
+                    else:
+                        # "forget" the script in this case so we don't keep
+                        # processing it further below..
+                        ca_script = None
+            # Format Cash Accounts address *in* script to be highlighted with
+            # our preferred yellow/green for change/receiving and also
+            # linkify it.
             addrstr = addr.to_ui_string()
-            cursor.insertText(addrstr, text_format(addr))
+            my_addr_in_script_str = my_addr_in_script and my_addr_in_script.to_ui_string()
+            idx = my_addr_in_script_str and addrstr.find(my_addr_in_script_str)
+            if idx is not None and idx > -1:
+                cursor.insertText(addrstr[:idx], text_format(addr))
+                len2 = idx+len(my_addr_in_script_str)
+                cursor.insertText(addrstr[idx:len2], text_format(my_addr_in_script))
+                cursor.insertText(addrstr[len2:], text_format(addr))
+            else:
+                # Regular format. Was not a Cash Accounts script, just
+                # any old Address/ScriptOutput/PublicKey output.
+                cursor.insertText(addrstr, text_format(addr))
+            # /CashAccounts support
+            # Mark B. Lundeberg's patented output formatter logic™
             if v is not None:
                 if len(addrstr) > 42: # for long outputs, make a linebreak.
                     cursor.insertBlock()
@@ -539,6 +626,28 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
                 cursor.insertText(' '*(43 - len(addrstr)), ext)
                 cursor.insertText(format_amount(v), ext)
             cursor.insertBlock()
+            # /Mark B. Lundeberg's patented output formatting logic™
+
+        # Cash Accounts support
+        if ca_script:
+            # This branch is taken if script.is_complete() was False initially above...
+            if opret_ct == 1:  # <-- make sure only 1 OP_RETURN appears in the tx as per Cash Accounts spec
+                if ca_script.is_complete():
+                    # add tx to cashaccts ext tx's and verify, since user initiated
+                    # a UI action to open the TX, so maybe they are interested
+                    # in this particular cashacct registration
+                    self.print_error("adding ext tx to Cash Accounts")
+                    self.wallet.cashacct.add_ext_tx(self.tx_hash, ca_script)
+                else:
+                    # Not complete -- kick off ext verifier anyway
+                    # We will get an update() signal should it verify ok...
+                    # At which point it may become is_complete() and UI can
+                    # display all the info.
+                    self.print_error("adding incomplete tx to Cash Accounts")
+                    self.wallet.cashacct.add_ext_incomplete_tx(self.tx_hash, self.tx_height, ca_script)
+            else:
+                self.print_error(f"Encountered more than 1 OP_RETURN script in TX {self.tx_hash} with Cash Accounts registrations in it, ignoring registration script")
+        # /Cash Accounts support
 
         # make the change & receive legends appear only if we used that color
         self.recv_legend.setVisible(bool(rec_ct))
@@ -653,12 +762,19 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
             # figure out which output they right-clicked on .. output lines have an anchor named "output N"
             i = int(name.split()[1])  # split "output N", translate N -> int
             ignored, addr, value = (self.tx.outputs())[i]
+            ca_script = (isinstance(addr, cashacct.ScriptOutput) and addr) or None
             menu.addAction(_("Output") + " #" + str(i)).setDisabled(True)
             menu.addSeparator()
             self._add_addr_to_io_menu_lists_for_widget(addr, show_list, copy_list, o_text)
             if isinstance(value, int):
                 value_fmtd = self.main_window.format_amount(value)
                 copy_list += [ ( _("Copy Amount"), lambda: self._copy_to_clipboard(value_fmtd, o_text) ) ]
+            if ca_script:
+                copy_list += [ ( _("Copy Address (Embedded)"), lambda: self._copy_to_clipboard(ca_script.address.to_ui_string(), o_text) ) ]
+                if ca_script.is_complete():
+                    text_getter = lambda: self.wallet.cashacct.fmt_info(cashacct.Info.from_script(ca_script, self.tx_hash))
+                    text_getter()  # go out to network to cache the shortest encoding for cash account name ahead of time...
+                    copy_list += [ ( _("Copy Cash Account"), lambda: self._copy_to_clipboard(text_getter(), o_text) ) ]
         except (TypeError, ValueError, IndexError, KeyError) as e:
             self.print_error("Outputs right-click menu exception:", repr(e))
 

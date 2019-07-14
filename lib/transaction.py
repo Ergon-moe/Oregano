@@ -98,6 +98,11 @@ class BCDataStream(object):
 
         return ''
 
+    def can_read_more(self) -> bool:
+        if not self.input:
+            return False
+        return self.read_cursor < len(self.input)
+
     def read_boolean(self): return self.read_bytes(1)[0] != chr(0)
     def read_int16(self): return self._read_num('<h')
     def read_uint16(self): return self._read_num('<H')
@@ -287,7 +292,7 @@ def get_address_from_output_script(_bytes):
         print_error('{}: Failed to parse tx ouptut {}. Exception was: {}'.format(__name__, _bytes.hex(), repr(e)))
         pass
 
-    return TYPE_SCRIPT, ScriptOutput(bytes(_bytes))
+    return TYPE_SCRIPT, ScriptOutput.protocol_factory(bytes(_bytes))
 
 
 def parse_input(vds):
@@ -344,11 +349,12 @@ def deserialize(raw):
     start = vds.read_cursor
     d['version'] = vds.read_int32()
     n_vin = vds.read_compact_size()
-    assert n_vin != 0
     d['inputs'] = [parse_input(vds) for i in range(n_vin)]
     n_vout = vds.read_compact_size()
     d['outputs'] = [parse_output(vds, i) for i in range(n_vout)]
     d['lockTime'] = vds.read_uint32()
+    if vds.can_read_more():
+        raise SerializationError('extra junk at the end')
     return d
 
 
@@ -943,6 +949,7 @@ class Transaction:
         t0 = time.time()
         t = None
         cls = __class__
+        self_txid = self.txid()
         def doIt():
             '''
             This function is seemingly complex, but it's really conceptually
@@ -1023,7 +1030,8 @@ class Transaction:
             # Now, download the tx's we didn't find above if network is available
             # and caller said it's ok to go out ot network.. otherwise just return
             # what we have
-            if use_network and eph.get('_fetch') == t and wallet.network and need_dl_txids:
+            if use_network and eph.get('_fetch') == t and wallet.network:
+                callback_funcs_to_cancel = set()
                 try:  # the whole point of this try block is the `finally` way below...
                     prog(-1)  # tell interested code that progress is now 0%
                     # Next, queue the transaction.get requests, spreading them
@@ -1060,7 +1068,33 @@ class Transaction:
                         wallet.network.queue_request('blockchain.transaction.get', [txid],
                                                      interface='random',
                                                      callback=put_in_queue_and_cache)
+                        callback_funcs_to_cancel.add(put_in_queue_and_cache)
                         q_ct += 1
+
+                    def get_bh():
+                        if eph.get('block_height'):
+                            return False
+                        lh = wallet.network.get_server_height() or wallet.get_local_height()
+                        def got_tx_info(r):
+                            q.put('block_height')  # indicate to other thread we got the block_height reply from network
+                            try:
+                                confs = r.get('result').get('confirmations', 0)  # will raise of error reply
+                                if confs and lh:
+                                    # the whole point.. was to get this piece of data.. the block_height
+                                    eph['block_height'] = bh = lh - confs + 1
+                                    print_error('fetch_input_data: got tx block height', bh)
+                                else:
+                                    print_error('fetch_input_data: tx block height could not be determined')
+                            except Exception as e:
+                                print_error('fetch_input_data: get_bh fail:', str(e), r)
+                        if self_txid:
+                            wallet.network.queue_request('blockchain.transaction.get', [self_txid,True],
+                                                         interface=None, callback=got_tx_info)
+                            callback_funcs_to_cancel.add(got_tx_info)
+                            return True
+                    if get_bh():
+                        q_ct += 1
+
                     class ErrorResp(Exception):
                         pass
                     for i in range(q_ct):
@@ -1071,8 +1105,14 @@ class Transaction:
                             if eph.get('_fetch') != t:
                                 # early abort from func, canceled
                                 break
+                            if r == 'block_height':
+                                # ignore block_height reply from network.. was already processed in other thread in got_tx_info above
+                                continue
                             if r.get('error'):
-                                raise ErrorResp(r.get('error').get('message'))
+                                msg = r.get('error')
+                                if isinstance(msg, dict):
+                                    msg = msg.get('message') or 'unknown error'
+                                raise ErrorResp(msg)
                             rawhex = r['result']
                             txid = r['params'][0]
                             assert txid not in bad_txids, "txid marked bad"  # skip if was marked bad by our callback code
@@ -1089,12 +1129,13 @@ class Transaction:
                         except queue.Empty:
                             print_error("fetch_input_data: timed out after 10.0s fetching from network, giving up.")
                             break
-                        except (AssertionError, ValueError, TypeError, KeyError, IndexError, ErrorResp) as e:
+                        except Exception as e:
                             print_error("fetch_input_data:", repr(e))
                 finally:
                     # force-cancel any extant requests -- this is especially
                     # crucial on error/timeout/failure.
-                    wallet.network.cancel_requests(put_in_queue_and_cache)
+                    for func in callback_funcs_to_cancel:
+                        wallet.network.cancel_requests(func)
             if len(inps) == len(self._inputs) and eph.get('_fetch') == t:  # sanity check
                 eph.pop('_fetch', None)  # potential race condition here, popping wrong t -- but in practice w/ CPython threading it won't matter
                 print_error("fetch_input_data: elapsed {} sec".format(time.time()-t0))

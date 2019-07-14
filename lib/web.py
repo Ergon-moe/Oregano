@@ -31,7 +31,7 @@ import urllib
 from .address import Address
 from . import bitcoin
 from . import networks
-from .util import format_satoshis_plain
+from .util import format_satoshis_plain, bh2u, print_error
 
 
 DEFAULT_EXPLORER = "Blockchair.com"
@@ -39,16 +39,16 @@ DEFAULT_EXPLORER = "Blockchair.com"
 mainnet_block_explorers = {
     'Bitcoin.com': ('https://explorer.bitcoin.com/bch',
                     Address.FMT_CASHADDR,
-                    {'tx': 'tx', 'addr': 'address'}),
+                    {'tx': 'tx', 'addr': 'address', 'block' : 'block'}),
     'Blockchair.com': ('https://blockchair.com/bitcoin-cash',
                        Address.FMT_CASHADDR,
-                       {'tx': 'transaction', 'addr': 'address'}),
+                       {'tx': 'transaction', 'addr': 'address', 'block' : 'block'}),
     'BTC.com': ('https://bch.btc.com',
                        Address.FMT_CASHADDR,
-                       {'tx': '', 'addr': ''}),
+                       {'tx': '', 'addr': '', 'block' : 'block'}),
     'ViaBTC.com': ('https://www.viabtc.com/bch',
                    Address.FMT_CASHADDR,
-                   {'tx': 'tx', 'addr': 'address'}),
+                   {'tx': 'tx', 'addr': 'address', 'block' : 'block'}),
 }
 
 DEFAULT_EXPLORER_TESTNET = 'Bitcoin.com'
@@ -56,7 +56,7 @@ DEFAULT_EXPLORER_TESTNET = 'Bitcoin.com'
 testnet_block_explorers = {
     'Bitcoin.com'   : ('https://explorer.bitcoin.com/tbch',
                        Address.FMT_LEGACY,  # For some reason testnet expects legacy and fails on bchtest: addresses.
-                       {'tx': 'tx', 'addr': 'address'}),
+                       {'tx': 'tx', 'addr': 'address', 'block' : 'block'}),
 }
 
 def BE_info():
@@ -67,7 +67,7 @@ def BE_info():
 def BE_tuple(config):
     infodict = BE_info()
     return (infodict.get(BE_from_config(config))
-            or infodict.get(BE_default_explorer()) # In case block explorer in config is bad/no longet valid
+            or infodict.get(BE_default_explorer()) # In case block explorer in config is bad/no longer valid
            )
 
 def BE_default_explorer():
@@ -121,7 +121,7 @@ def urlencode(s):
 
 def urldecode(url):
     ''' Inverse of urlencode '''
-    return utllib.parse.unquote(url)
+    return urllib.parse.unquote(url)
 
 def parse_URI(uri, on_pr=None):
     if ':' not in uri:

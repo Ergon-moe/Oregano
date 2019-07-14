@@ -104,7 +104,7 @@ info "Installing PyInstaller"
 mkdir -p $BUILDDIR
 curl -L https://github.com/cculianu/pyinstaller/releases/download/3.4AppleEventsCodeSign/PyInstaller_3.4+AppleEvents+CodeSign.zip > $BUILDDIR/PyInstaller34_AECS.zip
 verify_hash $BUILDDIR/PyInstaller34_AECS.zip 543b2d98847f99df45d23e344c85acf3bfc5c057c95c09f444fd1b6b2cae749c
-python3 -m pip install $BUILDDIR/PyInstaller34_AECS.zip -I --user && pyenv rehash \
+python3 -m pip install $BUILDDIR/PyInstaller34_AECS.zip --user && pyenv rehash \
     || fail "Could not install PyInstaller"
 
 info "Using these versions for building $PACKAGE:"  # NB: PACKAGE var comes from ../base.sh
@@ -158,7 +158,7 @@ cp -fp contrib/secp256k1/.libs/libsecp256k1.0.dylib contrib/osx || fail "Could n
 
 info "Installing requirements..."
 python3 -m pip install -Ir ./contrib/deterministic-build/requirements.txt --user && \
-python3 -m pip install -Ir ./contrib/deterministic-build/requirements-binaries.txt --user || \
+python3 -m pip install -Ir ./contrib/deterministic-build/requirements-binaries-osx.txt --user || \
 fail "Could not install requirements"
 
 info "Installing hardware wallet requirements..."

@@ -30,9 +30,10 @@ from electroncash.plugins import run_hook
 class UTXOList(MyTreeWidget):
     filter_columns = [0, 2]  # Address, Label
     col_output_point = 4  # <-- index of the 'Output point' column. make sure to update this if you modify the header below...
+    default_sort = MyTreeWidget.SortSpec(2, Qt.DescendingOrder)
 
     def __init__(self, parent=None):
-        MyTreeWidget.__init__(self, parent, self.create_menu, [ _('Address'), _('Label'), _('Amount'), _('Height'), _('Output point')], 1, deferred_updates=True)
+        MyTreeWidget.__init__(self, parent, self.create_menu, [ _('Address'), _('Label'), _('Amount'), _('Height'), _('Output point')], 1, deferred_updates=True, save_sort_settings=True)
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.setSortingEnabled(True)
         # force attributes to always be defined, even if None, at construction.
@@ -43,6 +44,10 @@ class UTXOList(MyTreeWidget):
         self.lightBlue = QColor('lightblue') if not ColorScheme.dark_scheme else QColor('blue')
         self.blue = ColorScheme.BLUE.as_color(True)
         self.cyanBlue = QColor('#3399ff')
+        self.cleaned_up = False
+
+    def clean_up(self):
+        self.cleaned_up = True
 
     def get_name(self, x):
         return x.get('prevout_hash') + ":%d"%x.get('prevout_n')
@@ -52,7 +57,7 @@ class UTXOList(MyTreeWidget):
 
     @rate_limited(1.0, ts_after=True) # performance tweak -- limit updates to no more than oncer per second
     def update(self):
-        if self.wallet and (not self.wallet.thread or not self.wallet.thread.isRunning()):
+        if self.cleaned_up:
             # short-cut return if window was closed and wallet is stopped
             return
         super().update()
