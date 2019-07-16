@@ -19,10 +19,10 @@ RUN filename=sdk-tools-linux-4333796.zip && \
 # the build process will automatically download it.
 RUN yes | android-sdk/tools/bin/sdkmanager "platforms;android-28"
 
-# make_locale
+# For generate_strings.py.
 RUN apt-get update && \
     apt-get install -y python3 python3-pip && \
-    pip3 install requests
+    pip3 install polib requests
 COPY contrib/make_locale contrib/
 COPY gui gui
 COPY ios/ElectronCash/electroncash_gui/ios_native ios/ElectronCash/electroncash_gui/ios_native

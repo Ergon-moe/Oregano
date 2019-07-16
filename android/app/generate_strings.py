@@ -3,22 +3,26 @@
 # Generates strings.xml files from the gettext files. This script is run automatically by the
 # Gradle task `generateStrings`.
 #
-# This script has no special requirements, but it runs contrib/make_locale, which requires
-# the Python package `requests`, and the OS package `gettext`.
+# This script requires the package `polib`. It also runs contrib/make_locale, which requires
+# the package `requests`, and the external commands `xgettext` and `msgfmt`.
 
 import argparse
 from collections import Counter, defaultdict
 from datetime import datetime
-import gettext
 import os
 from os.path import abspath, basename, dirname, isdir, join
 import re
 from subprocess import run
 import sys
 
+# We use polib because we need msgid_plural, which the standard library gettext module discards
+# during parsing of .mo files.
+import polib
+
 
 SCRIPT_NAME = basename(__file__)
 EC_ROOT = abspath(join(dirname(__file__), "../.."))
+
 
 JAVA_KEYWORDS = set([
     "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class",
@@ -36,6 +40,29 @@ KOTLIN_KEYWORDS = set([  # "Hard" keywords only.
 KEYWORDS = JAVA_KEYWORDS | KOTLIN_KEYWORDS
 
 
+# Map from gettext plural formula to Android quantity keywords. This will have to be extended
+# as plural translations are added in more languages. Android uses the CLDR rules from
+# http://www.unicode.org/cldr/charts/25/supplemental/language_plural_rules.html.
+QUANTITIES = {
+    # e.g. zh
+    "0": {
+        0: "other"
+    },
+
+    # e.g. de
+    "(n != 1)": {
+        0: "one",
+        1: "other"
+    },
+
+    # e.g. fr
+    "(n > 1)": {
+        0: "one",   # For these languages, "one" includes zero (see CLDR link above).
+        1: "other"
+    }
+}
+
+
 def main():
     args = parse_args()
     if not args.no_download:
@@ -43,26 +70,16 @@ def main():
         run([sys.executable, join(EC_ROOT, "contrib/make_locale")], check=True)
 
     locale_dir = join(EC_ROOT, "lib/locale")
-    src_strings = set()
     lang_strings = defaultdict(list)
     for lang_region in [name for name in os.listdir(locale_dir)
                         if isdir(join(locale_dir, name))]:
         lang, region = lang_region.split("_")
-        trans = gettext.translation("electron-cash", locale_dir, [lang_region])
-        catalog = {src_str: tgt_str for src_str, tgt_str in trans._catalog.items()
-                   if not is_excluded(src_str)}
+        catalog = read_catalog(join(locale_dir, lang_region, "LC_MESSAGES",
+                                    "electron-cash.mo"))
         lang_strings[lang].append((region, catalog))
-        src_strings.update(catalog)
 
+    src_strings = read_catalog(join(locale_dir, "messages.pot"))
     ids = make_ids(src_strings)
-
-    # The region with the most translations is output without a country code so it will act as
-    # a fallback for the others.
-    #
-    # This doesn't entirely work for Chinese. Apparently Android 7 and later treats traditional
-    # and simplified Chinese as unrelated languages. Since it interprets "zh" as being
-    # simplified, it will never use it in any traditional locale, preferring English instead
-    # (https://gist.github.com/amake/0ac7724681ac1c178c6f95a5b09f03ce).
     for lang, region_strings in lang_strings.items():
         region_strings.sort(key=region_order, reverse=True)
         for i, (region, strings) in enumerate(region_strings):
@@ -71,9 +88,56 @@ def main():
 
     # The main strings.xml should be generated last, because this script will only be
     # automatically run if it's missing.
-    write_xml("", {s: s for s in src_strings}, ids)
+    write_xml("", src_strings, ids)
 
 
+def read_catalog(filename):
+    try:
+        is_pot = filename.endswith(".pot")
+        f = (polib.mofile if filename.endswith(".mo") else polib.pofile)(filename)
+        pf = f.metadata.get("Plural-Forms")
+        if pf is None:
+            quantities = None
+        else:
+            match = re.search(r"plural=(.+?);", pf)
+            if not match:
+                raise Exception("Failed to parse Plural-Forms")
+            quantities = QUANTITIES.get(match.group(1))
+
+        catalog = {}
+        for entry in f:
+            try:
+                if is_excluded(entry.msgid):
+                    continue
+                if entry.msgid_plural:
+                    if is_pot:
+                        catalog[entry.msgid] = {"one": entry.msgid,
+                                                "other": entry.msgid_plural}
+                    else:
+                        if quantities is None:
+                            raise Exception("Plural formula unknown: add it to QUANTITIES "
+                                            "in " + SCRIPT_NAME)
+                        catalog[entry.msgid] = {quantities[i]: s
+                                                for i, s in entry.msgstr_plural.items()}
+                else:
+                    catalog[entry.msgid] = entry.msgid if is_pot else entry.msgstr
+            except Exception:
+                raise Exception("Failed to process entry '{}'".format(entry.msgid))
+        return catalog
+
+    except Exception:
+        raise Exception("Failed to process '{}'".format(filename))
+
+
+# The region with the most translations is output without a country code so it will act as
+# a fallback for the others.
+#
+# Apparently Android 7 and later treats traditional and simplified Chinese as unrelated
+# languages. Since it interprets "zh" as being simplified, it will never use it in any
+# traditional locale, preferring English instead
+# (https://gist.github.com/amake/0ac7724681ac1c178c6f95a5b09f03ce). We work around this by
+# giving priority to zh_CN (simplified Chinese), so it is always output to in values-zh,
+# irrespective of how many translations it contains.
 def region_order(item):
     region, strings = item
     return (region == "CN",   # "zh" must always be simplified Chinese: see comment above.
@@ -143,11 +207,6 @@ class DuplicateStringError(Exception):
 
 # Returns an identifier generated from every word in the given string.
 def str_to_id(s, *, lower, squash):
-    if not isinstance(s, str):
-        # For plural forms (which Electron Cash currently doesn't use), gettext returns a (str,
-        # int) tuple.
-        raise TypeError("{!r} is not a string".format(s))
-
     if lower:
         s = s.lower()
     if squash:
@@ -181,10 +240,18 @@ def write_xml(res_suffix, strings, ids):
         print('<!-- Generated by {} at {} -->'.format(SCRIPT_NAME, timestamp), file=f)
         print('<!-- DO NOT EDIT: edit the source Python files instead. -->', file=f)
         print('<resources>', file=f)
-        for id, s in sorted(((ids[src_str], str_for_xml(tgt_str))
-                             for src_str, tgt_str in strings.items()),
-                            key=lambda x: case_insensitive(x[0])):
-            print('    <string name="{}">{}</string>'.format(id, s), file=f)
+        for id, tgt in sorted(((ids[src_str], tgt)
+                               for src_str, tgt in strings.items()),
+                              key=lambda x: case_insensitive(x[0])):
+            if isinstance(tgt, dict):
+                print('    <plurals name="{}">'.format(id), file=f)
+                for quantity, s in tgt.items():
+                    print('        <item quantity="{}">{}</item>'
+                          .format(quantity, str_for_xml(s)), file=f)
+                print('    </plurals>', file=f)
+            else:
+                print('    <string name="{}">{}</string>'.format(id, str_for_xml(tgt)), file=f)
+
         print('</resources>', file=f)
 
 
