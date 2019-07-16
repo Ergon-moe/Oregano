@@ -107,20 +107,32 @@ def read_catalog(filename):
         catalog = {}
         for entry in f:
             try:
-                if is_excluded(entry.msgid):
+                msgid = entry.msgid
+                if is_excluded(msgid):
                     continue
+
+                # Replace Python str.format syntax with Java String.format syntax.
+                keywords = re.findall(r"\{(\w+)\}", msgid)
+                def fix_format(s):
+                    s = s.replace("{}", "%s")
+                    for k in keywords:
+                        s = s.replace("{" + k + "}",
+                                      "%{}$s".format(keywords.index(k) + 1))
+                    return s
+
+                msgid = fix_format(msgid)
                 if entry.msgid_plural:
                     if is_pot:
-                        catalog[entry.msgid] = {"one": entry.msgid,
-                                                "other": entry.msgid_plural}
+                        catalog[msgid] = {"one": msgid,
+                                          "other": fix_format(entry.msgid_plural)}
                     else:
                         if quantities is None:
                             raise Exception("Plural formula unknown: add it to QUANTITIES "
                                             "in " + SCRIPT_NAME)
-                        catalog[entry.msgid] = {quantities[i]: s
-                                                for i, s in entry.msgstr_plural.items()}
+                        catalog[msgid] = {quantities[i]: fix_format(s)
+                                          for i, s in entry.msgstr_plural.items()}
                 else:
-                    catalog[entry.msgid] = entry.msgid if is_pot else entry.msgstr
+                    catalog[msgid] = msgid if is_pot else fix_format(entry.msgstr)
             except Exception:
                 raise Exception("Failed to process entry '{}'".format(entry.msgid))
         return catalog
@@ -207,9 +219,12 @@ class DuplicateStringError(Exception):
 
 # Returns an identifier generated from every word in the given string.
 def str_to_id(s, *, lower, squash):
+    s = s.replace("'", "")  # Combine contractions.
     if lower:
         s = s.lower()
+
     if squash:
+        s = re.sub(r"%\S+", "", s)  # Remove placeholders.
         pattern = r"\W+"
         lstrip = "0123456789_"
         rstrip = "_"
@@ -217,8 +232,7 @@ def str_to_id(s, *, lower, squash):
         pattern = r"\W"
         lstrip = "0123456789"
         rstrip = ""
-    id = (re.sub(pattern, "_", s.replace("'", ""),  # Combine contractions.
-                 flags=re.ASCII)
+    id = (re.sub(pattern, "_", s, flags=re.ASCII)  # Remove invalid characters.
           .lstrip(lstrip)
           .rstrip(rstrip))
     if id in KEYWORDS:
@@ -267,9 +281,6 @@ XML_REPLACEMENTS = [
     ("'", r"\'"),
     ('"', r'\"'),
     ("\n", r"\n"),
-
-    # Replace Python str.format syntax with Java String.format syntax.
-    ("{}", "%s"),
 ]
 
 def str_for_xml(s):

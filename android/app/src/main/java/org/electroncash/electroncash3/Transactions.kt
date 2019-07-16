@@ -90,12 +90,12 @@ class TransactionModel(val txExport: Map<PyObject, PyObject>) {
             else R.drawable.ic_remove_24dp)!!
     }
 
-    @SuppressLint("StringFormatMatches")
     fun getConfirmationsStr(): String {
         val confirmations = Integer.parseInt(get("confirmations"))
         return when {
             confirmations <= 0 -> ""
-            else -> app.getString(R.string.___confirmations, confirmations)
+            else -> app.resources.getQuantityString(R.plurals.confirmation,
+                                                    confirmations, confirmations)
         }
     }
 }
