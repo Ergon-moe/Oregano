@@ -46,6 +46,7 @@ android {
                 install "-r", "$REPO_ROOT/contrib/deterministic-build/requirements.txt"
                 install "-r", "$REPO_ROOT/contrib/deterministic-build/requirements-android.txt"
             }
+            extractPackages "electroncash.locale"
         }
         ndk {
             abiFilters "x86", "armeabi-v7a"

@@ -48,6 +48,11 @@ class MainActivity : AppCompatActivity() {
         // Remove splash screen: doesn't work if called after super.onCreate.
         setTheme(R.style.AppTheme_NoActionBar)
 
+        // If the system language changes while the app is running, the activity will be
+        // restarted, but not the process.
+        @Suppress("DEPRECATION")
+        libMod("i18n").callAttr("set_language", resources.configuration.locale.toString())
+
         // If the wallet name doesn't match, the process has probably been restarted, so
         // ignore the UI state, including all dialogs.
         stateValid = (state != null &&
