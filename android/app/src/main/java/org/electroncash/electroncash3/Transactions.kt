@@ -39,6 +39,7 @@ class TransactionsFragment : Fragment(), MainFragment {
                 showDialog(activity!!, SendDialog())
             } catch (e: ToastException) { e.show() }
         }
+        btnRequest.setOnClickListener { newRequest(activity!!) }
     }
 
     fun update() {
@@ -46,11 +47,13 @@ class TransactionsFragment : Fragment(), MainFragment {
         if (wallet == null) {
             rvTransactions.adapter = null
             btnSend.hide()
+            btnRequest.hide()
         } else {
             rvTransactions.adapter = TransactionsAdapter(
                 activity!!, wallet.callAttr("export_history",
                                             Kwarg("decimal_point", unitPlaces)).asList())
             btnSend.show()
+            btnRequest.show()
         }
     }
 }

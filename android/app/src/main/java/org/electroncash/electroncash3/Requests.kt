@@ -45,16 +45,17 @@ class RequestsFragment : Fragment(), MainFragment {
         settings.getString("base_unit").observe(viewLifecycleOwner, Observer {
             rvRequests.adapter?.notifyDataSetChanged()
         })
-
-        btnAdd.setOnClickListener {
-            try {
-                val address = daemonModel.wallet!!.callAttr("get_unused_address")
-                              ?: throw ToastException(R.string.no_more)
-                showDialog(activity!!,
-                           RequestDialog(address.callAttr("to_storage_string").toString()))
-            } catch (e: ToastException) { e.show() }
-        }
+        btnAdd.setOnClickListener { newRequest(activity!!) }
     }
+}
+
+
+fun newRequest(activity: FragmentActivity) {
+    try {
+        val address = daemonModel.wallet!!.callAttr("get_unused_address")
+                      ?: throw ToastException(R.string.no_more)
+        showDialog(activity, RequestDialog(address.callAttr("to_storage_string").toString()))
+    } catch (e: ToastException) { e.show() }
 }
 
 

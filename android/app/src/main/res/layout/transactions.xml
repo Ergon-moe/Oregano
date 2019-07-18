@@ -28,4 +28,15 @@
         app:layout_constraintEnd_toEndOf="parent"
         tools:visibility="visible"/>
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/btnRequest"
+        style="@style/FAB.Main.Inner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_request_24dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnSend"
+        tools:visibility="visible"/>
+
 </android.support.constraint.ConstraintLayout>
