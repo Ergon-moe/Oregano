@@ -1,12 +1,12 @@
 package org.electroncash.electroncash3
 
-import android.annotation.SuppressLint
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentActivity
+import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
 import android.view.LayoutInflater
 import android.view.View
@@ -59,8 +59,7 @@ class TransactionsAdapter(val activity: FragmentActivity, val transactions: List
     : BoundAdapter<TransactionModel>(R.layout.transaction_list) {
 
     override fun getItem(position: Int): TransactionModel {
-        return TransactionModel(transactions.get(itemCount - position - 1)  // Newest first
-                                .asMap())
+        return TransactionModel(transactions.get(position).asMap())
     }
 
     override fun getItemCount(): Int {
@@ -85,7 +84,8 @@ class TransactionModel(val txExport: Map<PyObject, PyObject>) {
     fun get(key: String) = txExport.get(PyObject.fromJava(key))!!.toString()
 
     fun getIcon(): Drawable {
-        return app.resources.getDrawable(
+        return ContextCompat.getDrawable(
+            app,
             if (get("value")[0] == '+') R.drawable.ic_add_24dp
             else R.drawable.ic_remove_24dp)!!
     }
