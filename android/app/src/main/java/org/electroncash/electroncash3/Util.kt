@@ -11,6 +11,7 @@ import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.ContextThemeWrapper
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -85,20 +86,33 @@ fun <T: DialogFragment> findDialog(activity: FragmentActivity, fragClass: KClass
 }
 
 
-// Since error messages are likely to be surprising, set the default duration to long.
-class ToastException(message: String?, cause: Throwable?, val duration: Int = Toast.LENGTH_LONG)
+// Error messages are likely to be surprising, so give the user more time to read them.
+val TOAST_DEFAULT_DURATION = Toast.LENGTH_LONG
+
+// The default gravity of BOTTOM would show the toast over the keyboard if it's visible. If the
+// keyboard color happens to be the same as the toast background, the user might not notice it
+// at all.
+val TOAST_DEFAULT_GRAVITY =  Gravity.CENTER
+
+
+class ToastException(message: String?, cause: Throwable?,
+                     val duration: Int = TOAST_DEFAULT_DURATION,
+                     val gravity: Int = TOAST_DEFAULT_GRAVITY)
     : Exception(message, cause) {
 
-    constructor(message: String?, duration: Int = Toast.LENGTH_LONG)
-        : this(message, null, duration)
+    constructor(message: String?, duration: Int = TOAST_DEFAULT_DURATION,
+                gravity: Int = TOAST_DEFAULT_GRAVITY)
+        : this(message, null, duration, gravity)
 
-    constructor(resId: Int, duration: Int = Toast.LENGTH_LONG)
-        : this(app.getString(resId), duration)
+    constructor(resId: Int, duration: Int = TOAST_DEFAULT_DURATION,
+                gravity: Int = TOAST_DEFAULT_GRAVITY)
+        : this(app.getString(resId), duration, gravity)
 
-    constructor(cause: Throwable, duration: Int = Toast.LENGTH_LONG)
-        : this(cause.message, cause, duration)
+    constructor(cause: Throwable, duration: Int = TOAST_DEFAULT_DURATION,
+                gravity: Int = TOAST_DEFAULT_GRAVITY)
+        : this(cause.message, cause, duration, gravity)
 
-    fun show() { toast(message!!, duration) }
+    fun show() { toast(message!!, duration, gravity) }
 }
 
 
@@ -110,21 +124,24 @@ class ToastException(message: String?, cause: Throwable?, val duration: Int = To
 // this should be fine as long as the `key` argument is used where necessary.
 val toastCache = HashMap<String, Toast>()
 
-fun toast(text: CharSequence, duration: Int = Toast.LENGTH_SHORT, key: String? = null) {
+fun toast(text: CharSequence, duration: Int = TOAST_DEFAULT_DURATION,
+          gravity: Int = TOAST_DEFAULT_GRAVITY, key: String? = null) {
     if (!onUiThread()) {
-        runOnUiThread { toast(text, duration, key) }
+        runOnUiThread { toast(text, duration, gravity, key) }
     } else {
         val cacheKey = key ?: text.toString()
         toastCache.get(cacheKey)?.cancel()
         // Creating a new Toast each time is more robust than attempting to reuse the existing one.
         val toast = Toast.makeText(app, text, duration)
+        toast.setGravity(gravity, 0, 0)
         toastCache.put(cacheKey, toast)
         toast.show()
     }
 }
 
-fun toast(resId: Int, duration: Int = Toast.LENGTH_SHORT, key: String? = null) {
-    toast(app.getString(resId), duration, key)
+fun toast(resId: Int, duration: Int = TOAST_DEFAULT_DURATION,
+          gravity: Int = TOAST_DEFAULT_GRAVITY, key: String? = null) {
+    toast(app.getString(resId), duration, gravity, key)
 }
 
 
@@ -133,7 +150,7 @@ fun copyToClipboard(text: CharSequence, what: Int? = null) {
     (getSystemService(ClipboardManager::class)).text = text
     val message = if (what == null) app.getString(R.string.text_copied)
                   else app.getString(R.string._s_copied, app.getString(what))
-    toast(message)
+    toast(message, Toast.LENGTH_SHORT)
 }
 
 

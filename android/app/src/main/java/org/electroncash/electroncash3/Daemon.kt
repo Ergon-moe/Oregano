@@ -1,6 +1,7 @@
 package org.electroncash.electroncash3
 
 import android.arch.lifecycle.MutableLiveData
+import android.widget.Toast
 import com.chaquo.python.PyException
 import com.chaquo.python.PyObject
 import com.chaquo.python.Python
@@ -94,7 +95,8 @@ fun makeAddress(addrStr: String): PyObject {
         return clsAddress.callAttr("from_string", addrStr)
     } catch (e: PyException) {
         throw if (e.message!!.startsWith("AddressError"))
-            ToastException(R.string.invalid_address) else e
+            ToastException(R.string.Invalid_address, Toast.LENGTH_SHORT)
+            else e
     }
 }
 

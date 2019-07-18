@@ -194,13 +194,7 @@ class MainActivity : AppCompatActivity() {
                 storage.callAttr("write")
             }
             R.id.menuChangePassword -> showDialog(this, ChangePasswordDialog())
-            R.id.menuShowSeed-> {
-                if (daemonModel.wallet!!.containsKey("get_seed")) {
-                    showDialog(this, ShowSeedPasswordDialog())
-                } else {
-                    toast(R.string.this_wallet_has_no_seed)
-                }
-            }
+            R.id.menuShowSeed-> { showDialog(this, ShowSeedPasswordDialog()) }
             R.id.menuDelete -> showDialog(this, DeleteWalletDialog())
             R.id.menuClose -> showDialog(this, CloseWalletDialog())
             else -> throw Exception("Unknown item $item")
@@ -237,7 +231,7 @@ class MainActivity : AppCompatActivity() {
             val uri = intent.data
             if (uri != null) {
                 if (daemonModel.wallet == null) {
-                    toast(R.string.no_wallet_is, Toast.LENGTH_LONG)
+                    toast(R.string.no_wallet_is)
                     openDrawer()
                 } else {
                     val dialog = findDialog(this, SendDialog::class)
@@ -376,7 +370,7 @@ class ChangePasswordDialog : AlertDialogFragment() {
                 try {
                     daemonModel.wallet!!.callAttr("update_password",
                                                   currentPassword, newPassword, true)
-                    toast(R.string.password_was)
+                    toast(R.string.password_was, Toast.LENGTH_SHORT)
                     dismiss()
                 } catch (e: PyException) {
                     throw if (e.message!!.startsWith("InvalidPassword"))

@@ -11,6 +11,7 @@ import android.support.v7.app.AlertDialog
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import com.chaquo.python.Kwarg
 import com.chaquo.python.PyObject
 import kotlinx.android.synthetic.main.transaction_detail.*
@@ -72,7 +73,7 @@ class TransactionsAdapter(val activity: FragmentActivity, val transactions: List
             val txid = holder.item.get("txid")
             val tx = daemonModel.wallet!!.get("transactions")!!.callAttr("get", txid)
             if (tx == null) {  // Can happen during wallet sync.
-                toast(R.string.transaction_not)
+                toast(R.string.Transaction_not, Toast.LENGTH_SHORT)
             } else {
                 showDialog(activity, TransactionDialog(txid))
             }

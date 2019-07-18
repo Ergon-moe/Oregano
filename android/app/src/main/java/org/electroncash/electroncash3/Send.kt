@@ -207,7 +207,7 @@ class SendDialog : AlertDialogFragment() {
                 if (pr == null) {
                     showDialog(activity!!, SendContactsDialog())
                 } else {
-                    toast(pr.callAttr("get_verify_status").toString(), Toast.LENGTH_LONG)
+                    toast(pr.callAttr("get_verify_status").toString())
                 }
             }
             btnMax.setEnabled(pr == null)
@@ -265,7 +265,7 @@ class SendContactsDialog : MenuDialog() {
 
     override fun onShowDialog(dialog: AlertDialog) {
         if (contacts.isEmpty()) {
-            toast(R.string.you_dont, Toast.LENGTH_LONG)
+            toast(R.string.you_dont_have_any_contacts)
             dismiss()
         }
     }
@@ -318,7 +318,7 @@ class SendPasswordDialog() : PasswordDialog(runInBackground = true) {
         val success = result.get(0).toBoolean()
         if (success) {
             sendDialog.dismiss()
-            toast(R.string.payment_sent)
+            toast(R.string.payment_sent, Toast.LENGTH_SHORT)
             setDescription(tx.callAttr("txid").toString(),
                            sendDialog.dialog.etDescription.text.toString())
             transactionsUpdate.setValue(Unit)
@@ -328,7 +328,7 @@ class SendPasswordDialog() : PasswordDialog(runInBackground = true) {
             if (message.contains(reError)) {
                 message = message.replace(reError, "$1")
             }
-            toast(message, Toast.LENGTH_LONG)
+            toast(message)
         }
     }
 }

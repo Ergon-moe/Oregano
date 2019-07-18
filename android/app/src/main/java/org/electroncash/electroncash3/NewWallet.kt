@@ -11,6 +11,7 @@ import android.support.v4.app.DialogFragment
 import android.support.v7.app.AlertDialog
 import android.text.Selection
 import android.view.View
+import android.widget.Toast
 import com.chaquo.python.Kwarg
 import com.chaquo.python.PyException
 import com.google.zxing.integration.android.IntentIntegrator
@@ -36,7 +37,7 @@ class NewWalletDialog1 : AlertDialogFragment() {
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             try {
                 val name = dialog.etName.text.toString()
-                if (name.isEmpty()) throw ToastException(R.string.name_is)
+                if (name.isEmpty()) throw ToastException(R.string.name_is, Toast.LENGTH_SHORT)
                 if (name.contains("/")) throw ToastException(R.string.invalid_name)
                 if (daemonModel.listWallets().contains(name)) {
                     throw ToastException(R.string.a_wallet_with_that_name_already_exists_please)
@@ -73,7 +74,7 @@ class NewWalletDialog1 : AlertDialogFragment() {
 
 fun confirmPassword(dialog: Dialog): String {
     val password = dialog.etPassword.text.toString()
-    if (password.isEmpty()) throw ToastException(R.string.enter_password)
+    if (password.isEmpty()) throw ToastException(R.string.enter_password, Toast.LENGTH_SHORT)
     if (password != dialog.etConfirmPassword.text.toString()) {
         throw ToastException(R.string.wallet_passwords)
     }

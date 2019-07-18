@@ -20,6 +20,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.Toast
 import com.chaquo.python.PyException
 import com.chaquo.python.PyObject
 import kotlinx.android.synthetic.main.network.*
@@ -204,7 +205,7 @@ class ServerPreferenceDialog: EditTextPreferenceDialogFragmentCompat() {
                     onClick(dialog, AlertDialog.BUTTON_POSITIVE)
                     dismiss()
                 } catch (e: InvalidServerException) {
-                    toast(R.string.invalid_address)
+                    toast(R.string.Invalid_address, Toast.LENGTH_SHORT)
                 }
             }
         }
