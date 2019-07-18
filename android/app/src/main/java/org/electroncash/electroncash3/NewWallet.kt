@@ -133,7 +133,7 @@ class NewWalletSeedDialog : NewWalletDialog2() {
         setupSeedDialog(this)
         if (arguments!!.getString("seed") == null) {  // Restore from seed
             dialog.bip39Panel.visibility = View.VISIBLE
-            dialog.swBip39.setOnCheckedChangeListener { view, isChecked ->
+            dialog.swBip39.setOnCheckedChangeListener { _, isChecked ->
                 dialog.etDerivation.isEnabled = isChecked
             }
         }
@@ -195,7 +195,8 @@ class NewWalletImportDialog : NewWalletDialog2() {
 
         if (foundAddress) {
             if (foundPrivkey) {
-                throw ToastException(R.string.cannot_specify_short)
+                throw ToastException(
+                    R.string.cannot_specify_private_keys_and_addresses_in_the_same_wallet)
             }
             daemonModel.commands.callAttr("create", name, password, Kwarg("addresses", input))
         } else if (foundPrivkey) {

@@ -8,6 +8,8 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
+import android.text.Html
+import android.text.SpannableStringBuilder
 import android.text.method.LinkMovementMethod
 import android.view.Menu
 import android.view.MenuItem
@@ -297,7 +299,10 @@ class AboutDialog : AlertDialogFragment() {
         with (builder) {
             val version = app.packageManager.getPackageInfo(app.packageName, 0).versionName
             setTitle(getString(R.string.app_name) + " " + version)
-            setMessage(R.string.about_dialog)
+            val message = SpannableStringBuilder(getString(R.string.copyright_2019) + "\n\n")
+            @Suppress("DEPRECATION")
+            message.append(Html.fromHtml(getString(R.string.made_with)))
+            setMessage(message)
         }
     }
 

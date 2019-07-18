@@ -21,7 +21,7 @@
             android:layout_marginEnd="@dimen/fab_dialog_margin_right"
             android:layout_marginRight="@dimen/fab_dialog_margin_right"
             android:layout_marginTop="20dp"
-            android:text="@string/requests"
+            android:text="@string/request"
             app:layout_constraintEnd_toStartOf="@+id/btnCopy"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>

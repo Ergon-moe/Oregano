@@ -134,7 +134,7 @@
                 android:id="@+id/textView16"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/size_nocolon"
+                android:text="@string/size"
                 app:layout_constraintBaseline_toBaselineOf="@+id/tvSize"
                 app:layout_constraintStart_toStartOf="@+id/textView12"/>
 
