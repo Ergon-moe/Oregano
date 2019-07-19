@@ -11,8 +11,11 @@ import android.support.v7.app.AppCompatActivity
 import android.text.Html
 import android.text.SpannableStringBuilder
 import android.text.method.LinkMovementMethod
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import com.chaquo.python.PyException
@@ -31,6 +34,7 @@ val ACTIVITIES = HashMap<Int, KClass<out Activity>>().apply {
 
 // Bottom navigation
 val FRAGMENTS = HashMap<Int, KClass<out Fragment>>().apply {
+    put(0, NoWalletFragment::class)
     put(R.id.navTransactions, TransactionsFragment::class)
     put(R.id.navRequests, RequestsFragment::class)
     put(R.id.navAddresses, AddressesFragment::class)
@@ -76,6 +80,7 @@ class MainActivity : AppCompatActivity() {
             invalidateOptionsMenu()
             updateToolbar()
             updateDrawer()
+            showFragment(navBottom.selectedItemId)
         })
         settings.getString("base_unit").observe(this, Observer { updateToolbar() })
         fiatUpdate.observe(this, Observer { updateToolbar() })
@@ -90,7 +95,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun updateToolbar() {
-        val title = daemonModel.walletName ?: getString(R.string.no_wallet)
+        val title = daemonModel.walletName ?: getString(R.string.No_wallet)
 
         val subtitle: String
         if (! daemonModel.isConnected()) {
@@ -231,7 +236,7 @@ class MainActivity : AppCompatActivity() {
             val uri = intent.data
             if (uri != null) {
                 if (daemonModel.wallet == null) {
-                    toast(R.string.no_wallet_is)
+                    toast(R.string.no_wallet_is_open_)
                     openDrawer()
                 } else {
                     val dialog = findDialog(this, SendDialog::class)
@@ -265,7 +270,7 @@ class MainActivity : AppCompatActivity() {
 
     fun showFragment(id: Int) {
         val ft = supportFragmentManager.beginTransaction()
-        val newFrag = getFragment(id)
+        val newFrag = getFragment(if (daemonModel.wallet == null) 0 else id)
         for (frag in supportFragmentManager.fragments) {
             if (frag is MainFragment && frag !== newFrag) {
                 ft.detach(frag)
@@ -289,6 +294,14 @@ class MainActivity : AppCompatActivity() {
                 .add(flContent.id, frag, tag).commitNowAllowingStateLoss()
             return frag
         }
+    }
+}
+
+
+class NoWalletFragment : Fragment(), MainFragment {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+                              savedInstanceState: Bundle?): View? {
+        return inflater.inflate(R.layout.no_wallet, container, false)
     }
 }
 

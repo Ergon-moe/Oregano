@@ -61,9 +61,6 @@ class AddressesFragment : Fragment(), MainFragment {
         setFilterLabel(btnStatus, R.string.status, R.menu.filter_status, addressFilterStatus)
 
         val wallet = daemonModel.wallet
-        for (btn in listOf(btnType, btnStatus)) {
-            btn.isEnabled = (wallet != null)
-        }
         rvAddresses.adapter =
             if (wallet == null) null
             else AddressesAdapter(activity!!, wallet)

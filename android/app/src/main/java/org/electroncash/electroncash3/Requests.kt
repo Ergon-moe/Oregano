@@ -32,12 +32,10 @@ class RequestsFragment : Fragment(), MainFragment {
             val wallet = daemonModel.wallet
             if (wallet == null) {
                 rvRequests.adapter = null
-                btnAdd.hide()
             } else {
                 rvRequests.adapter = RequestsAdapter(
                     activity!!,
                     wallet.callAttr("get_sorted_requests", daemonModel.config).asList())
-                btnAdd.show()
             }
         }
         daemonUpdate.observe(viewLifecycleOwner, observer)

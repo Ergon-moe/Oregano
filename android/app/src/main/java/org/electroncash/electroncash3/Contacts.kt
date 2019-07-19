@@ -34,10 +34,8 @@ class ContactsFragment : Fragment(), MainFragment {
             val wallet = daemonModel.wallet
             if (wallet == null) {
                 rvContacts.adapter = null
-                btnAdd.hide()
             } else {
                 rvContacts.adapter = ContactsAdapter(activity!!, listContacts())
-                btnAdd.show()
             }
         }
         daemonUpdate.observe(viewLifecycleOwner, observer)
