@@ -37,11 +37,13 @@
         app:layout_constraintTop_toBottomOf="@+id/textView4"
         tools:text="@string/test_address"/>
 
+    <!-- Bottom constraint keeps button aligned with text box before API 21 (see dimens.xml). -->
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/btnContacts"
         style="@style/FAB.Dialog"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/etAddress"
         app:layout_constraintEnd_toEndOf="@+id/textView4"
         app:layout_constraintTop_toTopOf="@+id/etAddress"
         app:srcCompat="@drawable/ic_person_24dp"/>
