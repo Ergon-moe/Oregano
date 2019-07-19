@@ -10,13 +10,14 @@ import android.support.v7.app.AlertDialog
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import com.chaquo.python.PyObject
 import com.google.zxing.integration.android.IntentIntegrator
 import kotlinx.android.synthetic.main.contact_detail.*
 import kotlinx.android.synthetic.main.contacts.*
-import java.util.*
-import kotlin.collections.ArrayList
 
+
+val libContacts by lazy { libMod("contacts") }
 
 val contactsUpdate = MutableLiveData<Unit>().apply { value = Unit }
 
@@ -50,27 +51,22 @@ class ContactsFragment : Fragment(), MainFragment {
 }
 
 
-class ContactsAdapter(val activity: FragmentActivity, val contacts: Map<String, PyObject>)
+class ContactsAdapter(val activity: FragmentActivity, val contacts: List<ContactModel>)
     : BoundAdapter<ContactModel>(R.layout.contact_list) {
-
-    val names = ArrayList<String>(contacts.keys)
 
     override fun getItemCount(): Int {
         return contacts.size
     }
 
     override fun getItem(position: Int): ContactModel {
-        val name = names.get(position)
-        return ContactModel(name, contacts.get(name)!!)
+        return contacts.get(position)
     }
 
     override fun onBindViewHolder(holder: BoundViewHolder<ContactModel>, position: Int) {
         super.onBindViewHolder(holder, position)
         holder.itemView.setOnClickListener {
             showDialog(activity, ContactDialog().apply {
-                arguments = Bundle().apply {
-                    putString("address", holder.item.addrStorageString)
-                }
+                arguments = holder.item.toBundle()
             })
         }
     }
@@ -78,22 +74,26 @@ class ContactsAdapter(val activity: FragmentActivity, val contacts: Map<String, 
 
 
 class ContactModel(val name: String, val addr: PyObject) {
+    constructor(args: Bundle) : this(args.getString("name")!!,
+                                     makeAddress(args.getString("address")!!))
     val addrUiString
         get() = addr.callAttr("to_ui_string").toString()
     val addrStorageString
         get() = addr.callAttr("to_storage_string").toString()
 
+    fun toBundle(): Bundle {
+        return Bundle().apply {
+            putString("name", name)
+            putString("address", addrStorageString)
+        }
+    }
 }
 
 
 class ContactDialog : AlertDialogFragment() {
-    val contacts by lazy { daemonModel.wallet!!.get("contacts")!! }
     val existingContact by lazy {
-        val address = arguments?.getString("address")
-        if (address == null) null
-        else ContactModel(
-            contacts.asMap().get(PyObject.fromJava(address))!!.asList().get(1).toString(),
-            makeAddress(address))
+        if (arguments == null) null
+        else ContactModel(arguments!!)
     }
 
     override fun onBuildDialog(builder: AlertDialog.Builder) {
@@ -118,11 +118,7 @@ class ContactDialog : AlertDialogFragment() {
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { scanQR(this) }
         } else {
             dialog.etName.setText(contact.name)
-            with(dialog.etAddress) {
-                setText(contact.addrUiString)
-                setFocusable(false)
-                setOnClickListener { copyToClipboard(text, R.string.address) }
-            }
+            dialog.etAddress.setText(contact.addrUiString)
             dialog.btnExplore.setOnClickListener {
                 exploreAddress(activity!!, contact.addr)
             }
@@ -137,7 +133,9 @@ class ContactDialog : AlertDialogFragment() {
                 } catch (e: ToastException) { e.show() }
             }
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
-                showDialog(activity!!, DeleteContactDialog(contact.addrStorageString))
+                showDialog(activity!!, DeleteContactDialog().apply {
+                    arguments = contact.toBundle()
+                })
             }
         }
     }
@@ -156,10 +154,13 @@ class ContactDialog : AlertDialogFragment() {
         val address = dialog.etAddress.text.toString()
         try {
             if (name.isEmpty()) {
-                throw ToastException(R.string.name_is)
+                throw ToastException(R.string.name_is, Toast.LENGTH_SHORT)
             }
-            contacts.asMap().put(makeAddress(address).callAttr("to_storage_string"),
-                                 py.builtins.callAttr("tuple", arrayOf("address", name)))
+            val newContact = makeContact(name, makeAddress(address))
+            val oldContact =
+                if (existingContact == null) null
+                else makeContact(existingContact!!.name, existingContact!!.addr)
+            daemonModel.wallet!!.get("contacts")!!.callAttr("add", newContact, oldContact)
             contactsUpdate.setValue(Unit)
             dismiss()
         } catch (e: ToastException) { e.show() }
@@ -167,17 +168,14 @@ class ContactDialog : AlertDialogFragment() {
 }
 
 
-class DeleteContactDialog() : AlertDialogFragment() {
-    constructor(address: String) : this() {
-        arguments = Bundle().apply { putString("address", address) }
-    }
-
+class DeleteContactDialog : AlertDialogFragment() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
+        val contact = ContactModel(arguments!!)
         builder.setTitle(R.string.confirm_delete)
             .setMessage(R.string.are_you_sure_you_wish_to_delete)
             .setPositiveButton(R.string.delete) { _, _ ->
                 daemonModel.wallet!!.get("contacts")!!.callAttr(
-                    "pop", arguments!!.getString("address")!!)
+                    "remove", makeContact(contact.name, contact.addr))
                 contactsUpdate.setValue(Unit)
                 findDialog(activity!!, ContactDialog::class)!!.dismiss()
             }
@@ -186,11 +184,18 @@ class DeleteContactDialog() : AlertDialogFragment() {
 }
 
 
-fun listContacts(): Map<String, PyObject> {
-    val contacts = TreeMap<String, PyObject>()
-    for (entry in daemonModel.wallet!!.get("contacts")!!.asMap().entries) {
-        contacts.put(entry.value.asList().get(1).toString(),
-                     makeAddress(entry.key.toString()))
+fun listContacts(): List<ContactModel> {
+    val contacts = ArrayList<ContactModel>()
+    for (contact in daemonModel.wallet!!.get("contacts")!!.callAttr("get_all").asList()) {
+        contacts.add(ContactModel(contact.get("name").toString(),
+                                  makeAddress(contact.get("address").toString())))
     }
+    contacts.sortBy { it.name }
     return contacts
+}
+
+
+fun makeContact(name: String, addr: PyObject): PyObject {
+    return libContacts.callAttr(
+        "Contact", name, addr.callAttr("to_storage_string"), "address")!!
 }

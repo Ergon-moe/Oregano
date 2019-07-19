@@ -258,8 +258,8 @@ class SendContactsDialog : MenuDialog() {
 
     override fun onBuildDialog(builder: AlertDialog.Builder, menu: Menu) {
         builder.setTitle(R.string.contacts)
-        for (name in contacts.keys) {
-            menu.add(name)
+        contacts.forEachIndexed { i, contact ->
+            menu.add(Menu.NONE, i, Menu.NONE, contact.name)
         }
     }
 
@@ -271,7 +271,7 @@ class SendContactsDialog : MenuDialog() {
     }
 
     override fun onMenuItemSelected(item: MenuItem) {
-        val address = contacts.get(item.title.toString())!!.callAttr("to_ui_string").toString()
+        val address = contacts.get(item.itemId).addr.callAttr("to_ui_string").toString()
         with (findDialog(activity!!, SendDialog::class)!!) {
             dialog.etAddress.setText(address)
             dialog.etAmount.requestFocus()

@@ -100,6 +100,7 @@
                 android:id="@+id/etAddress"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:inputType="textNoSuggestions"
                 android:singleLine="true"
                 app:layout_constraintEnd_toEndOf="@+id/textView13"
                 app:layout_constraintStart_toStartOf="@+id/textView13"
