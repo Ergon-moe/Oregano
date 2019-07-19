@@ -25,7 +25,7 @@ val libWallet by lazy { libMod("wallet") }
 
 class NewWalletDialog1 : AlertDialogFragment() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
-        builder.setTitle(R.string.new_wallet)
+        builder.setTitle(R.string.New_wallet)
             .setView(R.layout.new_wallet)
             .setPositiveButton(R.string.next, null)
             .setNegativeButton(R.string.cancel, null)
@@ -65,7 +65,6 @@ class NewWalletDialog1 : AlertDialogFragment() {
                     throw Exception("Unknown item: ${dialog.spnType.selectedItem}")
                 }
                 showDialog(activity!!, nextDialog.apply { setArguments(arguments) })
-                dismiss()
             } catch (e: ToastException) { e.show() }
         }
     }
@@ -89,10 +88,10 @@ abstract class NewWalletDialog2 : AlertDialogFragment() {
     private val model by lazy { ViewModelProviders.of(this).get(Model::class.java) }
 
     override fun onBuildDialog(builder: AlertDialog.Builder) {
-        builder.setTitle(R.string.new_wallet)
+        builder.setTitle(R.string.New_wallet)
             .setView(R.layout.new_wallet_2)
             .setPositiveButton(android.R.string.ok, null)
-            .setNegativeButton(R.string.cancel, null)
+            .setNegativeButton(R.string.back, null)
     }
 
     override fun onShowDialog(dialog: AlertDialog) {
@@ -123,6 +122,7 @@ abstract class NewWalletDialog2 : AlertDialogFragment() {
         dismissDialog(activity!!, ProgressDialogFragment::class)
         if (success) {
             dismiss()
+            dismissDialog(activity!!, NewWalletDialog1::class)
         }
     }
 }

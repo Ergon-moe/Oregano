@@ -6,7 +6,7 @@
         <item
             android:id="@+id/navNewWallet"
             android:icon="@drawable/ic_add_24dp"
-            android:title="@string/new_wallet"/>
+            android:title="@string/New_wallet"/>
     </group>
 
 </menu>
