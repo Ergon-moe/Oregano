@@ -1,7 +1,6 @@
 package org.electroncash.electroncash3
 
 import android.app.Dialog
-import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.content.Context
 import android.os.Bundle
@@ -59,45 +58,39 @@ class NetworkFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setupVerticalList(rvIfaces)
-        daemonUpdate.observe(viewLifecycleOwner, Observer {
-            val ifaceLock = daemonModel.network.get("interface_lock")!!
-            ifaceLock.callAttr("acquire")
-            val ifaces = ArrayList(daemonModel.network.get("interfaces")!!.asMap().values)
-            ifaces.sortBy { it.get("server").toString() }
-            ifaceLock.callAttr("release")
+        rvIfaces.adapter = IfacesAdapter(activity!!)
+        daemonUpdate.observe(viewLifecycleOwner, Observer { refresh() })
+    }
 
-            var status = getString(R.string.connected_to, ifaces.size)
-            val isSplit = daemonModel.network.callAttr("get_blockchains").asMap().size > 1
-            if (isSplit) {
-                val curChain = daemonModel.network.callAttr("blockchain")
-                status += "\n" + getString(R.string.chain_split,
-                                           curChain.callAttr("get_base_height").toInt())
-            }
-            tvStatus.text = status
+    fun refresh() {
+        val ifaceLock = daemonModel.network.get("interface_lock")!!
+        ifaceLock.callAttr("acquire")
+        val ifaces = ArrayList(daemonModel.network.get("interfaces")!!.asMap().values)
+        ifaces.sortBy { it.get("server").toString() }
+        ifaceLock.callAttr("release")
 
-            val serverIface = daemonModel.network.get("interface")
-            if (serverIface != null) {
-                tvServer.text = serverIface.callAttr("format_address").toString()
-            } else {
-                tvServer.setText(R.string.not_connected)
-            }
-            rvIfaces.adapter = IfacesAdapter(activity!!, ifaces, isSplit)
-        })
+        var status = getString(R.string.connected_to, ifaces.size)
+        val isSplit = daemonModel.network.callAttr("get_blockchains").asMap().size > 1
+        if (isSplit) {
+            val curChain = daemonModel.network.callAttr("blockchain")
+            status += "\n" + getString(R.string.chain_split,
+                                       curChain.callAttr("get_base_height").toInt())
+        }
+        tvStatus.text = status
+
+        val serverIface = daemonModel.network.get("interface")
+        if (serverIface != null) {
+            tvServer.text = serverIface.callAttr("format_address").toString()
+        } else {
+            tvServer.setText(R.string.not_connected)
+        }
+        (rvIfaces.adapter as IfacesAdapter).submitList(ifaces.map { IfaceModel(it, isSplit) })
     }
 }
 
 
-class IfacesAdapter(val activity: FragmentActivity, val ifaces: List<PyObject>,
-                    val isSplit: Boolean)
+class IfacesAdapter(val activity: FragmentActivity)
     : BoundAdapter<IfaceModel>(R.layout.iface) {
-
-    override fun getItemCount(): Int {
-        return ifaces.size
-    }
-
-    override fun getItem(position: Int): IfaceModel {
-        return IfaceModel(ifaces.get(position), isSplit)
-    }
 
     override fun onBindViewHolder(holder: BoundViewHolder<IfaceModel>, position: Int) {
         super.onBindViewHolder(holder, position)

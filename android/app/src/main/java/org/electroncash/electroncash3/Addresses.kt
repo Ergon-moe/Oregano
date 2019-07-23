@@ -19,7 +19,6 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import com.chaquo.python.Kwarg
 import com.chaquo.python.PyObject
 import kotlinx.android.synthetic.main.address_detail.*
 import kotlinx.android.synthetic.main.addresses.*
@@ -46,6 +45,7 @@ class AddressesFragment : Fragment(), MainFragment {
         btnStatus.setOnClickListener { showDialog(activity!!, FilterStatusDialog()) }
 
         setupVerticalList(rvAddresses)
+        rvAddresses.adapter = AddressesAdapter(activity!!)
         daemonUpdate.observe(viewLifecycleOwner, Observer { refresh() })
         for (filter in listOf(addressFilterType, addressFilterStatus)) {
             filter.observe(viewLifecycleOwner, Observer { refresh() })
@@ -61,9 +61,11 @@ class AddressesFragment : Fragment(), MainFragment {
         setFilterLabel(btnStatus, R.string.status, R.menu.filter_status, addressFilterStatus)
 
         val wallet = daemonModel.wallet
-        rvAddresses.adapter =
+        (rvAddresses.adapter as AddressesAdapter).submitList(
             if (wallet == null) null
-            else AddressesAdapter(activity!!, wallet)
+            else wallet.callAttr("get_addresses").asList()
+                .map { AddressModel(wallet, it) }
+                .filter { passesFilter(it) })
     }
 
     fun setFilterLabel(btn: Button, prefix: Int, menuId: Int, liveData: LiveData<Int>) {
@@ -73,22 +75,6 @@ class AddressesFragment : Fragment(), MainFragment {
 
     fun rebind() {
         rvAddresses.adapter?.notifyDataSetChanged()
-    }
-}
-
-
-class AddressesAdapter(val activity: FragmentActivity, val wallet: PyObject)
-    : BoundAdapter<AddressModel>(R.layout.address_list) {
-
-    val addresses = ArrayList<AddressModel>()
-
-    init {
-        for (addr in wallet.callAttr("get_addresses").asList()) {
-            val am = AddressModel(wallet, addr)
-            if (passesFilter(am)) {
-                addresses.add(am)
-            }
-        }
     }
 
     fun passesFilter(am: AddressModel): Boolean {
@@ -105,14 +91,11 @@ class AddressesAdapter(val activity: FragmentActivity, val wallet: PyObject)
         }
         return true
     }
+}
 
-    override fun getItem(position: Int): AddressModel {
-        return addresses.get(position)
-    }
 
-    override fun getItemCount(): Int {
-        return addresses.size
-    }
+class AddressesAdapter(val activity: FragmentActivity)
+    : BoundAdapter<AddressModel>(R.layout.address_list) {
 
     override fun onBindViewHolder(holder: BoundViewHolder<AddressModel>, position: Int) {
         super.onBindViewHolder(holder, position)
@@ -221,23 +204,20 @@ class AddressTransactionsDialog() : AlertDialogFragment() {
     }
 
     override fun onShowDialog(dialog: AlertDialog) {
-        // Remove bottom padding because this dialog has no FloatingActionButton.
+        // Remove buttons and bottom padding.
+        dialog.btnSend.hide()
+        dialog.btnRequest.hide()
         dialog.rvTransactions.setPadding(0, 0, 0, 0)
-        setupVerticalList(dialog.rvTransactions)
 
-        refresh()
+        setupVerticalList(dialog.rvTransactions)
+        dialog.rvTransactions.adapter = TransactionsAdapter(activity!!)
         transactionsUpdate.observe(this, Observer { refresh() })
     }
 
     fun refresh() {
         val addr = clsAddress.callAttr("from_string", arguments!!.getString("address")!!)
-        dialog.rvTransactions.adapter = TransactionsAdapter(
-            activity!!,
-            daemonModel.wallet!!.callAttr(
-                "export_history",
-                Kwarg("domain", arrayOf(addr)),
-                Kwarg("decimal_point", unitPlaces))
-                .asList())
+        (dialog.rvTransactions.adapter as TransactionsAdapter).submitList(
+            TransactionsList(daemonModel.wallet!!, addr))
     }
 }
 

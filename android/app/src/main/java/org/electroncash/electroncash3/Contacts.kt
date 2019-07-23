@@ -30,35 +30,27 @@ class ContactsFragment : Fragment(), MainFragment {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setupVerticalList(rvContacts)
-        val observer = Observer<Unit> {
-            val wallet = daemonModel.wallet
-            if (wallet == null) {
-                rvContacts.adapter = null
-            } else {
-                rvContacts.adapter = ContactsAdapter(activity!!, listContacts())
-            }
-        }
-        daemonUpdate.observe(viewLifecycleOwner, observer)
-        contactsUpdate.observe(viewLifecycleOwner, observer)
+        rvContacts.adapter = ContactsAdapter(activity!!)
+
+        daemonUpdate.observe(viewLifecycleOwner, Observer { refresh() })
+        contactsUpdate.observe(viewLifecycleOwner, Observer { refresh() })
         settings.getBoolean("cashaddr_format").observe(viewLifecycleOwner, Observer {
             rvContacts.adapter?.notifyDataSetChanged()
         })
 
         btnAdd.setOnClickListener { showDialog(activity!!, ContactDialog()) }
     }
+
+    fun refresh() {
+        val wallet = daemonModel.wallet
+        (rvContacts.adapter as ContactsAdapter).submitList(
+            if (wallet == null) null else listContacts())
+    }
 }
 
 
-class ContactsAdapter(val activity: FragmentActivity, val contacts: List<ContactModel>)
+class ContactsAdapter(val activity: FragmentActivity)
     : BoundAdapter<ContactModel>(R.layout.contact_list) {
-
-    override fun getItemCount(): Int {
-        return contacts.size
-    }
-
-    override fun getItem(position: Int): ContactModel {
-        return contacts.get(position)
-    }
 
     override fun onBindViewHolder(holder: BoundViewHolder<ContactModel>, position: Int) {
         super.onBindViewHolder(holder, position)

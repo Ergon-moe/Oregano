@@ -19,8 +19,6 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.PopupMenu
 import android.widget.Toast
-import java.lang.ClassCastException
-import java.lang.IllegalArgumentException
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -169,34 +167,43 @@ fun setupVerticalList(rv: RecyclerView) {
 }
 
 
-// Based on https://medium.com/google-developers/android-data-binding-recyclerview-db7c40d9f0e4
-abstract class BoundAdapter<Model: Any>(val layoutId: Int)
-    : RecyclerView.Adapter<BoundViewHolder<Model>>() {
+// The RecyclerView ListAdapter gives some nice animations when the list changes, but I found
+// the diff process was too slow when comparing long transaction lists. However, we do emulate
+// its API here in case we try it again in the future.
+open class BoundAdapter<T: Any>(val layoutId: Int)
+    : RecyclerView.Adapter<BoundViewHolder<T>>() {
 
-    override fun getItemViewType(position: Int): Int {
-        return layoutId
+    var list: List<T> = listOf()
+
+    fun submitList(newList: List<T>?) {
+        list = newList ?: listOf()
+        notifyDataSetChanged()
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BoundViewHolder<Model> {
+    override fun getItemCount() =
+        list.size
+
+    fun getItem(position: Int) =
+        list.get(position)
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BoundViewHolder<T> {
         val layoutInflater = LayoutInflater.from(parent.context)
         val binding = DataBindingUtil.inflate<ViewDataBinding>(
-            layoutInflater, viewType, parent, false)
+            layoutInflater, layoutId, parent, false)
         return BoundViewHolder(binding)
     }
 
-    override fun onBindViewHolder(holder: BoundViewHolder<Model>, position: Int) {
+    override fun onBindViewHolder(holder: BoundViewHolder<T>, position: Int) {
         holder.item = getItem(position)
         holder.binding.setVariable(BR.model, holder.item)
         holder.binding.executePendingBindings()
     }
-
-    protected abstract fun getItem(position: Int): Model
 }
 
-class BoundViewHolder<Model: Any>(val binding: ViewDataBinding)
+class BoundViewHolder<T: Any>(val binding: ViewDataBinding)
     : RecyclerView.ViewHolder(binding.root) {
 
-    lateinit var item: Model
+    lateinit var item: T
 }
 
 

@@ -30,9 +30,11 @@ class TransactionsFragment : Fragment(), MainFragment {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setupVerticalList(rvTransactions)
-        daemonUpdate.observe(viewLifecycleOwner, Observer { update() })
-        transactionsUpdate.observe(viewLifecycleOwner, Observer { update() })
-        settings.getString("base_unit").observe(viewLifecycleOwner, Observer { update() })
+        rvTransactions.adapter = TransactionsAdapter(activity!!)
+
+        daemonUpdate.observe(viewLifecycleOwner, Observer { refresh() })
+        transactionsUpdate.observe(viewLifecycleOwner, Observer { refresh() })
+        settings.getString("base_unit").observe(viewLifecycleOwner, Observer { refresh() })
 
         btnSend.setOnClickListener {
             try {
@@ -42,29 +44,31 @@ class TransactionsFragment : Fragment(), MainFragment {
         btnRequest.setOnClickListener { newRequest(activity!!) }
     }
 
-    fun update() {
+    fun refresh() {
         val wallet = daemonModel.wallet
-        if (wallet == null) {
-            rvTransactions.adapter = null
-        } else {
-            rvTransactions.adapter = TransactionsAdapter(
-                activity!!, wallet.callAttr("export_history",
-                                            Kwarg("decimal_point", unitPlaces)).asList())
-        }
+        (rvTransactions.adapter as TransactionsAdapter).submitList(
+            if (wallet == null) null else TransactionsList(wallet))
     }
 }
 
 
-class TransactionsAdapter(val activity: FragmentActivity, val transactions: List<PyObject>)
+class TransactionsList(wallet: PyObject, addr: PyObject? = null)
+    : AbstractList<TransactionModel>() {
+
+    val history = wallet.callAttr("export_history",
+                                  Kwarg("domain", if (addr == null) null else arrayOf(addr)),
+                                  Kwarg("decimal_point", unitPlaces)).asList()
+
+    override val size
+        get() = history.size
+
+    override fun get(index: Int) =
+        TransactionModel(history.get(index).asMap())
+}
+
+
+class TransactionsAdapter(val activity: FragmentActivity)
     : BoundAdapter<TransactionModel>(R.layout.transaction_list) {
-
-    override fun getItem(position: Int): TransactionModel {
-        return TransactionModel(transactions.get(position).asMap())
-    }
-
-    override fun getItemCount(): Int {
-        return transactions.size
-    }
 
     override fun onBindViewHolder(holder: BoundViewHolder<TransactionModel>, position: Int) {
         super.onBindViewHolder(holder, position)
@@ -112,13 +116,8 @@ class TransactionDialog() : AlertDialogFragment() {
         builder.setView(R.layout.transaction_detail)
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(android.R.string.ok, {_, _ ->
-                // Avoid calling transactionsUpdate if the label hasn't changed, because it
-                // currently scrolls the list back to the top.
-                val newLabel = dialog.etDescription.text.toString()
-                if (newLabel != wallet.callAttr("get_label", txid).toString()) {
-                    setDescription(txid, newLabel)
-                    transactionsUpdate.setValue(Unit)
-                }
+                setDescription(txid, dialog.etDescription.text.toString())
+                transactionsUpdate.setValue(Unit)
             })
     }
 

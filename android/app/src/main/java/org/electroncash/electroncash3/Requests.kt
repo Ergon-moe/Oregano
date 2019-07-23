@@ -28,22 +28,21 @@ class RequestsFragment : Fragment(), MainFragment {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setupVerticalList(rvRequests)
-        val observer = Observer<Unit> {
-            val wallet = daemonModel.wallet
-            if (wallet == null) {
-                rvRequests.adapter = null
-            } else {
-                rvRequests.adapter = RequestsAdapter(
-                    activity!!,
-                    wallet.callAttr("get_sorted_requests", daemonModel.config).asList())
-            }
-        }
-        daemonUpdate.observe(viewLifecycleOwner, observer)
-        requestsUpdate.observe(viewLifecycleOwner, observer)
+        rvRequests.adapter = RequestsAdapter(activity!!)
+
+        daemonUpdate.observe(viewLifecycleOwner, Observer { refresh() })
+        requestsUpdate.observe(viewLifecycleOwner, Observer { refresh() })
         settings.getString("base_unit").observe(viewLifecycleOwner, Observer {
             rvRequests.adapter?.notifyDataSetChanged()
         })
+
         btnAdd.setOnClickListener { newRequest(activity!!) }
+    }
+
+    fun refresh() {
+        val wallet = daemonModel.wallet
+        (rvRequests.adapter as RequestsAdapter).submitList(
+            if (wallet == null) null else RequestsList(wallet))
     }
 }
 
@@ -57,16 +56,19 @@ fun newRequest(activity: FragmentActivity) {
 }
 
 
-class RequestsAdapter(val activity: FragmentActivity, val requests: List<PyObject>)
+class RequestsList(wallet: PyObject) : AbstractList<RequestModel>() {
+    val requests = wallet.callAttr("get_sorted_requests", daemonModel.config).asList()
+
+    override val size: Int
+        get() = requests.size
+
+    override fun get(index: Int) =
+        RequestModel(requests.get(index))
+}
+
+
+class RequestsAdapter(val activity: FragmentActivity)
     : BoundAdapter<RequestModel>(R.layout.request_list) {
-
-    override fun getItemCount(): Int {
-        return requests.size
-    }
-
-    override fun getItem(position: Int): RequestModel {
-        return RequestModel(requests.get(position))
-    }
 
     override fun onBindViewHolder(holder: BoundViewHolder<RequestModel>, position: Int) {
         super.onBindViewHolder(holder, position)
