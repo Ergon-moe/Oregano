@@ -205,6 +205,7 @@ class AndroidCommands(commands.Commands):
         if not self.daemon_running:
             raise Exception("Daemon not running")  # Same wording as in electron-cash script.
 
+    # Log callbacks on stderr so they'll appear in the console activity.
     def _on_callback(self, *args):
         util.print_stderr("[Callback] " + ", ".join(repr(x) for x in args))
 
