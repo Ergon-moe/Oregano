@@ -2,6 +2,8 @@ package org.electroncash.electroncash3
 
 import android.app.Activity
 import android.arch.lifecycle.Observer
+import android.arch.lifecycle.ViewModel
+import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
@@ -34,7 +36,7 @@ val ACTIVITIES = HashMap<Int, KClass<out Activity>>().apply {
 
 // Bottom navigation
 val FRAGMENTS = HashMap<Int, KClass<out Fragment>>().apply {
-    put(0, NoWalletFragment::class)
+    put(R.id.navNoWallet, NoWalletFragment::class)
     put(R.id.navTransactions, TransactionsFragment::class)
     put(R.id.navRequests, RequestsFragment::class)
     put(R.id.navAddresses, AddressesFragment::class)
@@ -47,6 +49,11 @@ interface MainFragment
 class MainActivity : AppCompatActivity() {
     var stateValid: Boolean by notNull()
     var cleanStart = true
+
+    class Model : ViewModel() {
+        var walletName: String? = null
+    }
+    val model by lazy { ViewModelProviders.of(this).get(Model::class.java) }
 
     override fun onCreate(state: Bundle?) {
         // Remove splash screen: doesn't work if called after super.onCreate.
@@ -76,14 +83,28 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        daemonUpdate.observe(this, Observer {
-            invalidateOptionsMenu()
-            updateToolbar()
-            updateDrawer()
-            showFragment(navBottom.selectedItemId)
-        })
+        daemonUpdate.observe(this, Observer { refresh() })
         settings.getString("base_unit").observe(this, Observer { updateToolbar() })
         fiatUpdate.observe(this, Observer { updateToolbar() })
+    }
+
+    fun refresh() {
+        updateToolbar()
+        updateDrawer()
+
+        val walletName = daemonModel.walletName
+        if (walletName != model.walletName) {
+            model.walletName = walletName
+            invalidateOptionsMenu()
+            clearFragments()
+            navBottom.selectedItemId = R.id.navTransactions
+        }
+        if (walletName == null) {
+            navBottom.visibility = View.GONE
+            showFragment(R.id.navNoWallet)
+        } else {
+            navBottom.visibility = View.VISIBLE
+        }
     }
 
     override fun onBackPressed() {
@@ -270,7 +291,7 @@ class MainActivity : AppCompatActivity() {
 
     fun showFragment(id: Int) {
         val ft = supportFragmentManager.beginTransaction()
-        val newFrag = getFragment(if (daemonModel.wallet == null) 0 else id)
+        val newFrag = getOrCreateFragment(id)
         for (frag in supportFragmentManager.fragments) {
             if (frag is MainFragment && frag !== newFrag) {
                 ft.detach(frag)
@@ -283,18 +304,35 @@ class MainActivity : AppCompatActivity() {
         ft.commitNowAllowingStateLoss()
     }
 
-    private fun getFragment(id: Int): Fragment {
-        val tag = "MainFragment:$id"
-        var frag = supportFragmentManager.findFragmentByTag(tag)
+    fun getFragment(id: Int): Fragment? {
+        return supportFragmentManager.findFragmentByTag(fragTag(id))
+    }
+
+    fun getOrCreateFragment(id: Int): Fragment {
+        var frag = getFragment(id)
         if (frag != null) {
             return frag
         } else {
             frag = FRAGMENTS[id]!!.java.newInstance()
             supportFragmentManager.beginTransaction()
-                .add(flContent.id, frag, tag).commitNowAllowingStateLoss()
+                .add(flContent.id, frag, fragTag(id))
+                .commitNowAllowingStateLoss()
             return frag
         }
     }
+
+    fun clearFragments() {
+        val ft = supportFragmentManager.beginTransaction()
+        for (id in FRAGMENTS.keys) {
+            val frag = getFragment(id)
+            if (frag != null) {
+                ft.remove(frag)
+            }
+        }
+        ft.commitNowAllowingStateLoss()
+    }
+
+    fun fragTag(id: Int) = "MainFragment:$id"
 }
 
 
