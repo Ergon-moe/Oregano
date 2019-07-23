@@ -407,7 +407,7 @@ class CloseWalletDialog : ProgressDialogTask<Unit>() {
 
 class ChangePasswordDialog : AlertDialogFragment() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
-        builder.setTitle(R.string.change_password)
+        builder.setTitle(R.string.Change_password)
             .setView(R.layout.change_password)
             .setPositiveButton(android.R.string.ok, null)
             .setNegativeButton(android.R.string.cancel, null)
@@ -425,7 +425,7 @@ class ChangePasswordDialog : AlertDialogFragment() {
                     dismiss()
                 } catch (e: PyException) {
                     throw if (e.message!!.startsWith("InvalidPassword"))
-                        ToastException(R.string.Password_Incorrect, Toast.LENGTH_SHORT) else e
+                        ToastException(R.string.incorrect_password, Toast.LENGTH_SHORT) else e
                 }
             } catch (e: ToastException) {
                 e.show()
@@ -447,7 +447,7 @@ class ShowSeedPasswordDialog : PasswordDialog() {
 
 class SeedDialog : AlertDialogFragment() {
     override fun onBuildDialog(builder: AlertDialog.Builder) {
-        builder.setTitle(R.string.wallet_seed)
+        builder.setTitle(R.string.Wallet_seed)
             .setView(R.layout.new_wallet_2)
             .setPositiveButton(android.R.string.ok, null)
     }

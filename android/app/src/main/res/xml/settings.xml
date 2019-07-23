@@ -35,7 +35,7 @@
             tools:summary="BCH"/>
         <ListPreference
             android:key="block_explorer"
-            android:title="@string/online_block"
+            android:title="@string/block_explorer"
             tools:summary="Blockchair.com"/>
     </PreferenceCategory>
 

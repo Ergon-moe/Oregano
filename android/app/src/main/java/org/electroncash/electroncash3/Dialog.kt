@@ -145,7 +145,7 @@ abstract class PasswordDialog(val runInBackground: Boolean = false) : AlertDialo
     private val model by lazy { ViewModelProviders.of(this).get(Model::class.java) }
 
     override fun onBuildDialog(builder: AlertDialog.Builder) {
-        builder.setTitle(R.string.password_required)
+        builder.setTitle(R.string.Enter_password)
             .setView(R.layout.password)
             .setPositiveButton(android.R.string.ok, null)
             .setNegativeButton(android.R.string.cancel, null)
@@ -177,7 +177,7 @@ abstract class PasswordDialog(val runInBackground: Boolean = false) : AlertDialo
                     model.result.postValue(true)
                 } catch (e: PyException) {
                     throw if (e.message!!.startsWith("InvalidPassword"))
-                        ToastException(R.string.Password_Incorrect, Toast.LENGTH_SHORT) else e
+                        ToastException(R.string.incorrect_password, Toast.LENGTH_SHORT) else e
                 }
             } catch (e: ToastException) {
                 e.show()

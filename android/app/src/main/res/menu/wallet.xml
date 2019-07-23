@@ -4,7 +4,7 @@
     <item
         android:id="@+id/menuClose"
         android:icon="@drawable/ic_close_24dp"
-        android:title="@string/close"/>
+        android:title="@string/close_wallet"/>
 
     <item
         android:id="@+id/menuUseChange"
@@ -13,16 +13,16 @@
 
     <item
         android:id="@+id/menuChangePassword"
-        android:title="@string/change_password"/>
+        android:title="@string/Change_password"/>
 
     <item
         android:id="@+id/menuShowSeed"
         android:icon="@drawable/ic_key_24dp"
-        android:title="@string/wallet_seed"/>
+        android:title="@string/show_seed"/>
 
     <item
         android:id="@+id/menuDelete"
         android:icon="@drawable/ic_delete_24dp"
-        android:title="@string/delete_wallet"/>
+        android:title="@string/Delete_wallet"/>
 
 </menu>

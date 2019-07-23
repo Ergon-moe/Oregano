@@ -73,7 +73,7 @@ class NewWalletDialog1 : AlertDialogFragment() {
 
 fun confirmPassword(dialog: Dialog): String {
     val password = dialog.etPassword.text.toString()
-    if (password.isEmpty()) throw ToastException(R.string.enter_password, Toast.LENGTH_SHORT)
+    if (password.isEmpty()) throw ToastException(R.string.Enter_password, Toast.LENGTH_SHORT)
     if (password != dialog.etConfirmPassword.text.toString()) {
         throw ToastException(R.string.wallet_passwords)
     }
