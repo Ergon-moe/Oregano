@@ -203,9 +203,14 @@ implements ViewTreeObserver.OnGlobalLayoutListener, ViewTreeObserver.OnScrollCha
 
     private void restoreScroll() {
         removeCursor();
+
+        // getLayout sometimes returns null even when called from onGlobalLayout, but I haven't
+        // been able to reproduce this (Electron Cash issue #1330, Chaquopy issue #5443).
         Layout layout = tvOutput.getLayout();
-        int line = layout.getLineForOffset(consoleModel.scrollChar);
-        svOutput.scrollTo(0, layout.getLineTop(line) + consoleModel.scrollAdjust);
+        if (layout != null) {
+            int line = layout.getLineForOffset(consoleModel.scrollChar);
+            svOutput.scrollTo(0, layout.getLineTop(line) + consoleModel.scrollAdjust);
+        }
 
         // If we are now scrolled to the bottom, we should stick there. (scrollTo probably won't
         // trigger onScrollChanged unless the scroll actually changed.)
