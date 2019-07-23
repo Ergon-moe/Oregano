@@ -3,6 +3,8 @@ package org.electroncash.electroncash3
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
+import android.arch.lifecycle.ViewModel
+import android.arch.lifecycle.ViewModelProviders
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentActivity
@@ -23,31 +25,36 @@ import com.chaquo.python.PyObject
 import kotlinx.android.synthetic.main.address_detail.*
 import kotlinx.android.synthetic.main.addresses.*
 import kotlinx.android.synthetic.main.transactions.*
+import kotlin.reflect.KClass
 
 
 val libAddress by lazy { libMod("address") }
 val clsAddress by lazy { libAddress["Address"]!! }
 
-
-val addressFilterType = MutableLiveData<Int>().apply { value = R.id.filterAll }
-val addressFilterStatus = MutableLiveData<Int>().apply { value = R.id.filterAll }
 val addressLabelUpdate = MutableLiveData<Unit>().apply { value = Unit }
 
 
 class AddressesFragment : Fragment(), MainFragment {
+    
+    class Model : ViewModel() {
+        val filterType = MutableLiveData<Int>().apply { value = R.id.filterAll }
+        val filterStatus = MutableLiveData<Int>().apply { value = R.id.filterAll }
+    }
+    val model by lazy { ViewModelProviders.of(this).get(Model::class.java) }
+    
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.addresses, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        btnType.setOnClickListener { showDialog(activity!!, FilterTypeDialog()) }
-        btnStatus.setOnClickListener { showDialog(activity!!, FilterStatusDialog()) }
+        btnType.setOnClickListener { showFilterDialog(FilterTypeDialog::class) }
+        btnStatus.setOnClickListener { showFilterDialog(FilterStatusDialog::class) }
 
         setupVerticalList(rvAddresses)
         rvAddresses.adapter = AddressesAdapter(activity!!)
         daemonUpdate.observe(viewLifecycleOwner, Observer { refresh() })
-        for (filter in listOf(addressFilterType, addressFilterStatus)) {
+        for (filter in listOf(model.filterType, model.filterStatus)) {
             filter.observe(viewLifecycleOwner, Observer { refresh() })
         }
 
@@ -57,8 +64,8 @@ class AddressesFragment : Fragment(), MainFragment {
     }
 
     fun refresh() {
-        setFilterLabel(btnType, R.string.type, R.menu.filter_type, addressFilterType)
-        setFilterLabel(btnStatus, R.string.status, R.menu.filter_status, addressFilterStatus)
+        setFilterLabel(btnType, R.string.type, R.menu.filter_type, model.filterType)
+        setFilterLabel(btnStatus, R.string.status, R.menu.filter_status, model.filterStatus)
 
         val wallet = daemonModel.wallet
         (rvAddresses.adapter as AddressesAdapter).submitList(
@@ -73,16 +80,22 @@ class AddressesFragment : Fragment(), MainFragment {
         btn.setText("${getString(prefix)}: ${menu.findItem(liveData.value!!).title}")
     }
 
+    fun <T: FilterDialog> showFilterDialog(cls: KClass<T>) {
+        val frag = cls.java.newInstance()
+        frag.setTargetFragment(this, 0)
+        showDialog(activity!!, frag)
+    }
+
     fun rebind() {
         rvAddresses.adapter?.notifyDataSetChanged()
     }
 
     fun passesFilter(am: AddressModel): Boolean {
-        when (addressFilterType.value) {
+        when (model.filterType.value) {
             R.id.filterReceiving -> { if (am.isChange) return false }
             R.id.filterChange -> { if (!am.isChange) return false }
         }
-        when (addressFilterStatus.value) {
+        when (model.filterStatus.value) {
             R.id.filterUnused -> { if (!am.history.isEmpty()) return false }
             R.id.filterFunded -> { if (am.balance == 0L) return false }
             R.id.filterUsed -> {
@@ -223,6 +236,7 @@ class AddressTransactionsDialog() : AlertDialogFragment() {
 
 
 abstract class FilterDialog : MenuDialog() {
+    val model by lazy { (targetFragment as AddressesFragment).model }
     lateinit var liveData: MutableLiveData<Int>
 
     fun onBuildDialog(builder: AlertDialog.Builder, menu: Menu, titleId: Int, menuId: Int,
@@ -241,13 +255,13 @@ abstract class FilterDialog : MenuDialog() {
 
 class FilterTypeDialog : FilterDialog() {
     override fun onBuildDialog(builder: AlertDialog.Builder, menu: Menu) {
-        onBuildDialog(builder, menu, R.string.type, R.menu.filter_type, addressFilterType)
+        onBuildDialog(builder, menu, R.string.type, R.menu.filter_type, model.filterType)
     }
 }
 
 class FilterStatusDialog : FilterDialog() {
     override fun onBuildDialog(builder: AlertDialog.Builder, menu: Menu) {
         onBuildDialog(builder, menu, R.string.status, R.menu.filter_status,
-                      addressFilterStatus)
+                      model.filterStatus)
     }
 }
