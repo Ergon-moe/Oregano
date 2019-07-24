@@ -23,7 +23,12 @@ import java.lang.IllegalArgumentException
 
 
 abstract class AlertDialogFragment : DialogFragment() {
-    var firstStart = true
+    class Model : ViewModel() {
+        var started = false
+    }
+    private val model by lazy { ViewModelProviders.of(this).get(Model::class.java) }
+
+    var started = false
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val builder = AlertDialog.Builder(context!!)
@@ -38,15 +43,24 @@ abstract class AlertDialogFragment : DialogFragment() {
     // So use one of the fragment lifecycle methods instead.
     override fun onStart() {
         super.onStart()
-        if (firstStart) {
-            firstStart = false
+        if (!started) {
+            started = true
             onShowDialog(dialog as AlertDialog)
+        }
+        if (!model.started) {
+            model.started = true
+            onFirstShowDialog(dialog as AlertDialog)
         }
     }
 
     /** Can be used to do things like configure custom views, or attach listeners to buttons so
      *  they don't always close the dialog. */
     open fun onShowDialog(dialog: AlertDialog) {}
+
+    /** Unlike onShowDialog, this will only be called once, even if the dialog is recreated
+     * after a rotation. This can be used to do things like setting the initial state of
+     * editable views. */
+    open fun onFirstShowDialog(dialog: AlertDialog) {}
 }
 
 

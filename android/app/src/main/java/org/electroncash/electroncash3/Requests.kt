@@ -97,7 +97,6 @@ class RequestModel(val request: PyObject) {
 
 
 class RequestDialog() : AlertDialogFragment() {
-    var savedInstanceState: Bundle? = null
     val wallet by lazy { daemonModel.wallet!! }
 
     init {
@@ -115,11 +114,6 @@ class RequestDialog() : AlertDialogFragment() {
 
     constructor(address: String): this() {
         arguments = Bundle().apply { putString("address", address) }
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        this.savedInstanceState = savedInstanceState
     }
 
     override fun onBuildDialog(builder: AlertDialog.Builder) {
@@ -155,11 +149,15 @@ class RequestDialog() : AlertDialogFragment() {
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
                 showDialog(activity!!, DeleteRequestDialog(address))
             }
-            if (savedInstanceState == null) {
-                val model = RequestModel(existingRequest)
-                dialog.etAmount.setText(model.amount)
-                dialog.etDescription.setText(model.description)
-            }
+        }
+    }
+
+    override fun onFirstShowDialog(dialog: AlertDialog) {
+        val request = existingRequest
+        if (request != null) {
+            val model = RequestModel(request)
+            dialog.etAmount.setText(model.amount)
+            dialog.etDescription.setText(model.description)
         }
     }
 

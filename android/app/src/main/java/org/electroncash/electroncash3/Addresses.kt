@@ -199,6 +199,9 @@ class AddressDialog() : AlertDialogFragment() {
         dialog.tvTxCount.movementMethod = LinkMovementMethod.getInstance()
 
         dialog.tvBalance.text = formatSatoshisAndFiat(addrModel.balance)
+    }
+
+    override fun onFirstShowDialog(dialog: AlertDialog) {
         dialog.etDescription.setText(addrModel.description)
     }
 }

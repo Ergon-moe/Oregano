@@ -107,8 +107,6 @@ class ContactDialog : AlertDialogFragment() {
             }
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { scanQR(this) }
         } else {
-            dialog.etName.setText(contact.name)
-            dialog.etAddress.setText(contact.addrUiString)
             dialog.btnExplore.setOnClickListener {
                 exploreAddress(activity!!, contact.addr)
             }
@@ -127,6 +125,14 @@ class ContactDialog : AlertDialogFragment() {
                     arguments = contact.toBundle()
                 })
             }
+        }
+    }
+
+    override fun onFirstShowDialog(dialog: AlertDialog) {
+        val contact = existingContact
+        if (contact != null) {
+            dialog.etName.setText(contact.name)
+            dialog.etAddress.setText(contact.addrUiString)
         }
     }
 

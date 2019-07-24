@@ -109,8 +109,11 @@ class TransactionDialog() : AlertDialogFragment() {
     constructor(txid: String) : this() {
         arguments = Bundle().apply { putString("txid", txid) }
     }
-    val txid by lazy { arguments!!.getString("txid")!! }
+
     val wallet by lazy { daemonModel.wallet!! }
+    val txid by lazy { arguments!!.getString("txid")!! }
+    val tx by lazy { wallet.get("transactions")!!.callAttr("get", txid)!! }
+    val txInfo by lazy { wallet.callAttr("get_tx_info", tx).asList() }
 
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         builder.setView(R.layout.transaction_detail)
@@ -125,8 +128,6 @@ class TransactionDialog() : AlertDialogFragment() {
         dialog.btnExplore.setOnClickListener { exploreTransaction(activity!!, txid) }
         dialog.btnCopy.setOnClickListener { copyToClipboard(txid, R.string.transaction_id) }
 
-        val tx = wallet.get("transactions")!!.callAttr("get", txid)!!
-        val txInfo = wallet.callAttr("get_tx_info", tx).asList()
         dialog.tvTxid.text = txid
 
         val timestamp = txInfo.get(8).toLong()
@@ -147,7 +148,9 @@ class TransactionDialog() : AlertDialogFragment() {
                                               getString(R.string.sat_byte, feeSpb),
                                               formatSatoshisAndUnit(fee))
         }
+    }
 
+    override fun onFirstShowDialog(dialog: AlertDialog) {
         dialog.etDescription.setText(txInfo.get(2)!!.toString())
     }
 }
