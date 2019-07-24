@@ -1,6 +1,6 @@
 # This file lists translatable strings used in the Android app which don't appear anywhere else
-# in the Electron Cash repository. Some of them only differ in capitalization: see
-# https://medium.com/@jsaito/making-a-case-for-letter-case-19d09f653c98
+# in the Electron Cash repository. Some of them only differ in capitalization or punctuation:
+# see https://medium.com/@jsaito/making-a-case-for-letter-case-19d09f653c98
 
 # If you change anything here, you need to rebuild the Android strings files by running the
 # Gradle task `generateStrings`.
@@ -28,6 +28,7 @@ _("New wallet")
 _("No wallet")
 _("No wallet is open.")
 _("Not a valid address or private key: '%s'")
+_("Passphrase")
 _("Press the menu button above to open or create one.")
 _("Request")
 _("Restore from seed")
