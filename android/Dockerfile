@@ -28,10 +28,12 @@ COPY gui gui
 COPY ios/ElectronCash/electroncash_gui/ios_native ios/ElectronCash/electroncash_gui/ios_native
 COPY plugins plugins
 
-# The app itself
+# The app itself. Specifically check for the keystore, otherwise it'll build an APK with no
+# certificates.
 COPY android android
+COPY android/keystore.jks android/
 COPY contrib/deterministic-build contrib/deterministic-build
 COPY lib lib
 
 RUN echo "sdk.dir=$(pwd)/android-sdk" > android/local.properties
-RUN cd android && ./gradlew app:assembleRelease
+RUN cd android && ./gradlew app:assembleMainNetRelease
