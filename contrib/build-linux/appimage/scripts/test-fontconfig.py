@@ -1,5 +1,6 @@
 # Electron Cash - lightweight Bitcoin client
 # Copyright (C) 2019 Axel Gembe <derago@gmail.com>
+# Copyright (C) 2019 Calin Culianu <calin.culianu@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation files
@@ -22,19 +23,32 @@
 # SOFTWARE.
 
 """
-Tests if the system has libfreetype.so.6 and FT_Done_MM_Var is defined.
-The AppImage bundles libfreetype version 2.8 and FT_Done_MM_Var has been
-added in version 2.9. If this script returns success it means the system
-has a newer freetype library than we bundle and we should use that instead.
+Tests if the system has libfontconfig.so.1 and if its version is
+< 2.12.6, exit(1).  If version >= 2.12.6, exit 0.  Exit 2 on
+library load error.
+
+In other words, if this script returns success it means the system
+has a new enough fontconfig library and we should use that instead
+of the bundled version.
 """
 
 import ctypes
 import sys
+import os
+
+
+MIN_OK_VERSION = 21206  # we bundle 2.12.6
 
 try:
-    freetype = ctypes.CDLL('libfreetype.so.6')
-    freetype.FT_Done_MM_Var
+    fontconfig = ctypes.CDLL('libfontconfig.so.1')
+    # ctypes default is a function takng 0 args and returning int,
+    # which is already the prototype of this fontconfig function
+    ver = fontconfig.FcGetVersion()
 except Exception:
-    sys.exit(1)
+    sys.exit(2)  # error exit indicates to caller to use bundled fontconfig
 
+if ver < MIN_OK_VERSION:
+    sys.exit(1) # error exit indicates to caller to use bundled fontconfig
+
+# Success exit -- do not use bundled fontconfig
 sys.exit(0)

@@ -34,8 +34,7 @@ import inspect, weakref
 import itertools
 import subprocess
 from locale import localeconv
-
-from .i18n import _
+from abc import ABC, abstractmethod
 
 import queue
 
@@ -47,7 +46,12 @@ base_units = {'BCH':8, 'mBCH':5, 'bits':2}
 inv_base_units = inv_dict(base_units)
 base_unit_labels = tuple(inv_base_units[dp] for dp in sorted(inv_base_units.keys(), reverse=True))  # ('BCH', 'mBCH', 'bits')
 
+def _(message): return message
+
 fee_levels = [_('Within 25 blocks'), _('Within 10 blocks'), _('Within 5 blocks'), _('Within 2 blocks'), _('In the next block')]
+
+del _
+from .i18n import _
 
 class NotEnoughFunds(Exception): pass
 
@@ -98,14 +102,14 @@ class PrintError:
     def print_msg(self, *msg):
         print_msg("[%s]" % self.diagnostic_name(), *msg)
 
-class ThreadJob(PrintError):
+class ThreadJob(ABC, PrintError):
     """A job that is run periodically from a thread's main loop.  run() is
     called from that thread's context.
     """
 
+    @abstractmethod
     def run(self):
         """Called periodically from the thread"""
-        pass
 
 class DebugMem(ThreadJob):
     '''A handy class for debugging GC memory leaks'''
@@ -653,17 +657,30 @@ import socket
 import ssl
 
 class SocketPipe(PrintError):
-    def __init__(self, socket):
+    class MessageSizeExceeded(RuntimeError):
+        ''' Raised by get() if max_message_bytes is set and the message size
+        limit was exceeded. '''
+
+    def __init__(self, socket, *, max_message_bytes=0):
+        ''' A max_message_bytes of <= 0 means unlimited, otherwise a positive
+        value indicates this many bytes to limit the message size by. This is
+        used by get(), which will raise MessageSizeExceeded if the message size
+        received is larger than max_message_bytes. '''
         self.socket = socket
         self.message = b''
         self.set_timeout(0.1)
         self.recv_time = time.time()
+        self.max_message_bytes = max_message_bytes
 
     def set_timeout(self, t):
         self.socket.settimeout(t)
 
     def idle_time(self):
         return time.time() - self.recv_time
+
+    def clean_up(self):
+        ''' Clears the receive buffer to make sure no garbage data remains '''
+        self.message = b''
 
     def get(self):
         while True:
@@ -694,6 +711,9 @@ class SocketPipe(PrintError):
                 return None
             self.message += data
             self.recv_time = time.time()
+
+            if self.max_message_bytes > 0 and len(self.message) > self.max_message_bytes:
+                raise self.MessageSizeExceeded(f"Message limit is: {self.max_message_bytes}; message buffer exceeded this limit!")
 
     def send(self, request):
         out = json.dumps(request) + '\n'

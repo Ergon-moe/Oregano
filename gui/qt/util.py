@@ -9,7 +9,6 @@ import webbrowser
 from collections import namedtuple
 from functools import partial, wraps
 
-from electroncash.i18n import _
 from electroncash.address import Address
 from electroncash.util import print_error, PrintError, Weak, finalization_print_error
 from electroncash.wallet import Abstract_Wallet
@@ -35,6 +34,8 @@ pr_icons = {
     PR_EXPIRED:":icons/expired.svg"
 }
 
+def _(message): return message
+
 pr_tooltips = {
     PR_UNPAID:_('Pending'),
     PR_PAID:_('Paid'),
@@ -47,6 +48,10 @@ expiration_values = [
     (_('1 week'), 7*24*60*60),
     (_('Never'), None)
 ]
+
+del _
+from electroncash.i18n import _
+
 
 
 class EnterButton(QPushButton):
@@ -87,41 +92,60 @@ class WWLabel(QLabel):
         self.setWordWrap(True)
         self.setTextInteractionFlags(self.textInteractionFlags() | Qt.TextSelectableByMouse)
 
-
-class HelpLabel(QLabel):
-
-    def __init__(self, text, help_text):
-        QLabel.__init__(self, text)
+# --- Help widgets
+class HelpMixin:
+    def __init__(self, help_text, *, custom_parent=None):
+        assert isinstance(self, QWidget), "HelpMixin must be a QWidget instance!"
         self.help_text = help_text
-        self.app = QCoreApplication.instance()
-        self.font = QFont()
+        self.custom_parent = custom_parent
+        if isinstance(self, QLabel):
+            self.setTextInteractionFlags(
+                (self.textInteractionFlags() | Qt.TextSelectableByMouse)
+                & ~Qt.TextSelectableByKeyboard)
+
+    def show_help(self):
+        QMessageBox.information(self.custom_parent or self, _('Help'), self.help_text)
+
+class HelpLabel(HelpMixin, QLabel):
+    def __init__(self, text, help_text, *, custom_parent=None):
+        QLabel.__init__(self, text)
+        HelpMixin.__init__(self, help_text, custom_parent=custom_parent)
+        self.setCursor(QCursor(Qt.PointingHandCursor))
+        self.font = self.font()
 
     def mouseReleaseEvent(self, x):
-        QMessageBox.information(self, 'Help', self.help_text)
+        self.show_help()
 
     def enterEvent(self, event):
         self.font.setUnderline(True)
         self.setFont(self.font)
-        self.app.setOverrideCursor(QCursor(Qt.PointingHandCursor))
         return QLabel.enterEvent(self, event)
 
     def leaveEvent(self, event):
         self.font.setUnderline(False)
         self.setFont(self.font)
-        self.app.setOverrideCursor(QCursor(Qt.ArrowCursor))
         return QLabel.leaveEvent(self, event)
 
-
-class HelpButton(QPushButton):
-    def __init__(self, text):
-        QPushButton.__init__(self, '?')
-        self.help_text = text
+class HelpButton(HelpMixin, QPushButton):
+    def __init__(self, text, *, button_text='?', fixed_size=True, icon=None,
+                 tool_tip=None, custom_parent=None):
+        QPushButton.__init__(self, button_text or '')
+        HelpMixin.__init__(self, text, custom_parent=custom_parent)
+        self.setToolTip(tool_tip or _("Show help"))
+        self.setCursor(QCursor(Qt.PointingHandCursor))
         self.setFocusPolicy(Qt.NoFocus)
-        self.setFixedWidth(20)
-        self.clicked.connect(self.onclick)
+        if fixed_size:
+            self.setFixedWidth(20)
+        if icon:
+            self.setIcon(icon)
+        self.clicked.connect(self.show_help)
+        # The below is for older plugins that may have relied on the existence
+        # of this method.  The older version of this class provided this method.
+        # Delete this line some day.
+        self.onclick = self.show_help
 
-    def onclick(self):
-        QMessageBox.information(self, 'Help', self.help_text)
+# --- /Help widgets
+
 
 class Buttons(QHBoxLayout):
     def __init__(self, *buttons):
@@ -357,8 +381,10 @@ class WaitingDialog(WindowModalDialog):
 
 def line_dialog(parent, title, label, ok_label, default=None,
                 *, linkActivated=None, placeholder=None, disallow_empty=False,
-                icon=None):
+                icon=None, line_edit_widget=None):
     dialog = WindowModalDialog(parent, title)
+    dialog.setObjectName('WindowModalDialog - ' + title)
+    destroyed_print_error(dialog)  # track object lifecycle
     dialog.setMinimumWidth(500)
     l = QVBoxLayout()
     dialog.setLayout(l)
@@ -378,7 +404,7 @@ def line_dialog(parent, title, label, ok_label, default=None,
     if linkActivated:
         lbl.linkActivated.connect(linkActivated)
         lbl.setTextInteractionFlags(lbl.textInteractionFlags()|Qt.LinksAccessibleByMouse)
-    txt = QLineEdit()
+    txt = line_edit_widget or QLineEdit()
     if default:
         txt.setText(default)
     if placeholder:
@@ -753,17 +779,32 @@ class OverlayControlMixin:
             x -= scrollbar_width
         self.overlay_widget.move(x, y)
 
-    def addWidget(self, widget: QWidget):
-        # The old code positioned the items the other way around, so we just insert at position 0 instead
-        self.overlay_layout.insertWidget(0, widget)
+    def addWidget(self, widget: QWidget, index: int = None):
+        if index is not None:
+            self.overlay_layout.insertWidget(index, widget)
+        else:
+            self.overlay_layout.addWidget(widget)
 
-    def addButton(self, icon_name: str, on_click, tooltip: str) -> QAbstractButton:
+    def addButton(self, icon_name: str, on_click, tooltip: str, index : int = None,
+                  *, text : str = None) -> QAbstractButton:
+        ''' icon_name may be None but then you must define text (which is
+        hopefully then some nice Unicode character). Both cannot be None.
+
+        `on_click` is the callable to connect to the button.clicked signal.
+
+        Use `index` to insert it not at the end of the layout by anywhere in the
+        layout. If None, it will be appended to the right of the layout. '''
         button = QPushButton(self.overlay_widget)
         button.setToolTip(tooltip)
         button.setCursor(QCursor(Qt.PointingHandCursor))
-        button.setIcon(QIcon(icon_name))
+        if icon_name:
+            button.setIcon(QIcon(icon_name))
+        elif text:
+            button.setText(text)
+        if not icon_name and not text:
+            raise AssertionError('OverlayControlMixin.addButton: Button must have either icon_name or text defined!')
         button.clicked.connect(on_click)
-        self.addWidget(button)
+        self.addWidget(button, index)
         return button
 
     def addCopyButton(self) -> QAbstractButton:
@@ -772,6 +813,19 @@ class OverlayControlMixin:
     def on_copy(self):
         QApplication.instance().clipboard().setText(self.text())
         QToolTip.showText(QCursor.pos(), _("Text copied to clipboard"), self)
+
+    def keyPressEvent(self, e):
+        if not self.hasFocus():
+            # Ignore keypress when we're not focused like when the focus is on a button
+            e.ignore()
+            return
+        super().keyPressEvent(e)
+
+    def keyReleaseEvent(self, e):
+        if not self.hasFocus():
+            e.ignore()
+            return
+        super().keyReleaseEvent(e)
 
 class ButtonsLineEdit(OverlayControlMixin, QLineEdit):
     def __init__(self, text=None):

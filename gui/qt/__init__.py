@@ -131,10 +131,10 @@ class ElectrumGui(QObject, PrintError):
         self.plugins = plugins
         self.windows = []
         self.app = QApplication(sys.argv)
+        self._load_fonts()  # this needs to be done very early, before the font engine loads fonts.. out of paranoia
+        self._exit_if_required_pyqt_is_missing()  # This may immediately exit the app if missing required PyQt5 modules, so it should also be done early.
         self.new_version_available = None
         self._set_icon()
-        self._exit_if_required_pyqt_is_missing()  # This may immediately exit the app if missing required PyQt5 modules.
-        self._load_fonts()
         self.app.installEventFilter(self)
         self.timer = QTimer(self); self.timer.setSingleShot(False); self.timer.setInterval(500) #msec
         self.gc_timer = QTimer(self); self.gc_timer.setSingleShot(True); self.gc_timer.timeout.connect(ElectrumGui.gc); self.gc_timer.setInterval(500) #msec
@@ -170,6 +170,8 @@ class ElectrumGui(QObject, PrintError):
         # We did this once already in the set_dark_theme call, but we do this
         # again here just in case some plugin modified the color scheme.
         ColorScheme.update_from_widget(QWidget())
+
+        self._check_and_warn_qt_version()
 
     def __del__(self):
         stale = True
@@ -267,19 +269,30 @@ class ElectrumGui(QObject, PrintError):
         timer.setSingleShot(True); timer.timeout.connect(timeout); timer.start(10000)  # 10 sec
 
     def _set_icon(self):
+        icon = None
         if sys.platform == 'darwin':
             # on macOS, in "running from source" mode, we want to set the app
             # icon, otherwise we get the generic Python icon.
             # In non-running-from-source mode, macOS will get the icon from
             # the .app bundle Info.plist spec (which ends up being
-            # electron.icns anyway).
+            # electron.icns).  However, in .app mode, Qt will not know about
+            # this icon and won't be able to use it for e.g. the About dialog.
+            # In the latter case the branch below will tell Qt to use
+            # electron-cash.svg as the "window icon".
             icon = QIcon("electron.icns") if os.path.exists("electron.icns") else None
-        else:
-            # Unconditionally set this on all other platforms as it can only
-            # help and never harm, and is always available.
-            icon = QIcon(":icons/electron.svg")
+        if not icon:
+            # Set this on all other platforms (and macOS built .app) as it can
+            # only help and never harm, and is always available.
+            icon = QIcon(":icons/electron-cash.svg")
         if icon:
             self.app.setWindowIcon(icon)
+
+    @staticmethod
+    def qt_version() -> tuple:
+        ''' Returns a 3-tuple of the form (major, minor, revision) eg
+        (5, 12, 4) for the current Qt version derived from the QT_VERSION
+        global provided by Qt. '''
+        return ( (QT_VERSION >> 16) & 0xff,  (QT_VERSION >> 8) & 0xff, QT_VERSION & 0xff )
 
     def _load_fonts(self):
         # Only load the emoji font on Linux and Windows
@@ -289,10 +302,41 @@ class ElectrumGui(QObject, PrintError):
         # TODO: Check if we already have the needed emojis
         # TODO: Allow the user to download a full color emoji set
 
-        emojis_ttf_path = os.path.join(os.path.dirname(__file__), 'data', 'emojis.ttf')
+        linux_font_config_file = os.path.join(os.path.dirname(__file__), 'data', 'fonts.xml')
+
+        if (sys.platform == 'linux'
+                and not os.environ.get('FONTCONFIG_FILE')
+                and os.path.exists('/etc/fonts/fonts.conf')
+                and os.path.exists(linux_font_config_file)
+                and self.qt_version() >= (5, 12)):  # doing this on Qt < 5.12 causes harm and makes the whole app render fonts badly
+            # On Linux, we override some fontconfig rules by loading our own
+            # font config XML file. This makes it so that our custom emojis and
+            # other needed glyphs are guaranteed to get picked up first,
+            # regardless of user font config.  Without this some Linux systems
+            # had black and white or missing emoji glyphs.  We only do this if
+            # the user doesn't have their own fontconfig file in env and
+            # also as a sanity check, if they have the system
+            # /etc/fonts/fonts.conf file in the right place.
+            os.environ['FONTCONFIG_FILE'] = linux_font_config_file
+
+        emojis_ttf_name = 'ecsupplemental_lnx.ttf'
+        if sys.platform in ('win32', 'cygwin'):
+            emojis_ttf_name = 'ecsupplemental_win.ttf'
+
+        emojis_ttf_path = os.path.join(os.path.dirname(__file__), 'data', emojis_ttf_name)
 
         if QFontDatabase.addApplicationFont(emojis_ttf_path) < 0:
             self.print_error('failed to add unicode emoji font to application fonts')
+
+    def _check_and_warn_qt_version(self):
+        if sys.platform == 'linux' and self.qt_version() < (5, 12):
+            msg = _("Electron Cash on Linux requires PyQt5 5.12+.\n\n"
+                    "You have version {version_string} installed.\n\n"
+                    "Please upgrade otherwise you may experience "
+                    "font rendering issues with emojis and other unicode "
+                    "characters used by Electron Cash.").format(version_string=QT_VERSION_STR)
+            QMessageBox.warning(None, _("PyQt5 Upgrade Needed"), msg)  # this works even if app is not exec_() yet.
+
 
     def eventFilter(self, obj, event):
         ''' This event filter allows us to open bitcoincash: URIs on macOS '''
@@ -712,7 +756,7 @@ class ElectrumGui(QObject, PrintError):
         if self.tray:
             try:
                 # this requires Qt 5.9
-                self.tray.showMessage("Electron Cash", message, QIcon(":icons/electron.svg"), 20000)
+                self.tray.showMessage("Electron Cash", message, QIcon(":icons/electron-cash.svg"), 20000)
             except TypeError:
                 self.tray.showMessage("Electron Cash", message, QSystemTrayIcon.Information, 20000)
 
@@ -739,31 +783,6 @@ class ElectrumGui(QObject, PrintError):
         if was != b:
             self.config.set_key('hide_cashaddr_button', bool(b))
             self.cashaddr_status_button_hidden_signal.emit(b)
-
-    def test_emoji_fonts(self) -> bool:
-        ''' Returns True if we can render all of the emoji fonts we need,
-        False otherwise. This needs to be called after the QApplication has
-        already been instantiated, which is why it's an instance method. Even
-        though this contains a loop over many characters we need, it ends up
-        having the following performance: first run is ~130 msec, subsequent
-        runs are ~10 msec total (on moderate hardware).'''
-        from electroncash import cashacct
-        #from . import network_dialog as nd
-
-        fontm = QFontMetrics(QFont())
-        fontm_mono = QFontMetrics(QFont(MONOSPACE_FONT))
-
-        emojis = set(cashacct.emoji_list)
-        # Note the below characters are not emojis, so they do not need to
-        # be included in this test. The rationale is these characters for
-        # the network dialog are not 100% critical to the UI, and they also
-        # are not in the solution we will recommend:install NotoColorEmoji.ttf.
-        # Uncomment if you wish to also check for these characters, however.
-        #emojis |= set(ord(ch) for ch in nd.ServerFlag.Symbol + nd.ServerFlag.UnSymbol if ch)
-        for uval in emojis:
-            if not fontm.inFontUcs4(uval) or not fontm_mono.inFontUcs4(uval):
-                return False
-        return True
 
     def main(self):
         try:

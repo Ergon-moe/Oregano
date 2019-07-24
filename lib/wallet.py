@@ -39,7 +39,7 @@ from collections import defaultdict
 from decimal import Decimal as PyDecimal  # Qt 5.12 also exports Decimal
 from functools import partial
 
-from .i18n import _, ngettext
+from .i18n import ngettext
 from .util import NotEnoughFunds, ExcessiveFee, PrintError, UserCancelled, profiler, format_satoshis, format_time, finalization_print_error
 
 from .address import Address, Script, ScriptOutput, PublicKey, OpCodes
@@ -67,6 +67,8 @@ from .paymentrequest import InvoiceStore
 from .contacts import Contacts
 from . import cashacct
 
+def _(message): return message
+
 TX_STATUS = [
     _('Unconfirmed parent'),
     _('Low fee'),
@@ -74,8 +76,10 @@ TX_STATUS = [
     _('Not Verified'),
 ]
 
-DEFAULT_CONFIRMED_ONLY = False
+del _
+from .i18n import _
 
+DEFAULT_CONFIRMED_ONLY = False
 
 def relayfee(network):
     RELAY_FEE = 5000
@@ -840,8 +844,13 @@ class Abstract_Wallet(PrintError, SPVDelegate):
             confirmed_only = True
         return self.get_utxos(domain, exclude_frozen=True, mature=True, confirmed_only=confirmed_only)
 
-    def get_utxos(self, domain = None, exclude_frozen = False, mature = False, confirmed_only = False):
-        ''' Note that exclude_frozen = True checks for BOTH address-level and coin-level frozen status. '''
+    def get_utxos(self, domain = None, exclude_frozen = False, mature = False, confirmed_only = False,
+                  *, addr_set_out = None):
+        '''Note that exclude_frozen = True checks for BOTH address-level and
+        coin-level frozen status.
+
+        Optional kw-only arg `addr_set_out` specifies a set in which to add all
+        addresses encountered in the utxos returned. '''
         with self.lock:
             coins = []
             if domain is None:
@@ -850,6 +859,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
                 domain = set(domain) - self.frozen_addresses
             for addr in domain:
                 utxos = self.get_addr_utxo(addr)
+                len_before = len(coins)
                 for x in utxos.values():
                     if exclude_frozen and x['is_frozen_coin']:
                         continue
@@ -858,7 +868,9 @@ class Abstract_Wallet(PrintError, SPVDelegate):
                     if mature and x['coinbase'] and x['height'] + COINBASE_MATURITY > self.get_local_height():
                         continue
                     coins.append(x)
-                    continue
+                if addr_set_out is not None and len(coins) > len_before:
+                    # add this address to the address set if it has results
+                    addr_set_out.add(addr)
             return coins
 
     def dummy_address(self):
@@ -1181,7 +1193,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
         else:
             status = 3 + min(conf, 6)
         time_str = format_time(timestamp) if timestamp else _("unknown")
-        status_str = TX_STATUS[status] if status < 4 else time_str
+        status_str = _(TX_STATUS[status]) if status < 4 else time_str
         return status, status_str
 
     def relayfee(self):

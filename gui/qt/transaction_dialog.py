@@ -82,7 +82,7 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
         self.cashaddr_signal_slots = []
         self._dl_pct = None
         self._closed = False
-        self.tx_hash = self.tx._txid(self.tx.raw) if self.tx.raw else None
+        self.tx_hash = self.tx.txid_fast() if self.tx.raw and self.tx.is_complete() else None
         self.tx_height = self.wallet.get_tx_height(self.tx_hash)[0] or None
         self.block_hash = None
 
@@ -771,8 +771,8 @@ class TxDialog(QDialog, MessageBoxMixin, PrintError):
                 copy_list += [ ( _("Copy Amount"), lambda: self._copy_to_clipboard(value_fmtd, o_text) ) ]
             if ca_script:
                 copy_list += [ ( _("Copy Address (Embedded)"), lambda: self._copy_to_clipboard(ca_script.address.to_ui_string(), o_text) ) ]
-                if ca_script.is_complete():
-                    text_getter = lambda: self.wallet.cashacct.fmt_info(cashacct.Info.from_script(ca_script, self.tx_hash))
+                if ca_script.is_complete() and self.tx_hash:
+                    text_getter = lambda: self.wallet.cashacct.fmt_info(cashacct.Info.from_script(ca_script, self.tx_hash), emoji=True)
                     text_getter()  # go out to network to cache the shortest encoding for cash account name ahead of time...
                     copy_list += [ ( _("Copy Cash Account"), lambda: self._copy_to_clipboard(text_getter(), o_text) ) ]
         except (TypeError, ValueError, IndexError, KeyError) as e:
