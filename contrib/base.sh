@@ -187,7 +187,7 @@ export SOURCE_DATE_EPOCH=1530212462
 # If the manifest changed, contrib/build-wine/manifest.xml needs to be updated.
 export PYTHON_VERSION=3.6.9  # Windows, OSX & Linux AppImage use this to determine what to download/build
 export PYTHON_SRC_TARBALL_HASH="5e2f5f554e3f8f7f0296f7e73d8600c4e9acbaee6b2555b83206edf5153870da"  # If you change PYTHON_VERSION above, update this by downloading the tarball manually and doing a sha256sum on it.
-export DEFAULT_GIT_REPO=https://github.com/Electron-Cash/Electron-Cash
+export DEFAULT_GIT_REPO=https://github.com/Oregano/Oregano
 if [ -z "$GIT_REPO" ] ; then
     # If no override from env is present, use default. Support for overrides
     # for the GIT_REPO has been added to allows contributors to test containers
@@ -201,7 +201,7 @@ if [ "$GIT_REPO" != "$DEFAULT_GIT_REPO" ]; then
     info "Picked up override from env: GIT_REPO=${GIT_REPO}"
 fi
 export GIT_DIR_NAME=`basename $GIT_REPO`
-export PACKAGE="Electron-Cash"  # Modify this if you like -- Windows, MacOS & Linux srcdist build scripts read this, while AppImage has it hard-coded
+export PACKAGE="Oregano"  # Modify this if you like -- Windows, MacOS & Linux srcdist build scripts read this, while AppImage has it hard-coded
 export PYI_SKIP_TAG="${PYI_SKIP_TAG:-0}" # Set this to non-zero to make PyInstaller skip tagging the bootloader
 
 # Build a command line argument for docker, enabling interactive mode if stdin

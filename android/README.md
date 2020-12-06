@@ -1,4 +1,4 @@
-# Electron Cash Android app
+# Oregano Android app
 
 
 ## Release
@@ -32,7 +32,7 @@ For user interface text, the app uses the standard Android string resource syste
 script `contrib/make_locale` to obtain strings from elsewhere in the repository and Crowdin.
 
 Android-specific strings should be added to
-`app/src/main/python/electroncash_gui/android/strings.py`.
+`app/src/main/python/oregano_gui/android/strings.py`.
 
 `generateStrings` is run automatically the first time you build the app. If any of the source
 strings change, delete the directory `app/build/generated/ec_strings` and then rebuild the app.

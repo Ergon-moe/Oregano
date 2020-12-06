@@ -54,7 +54,7 @@ cd $build_dir/../..
 VERSION=`git describe --tags`
 
 # Paramterize
-BUILDDIR=/tmp/electron-cash-build
+BUILDDIR=/tmp/oregano-build
 LIBSECP_COMMIT="69ccf0d2f758b1a4df9cde8222459381e08fc1dc"
 # Compute major.minor Python version from above using Bash array magic
 MAJ_MIN=(${PYTHON_VERSION//./ })
@@ -141,13 +141,13 @@ python3 -m pip install -I --user -r contrib/osx/requirements-osx-build.txt \
 
 # This is for the Satochip hardware wallet which relies on the python module
 # 'smartcard' which contains a binary which is annoying to build. So we just
-# pre-built it and download the wheel from our Electron-Cash-Build-Tools repo.
+# pre-built it and download the wheel from our Oregano-Build-Tools repo.
 # Note: when we upgrade to Python 3.7 we will need to re-build this module for
 # python 3.7.
 info "Installing Python Smartcard Module (pyscard)"
 mkdir -p $BUILDDIR
 PYSCARD_FNAME="pyscard-1.9.9-cp36-cp36m-macosx_10_11_x86_64.whl"
-curl -L https://github.com/cculianu/Electron-Cash-Build-Tools/releases/download/v1.0/$PYSCARD_FNAME > $BUILDDIR/$PYSCARD_FNAME
+curl -L https://github.com/cculianu/Oregano-Build-Tools/releases/download/v1.0/$PYSCARD_FNAME > $BUILDDIR/$PYSCARD_FNAME
 verify_hash $BUILDDIR/$PYSCARD_FNAME 336b1cc335049e3ac5fad125c63d4e8fd4d25e85147f999359cdc6a9fde36fa7
 python3 -m pip install $BUILDDIR/$PYSCARD_FNAME --user && pyenv rehash \
     || fail "Could not install pyscard"
@@ -183,13 +183,13 @@ info "Making locale..."
 python3 ./contrib/make_locale || fail "Failed to make locale..."
 
 info "Downloading libusb..."
-curl -L https://github.com/cculianu/Electron-Cash-Build-Tools/releases/download/v1.0/libusb-1.0.21.el_capitan.bottle.tar.gz | \
+curl -L https://github.com/cculianu/Oregano-Build-Tools/releases/download/v1.0/libusb-1.0.21.el_capitan.bottle.tar.gz | \
     tar xz --directory $BUILDDIR || fail "Could not download libusb"
 verify_hash $BUILDDIR/libusb/1.0.21/lib/libusb-1.0.dylib d147e7382dfa676d93e8b17d160d50f68e4b01f58f3647c90a8899a7a0519ca3  # this exits on failure
 cp -fp $BUILDDIR/libusb/1.0.21/lib/libusb-1.0.dylib contrib/osx || fail "Could not copy libusb"
 
 info "Downloading ZBar dylib..."
-curl -L https://github.com/cculianu/Electron-Cash-Build-Tools/releases/download/v1.0/v0.23-libzbar.0.dylib.xz | \
+curl -L https://github.com/cculianu/Oregano-Build-Tools/releases/download/v1.0/v0.23-libzbar.0.dylib.xz | \
     xz -d -c > contrib/osx/libzbar.0.dylib || fail "Could not download libzbar"
 verify_hash contrib/osx/libzbar.0.dylib 7b82238dd73e56d9f57913230ea5418c247b292cf96c8996becda961ab001c85
 
@@ -252,7 +252,7 @@ plutil -insert 'CFBundleURLTypes' \
 	|| fail "Could not add keys to Info.plist. Make sure the program 'plutil' exists and is installed."
 
 plutil -insert 'NSCameraUsageDescription' \
-       -string 'Electron Cash would like to access the camera to scan for QR codes' \
+       -string 'Oregano would like to access the camera to scan for QR codes' \
 	-- dist/$PACKAGE.app/Contents/Info.plist \
 	|| fail "Could not add keys to Info.plist. Make sure the program 'plutil' exists and is installed."
 
@@ -266,7 +266,7 @@ if ((DARWIN_VER >= 18 && FORCE_MOJAVE_DARK)); then
 fi
 
 # Sign the Tor binary separately
-DoCodeSignMaybe "tor binary" "dist/${PACKAGE}.app/Contents/MacOS/electroncash/tor/bin/tor" "$APP_SIGN"
+DoCodeSignMaybe "tor binary" "dist/${PACKAGE}.app/Contents/MacOS/oregano/tor/bin/tor" "$APP_SIGN"
 # Finally, codesign the whole thing
 DoCodeSignMaybe ".app bundle" "dist/${PACKAGE}.app" "$APP_SIGN"
 

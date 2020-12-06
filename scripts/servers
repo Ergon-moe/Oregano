@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from electroncash import set_verbosity
-from electroncash.network import filter_version
+from oregano import set_verbosity
+from oregano.network import filter_version
 import util, json
 set_verbosity(False)
 

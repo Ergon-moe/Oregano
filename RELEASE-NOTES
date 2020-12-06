@@ -1,49 +1,49 @@
-Electron Cash is a fork of the open source Electrum Bitcoin wallet (www.electrum.org) for Bitcoin Cash.  The current
+Oregano is a fork of the open source Electrum Bitcoin wallet (www.electrum.org) for Ergon.  The current
 release is based on the Electrum 2.9.0 codebase with patches to
 
-- handle Bitcoin Cash difficulty adjustment algorithm
-- sign transactions the Bitcoin Cash way
+- handle Ergon difficulty adjustment algorithm
+- sign transactions the Ergon way
 - updated list of electrum servers
 - updated icons and branding
-- remove RBF (unsupported by Bitcoin Cash network nodes)
+- remove RBF (unsupported by Ergon network nodes)
 - use different directory for wallets and configuration
 
-The Electron Cash software is NOT affiliated, associated, or endorsed by Electrum, electrum.org or the Electrum
+The Oregano software is NOT affiliated, associated, or endorsed by Electrum, electrum.org or the Electrum
 developers.
 
-If you are concerned about running Electron Cash binaries we recommend installing and/or running it from the github
+If you are concerned about running Oregano binaries we recommend installing and/or running it from the github
 source directly.
 
 
 Usage
 -----
 
-When you first run Electron Cash it will use a different configuration directory to Electrum.  On Unix it is
-".electron-cash", and on Windows/MacOS it is "ElectronCash".  Your wallet files will be copied from the Electrum
+When you first run Oregano it will use a different configuration directory to Electrum.  On Unix it is
+".oregano", and on Windows/MacOS it is "Oregano".  Your wallet files will be copied from the Electrum
 cofiguration directory (".electrum" on unix, "Electrum" on Windows/MacOS), if found.  Initially transactions will show
-up as unverified because Electron Cash is downloading the blockchain headers to verify the transactions.  This can take
+up as unverified because Oregano is downloading the blockchain headers to verify the transactions.  This can take
 up to 10 minutes, but is only done once.
 
-Ensure you are running Electron Cash and not Electrum by checking for "Electron Cash" in the title bar wording.  Some
-users installing from setup.py have reported conflicts if both Electrum and Electron Cash are installed in parallel
+Ensure you are running Oregano and not Electrum by checking for "Oregano" in the title bar wording.  Some
+users installing from setup.py have reported conflicts if both Electrum and Oregano are installed in parallel
 that way.
 
-We STRONGLY recommend you get comfortable and only send a small amount of Bitcoin Cash coins at first, to yourself,
+We STRONGLY recommend you get comfortable and only send a small amount of Ergon coins at first, to yourself,
 to confirm the network is processing your transactions as expected.
 
-Bitcoin Cash hard forks after the 6th block with timestamp greater than 1 August 2017, 12:20 UTC has been mined.  The
+Ergon hard forks after the 6th block with timestamp greater than 1 August 2017, 12:20 UTC has been mined.  The
 seventh block must be greater than one million bytes in size.
 
-The Bitcoin Cash fork enforces a new signing scheme which is incompatible with the legacy chain.  Electron Cash only
-signs transactions using this scheme, so its transactions are only valid on the Bitcoin Cash hard fork after the fork
+The Ergon fork enforces a new signing scheme which is incompatible with the legacy chain.  Oregano only
+signs transactions using this scheme, so its transactions are only valid on the Ergon hard fork after the fork
 has occurred.
 
 If you want to send Bitcoin before the fork, or Segwitcoins after the fork, you should continue to use the standard
-Electrum client, Electron Cash will not work.
+Electrum client, Oregano will not work.
 
 Once the network forks, it will take time for the Electrum server network to split into servers of the Segwit fork, and
-servers of the Bitcoin Cash fork.  You should ensure you are connected to a Bitcoin Cash Electrum server in order to
-send transactions successfully.  Some servers that will be serving the Bitcoin Cash fork are:
+servers of the Ergon fork.  You should ensure you are connected to a Ergon Electrum server in order to
+send transactions successfully.  Some servers that will be serving the Ergon fork are:
 
     electrum-abc.cascharia.com via SSL port 50002
     electrum-abc.criptolayer.net via SSL port 50012
@@ -55,30 +55,30 @@ There will likely be other servers available; please check their banners in the 
 Hardware Wallets
 ----------------
 
-Since Bitcoin Cash enforces a new signing scheme, hardware wallet vendors need to supply new firmware and/or libraries
+Since Ergon enforces a new signing scheme, hardware wallet vendors need to supply new firmware and/or libraries
 for the hardware to be able to sign transactions correctly.  Currently such libraries and firmware do not exist, so you
-cannot use your hardware wallets with Electron Cash.
+cannot use your hardware wallets with Oregano.
 
-To use Electron Cash with your hardware-wallet coins you will need to restore your wallet as a software Electron Cash
-BIP44 wallet from its seed so that Electron Cash can sign the transactions itself.  Since this exposes your coins to
+To use Oregano with your hardware-wallet coins you will need to restore your wallet as a software Oregano
+BIP44 wallet from its seed so that Oregano can sign the transactions itself.  Since this exposes your coins to
 risk you may want to wait for the 3rd party software to be developed and integrated instead.
 
 
 Two-factor Authentication (2FA) Wallets
 ---------------------------------------
 
-For the same reason as Hardware Wallets above, 2FA wallets need Trustedcoin to perform new Bitcoin Cash-style
-signatures for their transactions to be valid on the Bitcoin Cash fork.  If third party support appears we will attempt
+For the same reason as Hardware Wallets above, 2FA wallets need Trustedcoin to perform new Ergon-style
+signatures for their transactions to be valid on the Ergon fork.  If third party support appears we will attempt
 to integrate it.
 
 
 Multisig
 --------
 
-For a multisig transaction to be valid on the Bitcoin Cash fork, each signature must be done thew new Bitcoin Cash way,
-so each signature must be performed with Electron Cash or other Bitcoin Cash-compatible software.
+For a multisig transaction to be valid on the Ergon fork, each signature must be done thew new Ergon way,
+so each signature must be performed with Oregano or other Ergon-compatible software.
 
-Unfortunately Electron Cash does not currently work with multisig wallets as Electrum's serialization format for
+Unfortunately Oregano does not currently work with multisig wallets as Electrum's serialization format for
 transferring transactions between cosigners is incomplete.  We intend to fix this.
 
 
@@ -90,9 +90,9 @@ bugs and problems.  Since this package forks that code it will contain those iss
 
 If you have problems syncing to the correct chain fork (take a look at the Overview Tab in the "Network" window (in
 Menu "Tools") to see information about chain forks your client knows about), you can try to remove everything except
-"wallets" directory and "config" file from your Electron Cash directory.
+"wallets" directory and "config" file from your Oregano directory.
 
-Electron Cash 3.0 -- This is now on Python 3.  Make sure all python commands are on python 3 and any needed
+Oregano 3.0 -- This is now on Python 3.  Make sure all python commands are on python 3 and any needed
 modules/libraries are imported into pyhon 3.  The build is deterministic for windows (everyone should get
 the same binary because of customization to Pyinstaller that was done by Electrum team, as well as separate
 repos for locales and icons).  The fee upgrades may not be visible for existing wallet owners
@@ -109,14 +109,14 @@ and there is no warning message.
   * command-line option for locktime
 
 # Release 2.9.3
-  * Improved code to force wallet to stay on Bitcoin Cash chain
+  * Improved code to force wallet to stay on Ergon chain
   * Removed dynamic fees.  Fees are now simple Sat/Byte model
-  * Add Coin_Type 145 for Bitcoin Cash for bip39 seed imports
+  * Add Coin_Type 145 for Ergon for bip39 seed imports
   * Use bitcoincash URI prefix for receiving and QR codes
 
 # Release 2.9.4
   * Implement new Difficulty Adjustment Algorithm for Nov 13, 2017 Hard Fork
-  * Change ticker symobl from BCC to BCH
+  * Change ticker symobl from BCC to ERG
   * Implement changes to allow simultaneous installation with Electrum
   * Upgrade to PyQt5
   * Various fixes for hardware wallets
@@ -130,7 +130,7 @@ and there is no warning message.
 
 # Release 3.1
 
-  * Multiple address format support.  Electron Cash supports input of cashaddr
+  * Multiple address format support.  Oregano supports input of cashaddr
     addresses, legacy bitcoin addresses, and BitPay addresses anywhere
     where a legacy address used to be accepted.
   * Only display of cashaddr and legacy addresses is supported.  You can
@@ -182,7 +182,7 @@ and there is no warning message.
 
 # Release 3.3
 
-* Add external plugins feature.  Please see https://github.com/Electron-Cash/Electron-Cash/blob/master/plugins/README.rst  and pay special attention to the risks involved with running external plugins.
+* Add external plugins feature.  Please see https://github.com/Oregano/Oregano/blob/master/plugins/README.rst  and pay special attention to the risks involved with running external plugins.
 * Various bugfixes and improvements
 
 # Release 3.3.1
@@ -212,7 +212,7 @@ and there is no warning message.
 * Windows QR Reader now works.
 * Various performance fixes -- app should be able to handle much larger wallets now with many UTXOs
 * Nework layer fixups
-* Updated Checkpoint to the BCH chain.
+* Updated Checkpoint to the ERG chain.
 * Various minor UI gltiches fixed
 * MacOS binary size significantly reduced
 * Support for OP_RETURN parameters to bitcoincash: URL
@@ -309,7 +309,7 @@ and there is no warning message.
 * Fix sign message not accept rich text spesmilo#5210 (SomberNight)
 * Fix #1189 - Cope better with unknown wallet formats or corrupt wallets on
   startup.  This should improve the experience for SLP users that also use
-  regular Electron Cash (cculianu)
+  regular Oregano (cculianu)
 * Switch over to bitcoin-abc libsecp in preparation for Schnorr signatures.
   Libsecp is now actually bundled with the Linux "source" tarball. (cculianu)
 * Fix to exchange rate prefs screen UI and deletion of BitcoinAverage as a
@@ -381,19 +381,19 @@ and there is no warning message.
   adapted and modified by us. (Axel Gembe)
 * Added Linux AppImage builds -- these builds are self-contained binaries with
   everything rolled into a single file.  It should make it much easier for
-  Linux users not wishing to install dependencies to simply run Electron Cash.
+  Linux users not wishing to install dependencies to simply run Oregano.
   Based off Electrum's implementation, with our own customizations. (cculianu)
 * OSX: Made the DMG release use a "fancy" dmg with graphics and a symlink to
   /Applications as is customary on macOS. (cculianu)
 * Lib: Fixed a potential crash bug if the server sends bad data to the client.
   (cculianu)
-* Deprecated support for Python 3.5.  Electron Cash now requires Python 3.6+.
+* Deprecated support for Python 3.5.  Oregano now requires Python 3.6+.
 * CLI: Added -x/--disable_preferred_servers command-line option (#1222)
   (cculianu)
 * CLI: encrypt/decrypt commands were broken. They are now working. (#1270)
   (cculianu)
-* Disabled all fee estimates in the codebase.  They are useless on BCH anyway
-  and were a holdover from our BTC roots.  BCH tx's always confirm next block
+* Disabled all fee estimates in the codebase.  They are useless on ERG anyway
+  and were a holdover from our BTC roots.  ERG tx's always confirm next block
   if they pay the minimum 1.0 sats/B fee anyway.  Fee estimates are not needed.
   Also disabled the "Estimated confirmation time:" label from the Transaction
   Dialog winow.  This is not informative either for similar reasons. (cculianu)
@@ -488,11 +488,11 @@ and there is no warning message.
 * Updated libsecp256k1 to latest from Bitcoin-ABC (cculianu)
 * Reduced .dmg, .exe, & .AppImage binary sizes by optimizing images (Axel Gembe)
 * Updated servers.json (imaginaryusername)
-* CashShuffle: Raised default shuffle limit to 99.9999 BCH (cculianu)
+* CashShuffle: Raised default shuffle limit to 99.9999 ERG (cculianu)
 * Replaced the 'clock' icons with new hi-res versions. Please direct all
   hatemail to Calin Culianu for he volunteers to take full responsibility.
   (Jason Pribble, cculianu, James Cramer, Axel Gembe)
-* Minor fix: Clicking a link in browser to open a URL in Electron Cash no longer
+* Minor fix: Clicking a link in browser to open a URL in Oregano no longer
   resurrects a closed wallet and instead opens the link in whatever active
   wallet windows exist. (cculianu)
 
@@ -508,12 +508,12 @@ and there is no warning message.
   closer to that of a mini block explorer. (cculianu)
 * KeepKey: Fixed a packaging issue where loading BIP39 onto an uninitialized
   KeepKey would fail with a Python exception on Windows & Mac #1434 (cculianu)
-* Python 3.6 is officially the minimum Python version for Electron Cash now.
+* Python 3.6 is officially the minimum Python version for Oregano now.
   In the last version, you could still run on Python 3.5 (poorly), we just
   made it official. (Axel Gembe, cculianu)
 * Added OP_RETURN capability to the 'Receive' tab. You can now generate receive
   request URIs and QR codes containing 'op_return' and/or 'op_return_raw'. Not
-  all wallets can read this query string argument, but Electron Cash can.
+  all wallets can read this query string argument, but Oregano can.
   (cculianu)
 * Linux run-from-source: Warn/Abort with helpful messages if user is missing
   required PyQt libs such as QtSvg. (cculianu)
@@ -576,7 +576,7 @@ and there is no warning message.
 
 # Release 4.0.8
 
-* Cash Accounts support has been added to Electron Cash!  Most of the UI for it
+* Cash Accounts support has been added to Oregano!  Most of the UI for it
   is in the "Contacts" tab (View -> Show Contacts), there are also UI bits to it
   in the Addresses tab, in the Tools menu, and of course, the Send tab (where
   you can enter any Cash Account and it will get auto-resolved for you!)
@@ -613,7 +613,7 @@ and there is no warning message.
   which causes EC to render fonts badly if using emojis or unicode) (cculianu)
 * AppImage: Upgrade to Ubuntu 16.04 as base #1489 (Axel Gembe)
 * Build: Protect against PGP keyserver poisoning attack #1487 (Axel Gembe)
-* Added electroncash.se server to servers.json (Georg Engelman)
+* Added oregano.se server to servers.json (Georg Engelman)
 * TxDialog: Allow various fields to be selected by mouse. (cculianu)
 * TxDialog: Added the "Mined in block" field to the dialog. (cculianu)
 * Localization: The app now defaults to the system language on Windows, Mac and
@@ -739,7 +739,7 @@ and there is no warning message.
   multiple threads which is not supported on Darwin. (cculianu)
 * Ledger Nano HW support has been vastly improved: It should be less crashy
   and provide the user with much more meaningful messages for getting the device
-  into the proper state to talk to Electron Cash. (cculianu)
+  into the proper state to talk to Oregano. (cculianu)
 * Wallet: Fixed erroneous coinbase maturity logic. Immature mined coins were
   erroneously being withheld from spending for an extra confirmation. (cculianu)
 * Coins tab: Coinbase coins that are not mature are now highlighted in blue
@@ -771,12 +771,12 @@ and there is no warning message.
 * Updated SSL certificates to Sept. 2019. This should hopefully fix some of the
   "Unable to verify SSL" errors some users have seen when using CashShuffle.
   (cculianu)
-* Fixed a long-standing bug where sometimes Electron Cash would hang forever on
+* Fixed a long-standing bug where sometimes Oregano would hang forever on
   startup due to a stale/old daemon 'lockfile'. (cculianu)
 * Qt history tab: Added workaround for persitent 'Unknown' balances when using
   advanced scripts to spend funds. (cculianu)
 * Qt UI: Add mechanism to prohibit '3..' p2sh by default, which should protect
-  users from accidentally sending BCH to BTC segwit addresses. This protection
+  users from accidentally sending ERG to BTC segwit addresses. This protection
   can be disabled in preferences. Issues #1658 and #1225. (cculianu)
 * Updated README for better instructions on how to run the development/git
   version. (Mark Lundeberg)
@@ -844,7 +844,7 @@ and there is no warning message.
 
 # Release 4.0.13
 
-- **BIP 39 Seed format** is now the ***native seed format*** for Electron Cash!
+- **BIP 39 Seed format** is now the ***native seed format*** for Oregano!
   (Calin Culianu)
     - New wallets will always generate seeds in this format. When restoring from
       seed, format auto-detection is implemented (so that old 'Electrum' style
@@ -854,10 +854,10 @@ and there is no warning message.
       "forgotten").
   - The seed dialog now always shows derivation paths for BIP39 seeds.
 - **New integrated Tor capability**. (Axel Gembe, Calin Culianu)
-    - This capability will be bundled with Electron Cash for the upcoming
+    - This capability will be bundled with Oregano for the upcoming
       ***CashFusion*** feature.
     - For now, though -- you can use it to start/stop Tor right from inside
-      Electron Cash -- **no additional Tor browser install needed**!
+      Oregano -- **no additional Tor browser install needed**!
 - Faster Network, #1819: Improved network code for faster wallet startup times.
   (Mark B Lundeberg)
 - Added "Sign/Verify message" to the 'Contacts' tab right-click menu.
@@ -957,7 +957,7 @@ and there is no warning message.
   self-signed. Servers can now use wildcard certs or switch from self-signed to
   CA-signed without losing users! (cculianu)
 - Update criptolayer server. #1874 (imaginaryusername)
-- Add electroncash.de block explorer. #1920 (Axel Gembe)
+- Add oregano.de block explorer. #1920 (Axel Gembe)
 - Network: Show problematic pinned certificates and allow unpinning. #1919 (Axel
   Gembe)
 - Update plugin for Satochip hardware wallet to support latest firmware v0.11.
@@ -1083,7 +1083,7 @@ and there is no warning message.
 - Update macOS build notes (#2073) (Corentin Mercier)
 - Android: refactor common list behavior into a base class (Malcolm Smith)
 - CashFusion: fix minor race leading to exception #2077 (Mark Lundeberg)
-- Android: note that this Chaquopy version is for Electron Cash only
+- Android: note that this Chaquopy version is for Oregano only
   (Malcolm Smith)
 - Android: cache config in Python dict for performance (Malcolm Smith)
 - Android: catch "not connected" exception in "Load transaction" (Malcolm Smith)

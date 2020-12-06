@@ -31,16 +31,16 @@ COPY android/build-requirements.txt android/
 RUN wget -O - https://bootstrap.pypa.io/get-pip.py | python3.6 && \
     pip3 install -r android/build-requirements.txt
 COPY contrib/make_locale contrib/
-COPY electroncash_gui electroncash_gui
-COPY ios/ElectronCash/electroncash_gui/ios_native ios/ElectronCash/electroncash_gui/ios_native
-COPY electroncash_plugins electroncash_plugins
+COPY oregano_gui oregano_gui
+COPY ios/Oregano/oregano_gui/ios_native ios/Oregano/oregano_gui/ios_native
+COPY oregano_plugins oregano_plugins
 
 # The app itself. Specifically check for the keystore, otherwise it'll build an APK with no
 # certificates.
 COPY android android
 COPY android/keystore.jks android/
 COPY contrib/deterministic-build contrib/deterministic-build
-COPY electroncash electroncash
+COPY oregano oregano
 
 RUN echo "sdk.dir=$(pwd)/android-sdk" > android/local.properties
 RUN cd android && ./gradlew app:assembleMainNetRelease

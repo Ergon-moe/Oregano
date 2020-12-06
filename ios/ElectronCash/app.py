@@ -5,12 +5,12 @@
 # MIT License
 #
 import os
-from electroncash_gui.ios_native.monkeypatches import MonkeyPatches
-from electroncash.util import set_verbosity
-from electroncash_gui.ios_native import ElectrumGui
-from electroncash_gui.ios_native.utils import call_later, get_user_dir, cleanup_tmp_dir, is_debug_build, NSLogSuppress, NSLog
-from electroncash.simple_config import SimpleConfig
-from electroncash.networks import set_mainnet, set_testnet
+from oregano_gui.ios_native.monkeypatches import MonkeyPatches
+from oregano.util import set_verbosity
+from oregano_gui.ios_native import ElectrumGui
+from oregano_gui.ios_native.utils import call_later, get_user_dir, cleanup_tmp_dir, is_debug_build, NSLogSuppress, NSLog
+from oregano.simple_config import SimpleConfig
+from oregano.networks import set_mainnet, set_testnet
 
 # NB: This is called from appdelegate.py "application_didFinishLaunchingWithOptions_"
 def main():
@@ -42,15 +42,15 @@ def main():
 
     _printStats(config_options)  # Prints some startup/debug stats such as Python version and SSL version (this is done in another thread to hopefully not impact startup overhead too much, as importing ssl may be a bit heavy)
 
-    return "Bitcoin Cash FTW!"
+    return "Ergon FTW!"
 
 def _printStats(config_options):
     import threading
     def thrdfunc(config_options):
         # lazy init of SSL
         import ssl, sys
-        from electroncash import version, ecc_fast, schnorr
-        NSLog("Electron Cash lib version: %s (using server protocol: %s)", version.PACKAGE_VERSION, version.PROTOCOL_VERSION)
+        from oregano import version, ecc_fast, schnorr
+        NSLog("Oregano lib version: %s (using server protocol: %s)", version.PACKAGE_VERSION, version.PROTOCOL_VERSION)
         NSLog("Python version: %s", ' '.join(sys.version.split('\n')))
         NSLog("OpenSSL version: %s", ssl.OPENSSL_VERSION)
         NSLog("Fast ECC: %s  Fast Schnorr: %s", str(ecc_fast.is_using_fast_ecc()), str(schnorr.has_fast_sign()))

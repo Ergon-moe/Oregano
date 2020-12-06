@@ -5,10 +5,10 @@
     tools:context=".TransactionsFragment">
     <data>
         <import type="android.view.View"/>
-        <import type="org.electroncash.electroncash3.UtilKt"/>
+        <import type="org.oregano.oregano3.UtilKt"/>
         <variable
             name="model"
-            type="org.electroncash.electroncash3.TransactionModel"/>
+            type="org.oregano.oregano3.TransactionModel"/>
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
