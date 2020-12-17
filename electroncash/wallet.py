@@ -2286,7 +2286,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
                 info[addr] = index, sorted_xpubs, self.m if isinstance(self, Multisig_Wallet) else None, self.txin_type
         tx.output_info = info
 
-    def sign_transaction(self, tx, password, *, use_cache=False, ndata=None):
+    def sign_transaction(self, tx, password, *, use_cache=False, ndata=None, grind=None):
         """ Sign a transaction, requires password (may be None for password-less
         wallets). If `use_cache` is enabled then signing will be much faster.
 
@@ -2312,7 +2312,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
                         # test if keystore sign_transaction method knows about the `ndata` kwarg
                         if 'ndata' in inspect.signature(k.sign_transaction, follow_wrapped=True).parameters:
                             # keystore understands the optional `ndata` kwarg
-                            k.sign_transaction(tx, password, use_cache=use_cache, ndata=ndata)
+                            k.sign_transaction(tx, password, use_cache=use_cache, ndata=ndata,grind=grind)
                         else:
                             # keystore does not understand `ndata` (possibly because hw wallet)
                             raise RuntimeError("Keystore does not understand ndata parameter.  Possibly wrong wallet type attemping special operation.")

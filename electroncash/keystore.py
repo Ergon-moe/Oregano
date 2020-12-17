@@ -105,7 +105,7 @@ class Software_KeyStore(KeyStore):
         decrypted = ec.decrypt_message(message)
         return decrypted
 
-    def sign_transaction(self, tx, password, *, use_cache=False, ndata=None):
+    def sign_transaction(self, tx, password, *, use_cache=False, ndata=None, grind=None):
         if self.is_watching_only():
             return
         # Raise if password is not correct.
@@ -122,10 +122,10 @@ class Software_KeyStore(KeyStore):
                 # support this argument.
                 if 'ndata' not in inspect.signature(tx.sign, follow_wrapped=True).parameters:
                     raise RuntimeError(f'Transaction subclass "{tx.__class__.__name__}" does not support the "ndata" kwarg')
-                tx.sign(keypairs, use_cache=use_cache, ndata=ndata)
+                tx.sign(keypairs, use_cache=use_cache, ndata=ndata,grind=grind)
             else:
                 # Regular transaction sign (no ndata supported or no ndata specified)
-                tx.sign(keypairs, use_cache=use_cache)
+                tx.sign(keypairs, use_cache=use_cache,ndata=ndata,grind=grind)
 
 
 class Imported_KeyStore(Software_KeyStore):

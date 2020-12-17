@@ -27,7 +27,7 @@
 
 # Note: The deserialization code originally comes from ABE.
 
-from .util import print_error, profiler
+from .util import print_error, profiler, print_msg
 from .caches import ExpiringCache
 
 from .bitcoin import *
@@ -38,7 +38,7 @@ from . import schnorr
 from . import util
 import struct
 import warnings
-
+ 
 #
 # Workalike python implementation of Bitcoin's CDataStream class.
 #
@@ -940,7 +940,8 @@ class Transaction:
         assert schnorr.verify(pubkey, sig, pre_hash)  # verify what we just signed
         return sig
 
-    def sign(self, keypairs, *, use_cache=False, ndata=None):
+    def sign(self, keypairs, *, use_cache=False, ndata=None, grind=None):
+         
         for i, txin in enumerate(self.inputs()):
             pubkeys, x_pubkeys = self.get_sorted_pubkeys(txin)
             for j, (pubkey, x_pubkey) in enumerate(zip(pubkeys, x_pubkeys)):
@@ -957,11 +958,35 @@ class Transaction:
                     continue
                 print_error(f"adding signature for input#{i} sig#{j}; {kname}: {_pubkey} schnorr: {self._sign_schnorr}")
                 sec, compressed = keypairs.get(_pubkey)
-                self._sign_txin(i, j, sec, compressed, use_cache=use_cache, ndata=ndata)
+                
+                if grind is not None:
+                    grind_process = True
+                    grind_count = 0
+                    grind_match_string = grind
+                    while grind_process:
+                        grind_count +=1
+                        ndata = grind_count.to_bytes(32,'big')
+                        #print ("grind count is ",grind_count, "looking for ",grind)
+                        self._sign_txin(i, j, sec, compressed, use_cache=use_cache, ndata=ndata) #x.to_bytes()
+                        my_serialized_input = self.serialize_input(self._inputs[i],self.input_script(self._inputs[i], False, self._sign_schnorr)) 
+                        my_serialized_input2 = bytes.fromhex(my_serialized_input)
+                        hashed = sha256(sha256(my_serialized_input2))
+                        hashed2 = hashed.hex().upper()
+                        if grind_match_string == hashed2[0:len(grind_match_string)]:
+                            grind_process = False
+                    #print ("serial is ",my_serialized_input2)
+                    #print ("hashsed is ",hashed2)
+                    #print ("substr is ",hashed2[0:2])
+                else:
+                    self._sign_txin(i, j, sec, compressed, use_cache=use_cache, ndata=ndata)
+                    
+                        
         print_error("is_complete", self.is_complete())
         self.raw = self.serialize()
 
     def _sign_txin(self, i, j, sec, compressed, *, use_cache=False, ndata=None):
+         
+    
         '''Note: precondition is self._inputs is valid (ie: tx is already deserialized)'''
         pubkey = public_key_from_private_key(sec, compressed)
         # add signature

@@ -131,7 +131,7 @@ def _generate_privkey_from_secret(parent_privkey, secret):
     return bitcoin.CKD_priv(parent_privkey, secret, 0)[0].hex()
 
 
-def generate_paycode(wallet, prefix_size="08"):
+def generate_paycode(wallet, prefix_size="10"):
     """prefix size should be either 0x04 , 0x08, 0x0C, 0x10"""
 
     # Fields of the paycode
@@ -163,7 +163,7 @@ def generate_transaction_from_paycode(wallet, config, amount, rpa_paycode=None, 
 
     # Decode the paycode
     rprefix, addr_hash = addr.decode(rpa_paycode)
-    paycode_hex = addr_hash.hex()
+    paycode_hex = addr_hash.hex().upper()
 
     # Parse paycode
     paycode_field_version = paycode_hex[0:2]
@@ -193,7 +193,7 @@ def generate_transaction_from_paycode(wallet, config, amount, rpa_paycode=None, 
     else:
         raise ValueError("Invalid prefix size. Must be 4,8,12, or 16 bits.")
 
-    print_msg("Attempting to grind a matching prefix.  This may take a few minutes.  Please be patient.")
+    #print_msg("Attempting to grind a matching prefix.  This may take a few minutes.  Please be patient.")
 
     # While loop for grinding.  Keep grinding until txid prefix matches paycode scanpubkey prefix.
     while not tx_matches_paycode_prefix:
@@ -238,7 +238,8 @@ def generate_transaction_from_paycode(wallet, config, amount, rpa_paycode=None, 
         tx.BIP_LI01_sort()
 
         # Now we need to sign the transaction after the outputs are known
-        wallet.sign_transaction(tx, password, ndata=ndata)
+        grind_string = paycode_field_scan_pubkey[2:prefix_chars + 2].upper() 
+        wallet.sign_transaction(tx, password, ndata=ndata,grind=grind_string)
 
         # Generate the raw transaction
         raw_tx_string = tx.as_dict()["hex"]
@@ -249,16 +250,18 @@ def generate_transaction_from_paycode(wallet, config, amount, rpa_paycode=None, 
         txid = double_hash_tx.hex()
 
         # Check if we got a successful match.  If so, exit.
-        if txid[0:prefix_chars].upper() == paycode_field_scan_pubkey[2:prefix_chars + 2].upper():
-            print_msg("Grinding successful after ", grind_nonce, " iterations.")
-            print_msg("Transaction Id: ", txid)
-            print_msg("prefix is ", txid[0:prefix_chars].upper())
-            final_raw_tx = raw_tx_string
-            tx_matches_paycode_prefix = True  # <<-- exit
+        
+        #if txid[0:prefix_chars].upper() == paycode_field_scan_pubkey[2:prefix_chars + 2].upper() or grind_nonce > 2  :
+        #    print_msg("Grinding successful after ", grind_nonce, " iterations.")
+        #    print_msg("Transaction Id: ", txid)
+        #    print_msg("prefix is ", txid[0:prefix_chars].upper())
+        #    final_raw_tx = raw_tx_string
+        #    tx_matches_paycode_prefix = True  # <<-- exit
 
         # Increment the nonce
-        grind_nonce += 1
-
+        #grind_nonce += 1
+        final_raw_tx = raw_tx_string
+        tx_matches_paycode_prefix = True
     return final_raw_tx
 
 
