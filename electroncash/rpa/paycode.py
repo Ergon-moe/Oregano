@@ -16,9 +16,10 @@ from . import addr
 from .. import bitcoin
 from .. import transaction
 from ..address import Address, Base58
-from ..bitcoin import COIN, TYPE_ADDRESS, sha256
+from ..bitcoin import * #COIN, TYPE_ADDRESS, sha256
 from ..plugins import run_hook
 from ..transaction import Transaction, OPReturn
+from ..keystore import KeyStore
 from ..util import print_msg
 
 
@@ -193,75 +194,101 @@ def generate_transaction_from_paycode(wallet, config, amount, rpa_paycode=None, 
     else:
         raise ValueError("Invalid prefix size. Must be 4,8,12, or 16 bits.")
 
-    #print_msg("Attempting to grind a matching prefix.  This may take a few minutes.  Please be patient.")
-
-    # While loop for grinding.  Keep grinding until txid prefix matches paycode scanpubkey prefix.
-    while not tx_matches_paycode_prefix:
-
-        # Construct the transaction, initially with a dummy destination
-        rpa_dummy_address = wallet.dummy_address().to_string(Address.FMT_CASHADDR)
-        unsigned = True
-        tx = _mktx(wallet, config, [(rpa_dummy_address, amount)], tx_fee, change_addr, domain, nocheck, unsigned,
+    # Construct the transaction, initially with a dummy destination
+    rpa_dummy_address = wallet.dummy_address().to_string(Address.FMT_CASHADDR)
+    unsigned = True
+    tx = _mktx(wallet, config, [(rpa_dummy_address, amount)], tx_fee, change_addr, domain, nocheck, unsigned,
                    password, locktime, op_return, op_return_raw)
+ 
+    # Use the first input (input zero) for our shared secret
+    input_zero = tx._inputs[0]
 
-        # Calculate ndata for grinding.  Ndata is passed through the stack as an input into RFC 6979
-        grind_nonce_string = str(grind_nonce)
-        grinding_message = rpa_paycode + grind_nonce_string + grinding_version
-        ndata = sha256(grinding_message)
+    # Fetch our own private key for the coin
+    bitcoin_addr = input_zero["address"]
+    private_key_wif_format = wallet.export_private_key(bitcoin_addr, password)
+    private_key_int_format = int.from_bytes(Base58.decode_check(private_key_wif_format)[1:33], byteorder="big")
 
-        # Use the first input (input zero) for our shared secret
-        input_zero = tx._inputs[0]
+    # Grab the outpoint  (the colon is intentionally ommitted from the string)
+    outpoint_string = str(input_zero["prevout_hash"]) + str(input_zero["prevout_n"])
 
-        # Fetch our own private key for the coin
-        bitcoin_addr = input_zero["address"]
-        private_key_wif_format = wallet.export_private_key(bitcoin_addr, password)
-        private_key_int_format = int.from_bytes(Base58.decode_check(private_key_wif_format)[1:33], byteorder="big")
+    # Format the pubkey in preparation to get the shared secret
+    scanpubkey_bytes = bytes.fromhex(paycode_field_scan_pubkey)
 
-        # Grab the outpoint  (the colon is intentionally ommitted from the string)
-        outpoint_string = str(input_zero["prevout_hash"]) + str(input_zero["prevout_n"])
+    # Calculate shared secret
+    shared_secret = _calculate_paycode_shared_secret(private_key_int_format, scanpubkey_bytes, outpoint_string)
 
-        # Format the pubkey in preparation to get the shared secret
-        scanpubkey_bytes = bytes.fromhex(paycode_field_scan_pubkey)
-
-        # Calculate shared secret
-        shared_secret = _calculate_paycode_shared_secret(private_key_int_format, scanpubkey_bytes, outpoint_string)
-
-        # Get the real destination for the transaction
-        rpa_destination_address = _generate_address_from_pubkey_and_secret(bytes.fromhex(paycode_field_spend_pubkey),
+    # Get the real destination for the transaction
+    rpa_destination_address = _generate_address_from_pubkey_and_secret(bytes.fromhex(paycode_field_spend_pubkey),
                                                                            shared_secret).to_string(
             Address.FMT_CASHADDR)
 
-        # Swap the dummy destination for the real destination
-        tx.rpa_paycode_swap_dummy_for_destination(rpa_dummy_address, rpa_destination_address)
+    # Swap the dummy destination for the real destination
+    tx.rpa_paycode_swap_dummy_for_destination(rpa_dummy_address, rpa_destination_address)
 
-        # Sort the inputs and outputs deterministically
-        tx.BIP_LI01_sort()
+    # Now we need to sign the transaction after the outputs are known
+    grind_string = paycode_field_scan_pubkey[2:prefix_chars + 2].upper() 
+    wallet.sign_transaction(tx, password)
 
-        # Now we need to sign the transaction after the outputs are known
-        grind_string = paycode_field_scan_pubkey[2:prefix_chars + 2].upper() 
-        wallet.sign_transaction(tx, password, ndata=ndata,grind=grind_string)
+    #Setup wallet and keystore in preparation for signature grinding
+    my_keystore = wallet.get_keystore() 
+    
+    # We assume one signature per input, for now...
+    assert len(input_zero["signatures"]) == 1      
+    input_zero["signatures"]=[None]
+         
+    #Keypair logic from transaction module
+    keypairs = my_keystore.get_tx_derivations(tx) 
+    for k, v in keypairs.items():
+        keypairs[k] = my_keystore.get_private_key(v, password)     
+    txin = input_zero
+    pubkeys, x_pubkeys = tx.get_sorted_pubkeys(txin)
+    for j, (pubkey, x_pubkey) in enumerate(zip(pubkeys, x_pubkeys)):                
+        if pubkey in keypairs:
+            _pubkey = pubkey
+            kname = 'pubkey'
+        elif x_pubkey in keypairs:
+            _pubkey = x_pubkey
+            kname = 'x_pubkey'
+        else:
+            continue 
+        sec, compressed = keypairs.get(_pubkey)
+                
+    # Get the keys and preimage ready for signing 
+    pubkey = public_key_from_private_key(sec, compressed)     
+    nHashType = 0x00000041 # hardcoded, perhaps should be taken from unsigned input dict
+    pre_hash = Hash(bfh(tx.serialize_preimage(0, nHashType, use_cache=False)))
+         
+    # While loop for grinding.  Keep grinding until txid prefix matches paycode scanpubkey prefix.
+    grind_count = 0
+    while not tx_matches_paycode_prefix:
+        grind_nonce_string = str(grind_count)
+        grinding_message = paycode_hex + grind_nonce_string + grinding_version
+        ndata = sha256(grinding_message) 
+        sig = Transaction._schnorr_sign(pubkey, sec, pre_hash, ndata=ndata)
+        input_zero["signatures"]=[sig.hex()]
+        tx._inputs[0]=input_zero
+        my_serialized_input = tx.serialize_input(input_zero,tx.input_script(input_zero, False, tx._sign_schnorr))
+        my_serialized_input_bytes = bytes.fromhex(my_serialized_input)
+        hashed_input = sha256(sha256(my_serialized_input_bytes)).hex() 
+         
+        if hashed_input[0:prefix_chars].upper() == paycode_field_scan_pubkey[2:prefix_chars + 2].upper():
+            tx_matches_paycode_prefix = True
 
-        # Generate the raw transaction
-        raw_tx_string = tx.as_dict()["hex"]
+        grind_count +=1 
 
-        # Get the TxId for this raw Tx.
-        double_hash_tx = bytearray(sha256(sha256(bytes.fromhex(raw_tx_string))))
-        double_hash_tx.reverse()
-        txid = double_hash_tx.hex()
+    # Sort the inputs and outputs deterministically
+    tx.BIP_LI01_sort()
 
-        # Check if we got a successful match.  If so, exit.
-        
-        #if txid[0:prefix_chars].upper() == paycode_field_scan_pubkey[2:prefix_chars + 2].upper() or grind_nonce > 2  :
-        #    print_msg("Grinding successful after ", grind_nonce, " iterations.")
-        #    print_msg("Transaction Id: ", txid)
-        #    print_msg("prefix is ", txid[0:prefix_chars].upper())
-        #    final_raw_tx = raw_tx_string
-        #    tx_matches_paycode_prefix = True  # <<-- exit
+    # Generate the raw transaction
+    raw_tx_string = tx.as_dict()["hex"]
 
-        # Increment the nonce
-        #grind_nonce += 1
-        final_raw_tx = raw_tx_string
-        tx_matches_paycode_prefix = True
+    # Get the TxId for this raw Tx.
+    double_hash_tx = bytearray(sha256(sha256(bytes.fromhex(raw_tx_string))))
+    double_hash_tx.reverse()
+    txid = double_hash_tx.hex()
+ 
+    final_raw_tx = raw_tx_string
+    tx_matches_paycode_prefix = True
     return final_raw_tx
 
 
