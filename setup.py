@@ -151,6 +151,7 @@ setup(
     packages=[
         'electroncash',
         'electroncash.qrreaders',
+        'electroncash.rpa',
         'electroncash.slp',
         'electroncash.tor',
         'electroncash.utils',
