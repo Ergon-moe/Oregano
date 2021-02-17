@@ -53,8 +53,9 @@ if platform.system() in ['Linux', 'FreeBSD', 'DragonFly']:
         share_dir = user_share
     data_files += [
         # Menu icon
-        (os.path.join(share_dir, 'icons/hicolor/128x128/apps/'), ['icons/electron-cash.png']),
-        (os.path.join(share_dir, 'pixmaps/'),                    ['icons/electron-cash.png']),
+        (os.path.join(share_dir, 'icons/hicolor/256x256/apps/'),   ['icons/electron-cash.png']),
+        (os.path.join(share_dir, 'pixmaps/'),                      ['icons/electron-cash.png']),
+        (os.path.join(share_dir, 'icons/hicolor/scaleable/apps.'), ['icons/electron-cash.svg']),
         # Menu entry
         (os.path.join(share_dir, 'applications/'), ['electron-cash.desktop']),
         # App stream (store) metadata
@@ -118,22 +119,22 @@ class MakeAllBeforeSdist(setuptools.command.sdist.sdist):
         super().run()
 
 
-platform_package_data = {}
+platform_package_data = {
+    'electroncash_gui.qt': [
+        'data/ard_mone.mp3'
+    ],
+}
 
 if sys.platform in ('linux'):
-    platform_package_data = {
-        'electroncash_gui.qt': [
+    platform_package_data['electroncash_gui.qt'] += [
             'data/ecsupplemental_lnx.ttf',
             'data/fonts.xml'
-        ],
-    }
+    ]
 
 if sys.platform in ('win32', 'cygwin'):
-    platform_package_data = {
-        'electroncash_gui.qt': [
+    platform_package_data['electroncash_gui.qt'] += [
             'data/ecsupplemental_win.ttf'
-        ],
-    }
+    ]
 
 setup(
     cmdclass={
@@ -180,6 +181,7 @@ setup(
             'servers_testnet.json',
             'servers_testnet4.json',
             'servers_scalenet.json',
+            'servers_taxcoin.json',
             'currencies.json',
             'www/index.html',
             'wordlist/*.txt',

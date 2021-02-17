@@ -84,8 +84,9 @@ fun validateWalletName(name: String) {
 }
 
 
+// Also called from PasswordChangeDialog.
 fun confirmPassword(dialog: Dialog): String {
-    val password = dialog.etPassword.text.toString()
+    val password = dialog.etNewPassword.text.toString()
     if (password.isEmpty()) throw ToastException(R.string.Enter_password, Toast.LENGTH_SHORT)
     if (password != dialog.etConfirmPassword.text.toString()) {
         throw ToastException(R.string.wallet_passwords)
@@ -121,6 +122,7 @@ abstract class NewWalletDialog2 : TaskLauncherDialog<String>() {
     override fun onPostExecute(result: String) {
         (targetFragment as NewWalletDialog1).dismiss()
         daemonModel.commands.callAttr("select_wallet", result)
+        (activity as MainActivity).updateDrawer()
     }
 }
 
@@ -191,10 +193,14 @@ class NewWalletImportDialog : NewWalletDialog2() {
                 // Can happen at start or end of list.
             } else if (clsAddress.callAttr("is_valid", word).toBoolean()) {
                 foundAddress = true
-            } else if (libBitcoin.callAttr("is_private_key", word).toBoolean()) {
-                foundPrivkey = true
             } else {
-                throw ToastException(getString(R.string.not_a_valid, word))
+                try {
+                    // Use the same function as the wallet creation process (#2133).
+                    libAddress.get("PublicKey")!!.callAttr("from_WIF_privkey", word)
+                    foundPrivkey = true
+                } catch (e: PyException) {
+                    throw ToastException(getString(R.string.not_a_valid, word))
+                }
             }
         }
 

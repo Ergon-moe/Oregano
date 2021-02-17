@@ -23,13 +23,17 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import sys, time, threading
-import os, json, traceback
-import copy
-import shutil
-import csv
-from decimal import Decimal as PyDecimal  # Qt 5.12 also exports Decimal
 import base64
+import copy
+import csv
+import json
+import os
+import shutil
+import sys
+import threading
+import time
+import traceback
+from decimal import Decimal as PyDecimal  # Qt 5.12 also exports Decimal
 from functools import partial
 from collections import OrderedDict
 from typing import List
@@ -62,12 +66,12 @@ except:
     plot_history = None
 import electroncash.web as web
 
-from .amountedit import AmountEdit, BTCAmountEdit, MyLineEdit, BTCkBEdit, BTCSatsByteEdit
+from .amountedit import AmountEdit, BTCAmountEdit, MyLineEdit, BTCSatsByteEdit
 from .qrcodewidget import QRCodeWidget, QRDialog
 from .qrtextedit import ShowQRTextEdit, ScanQRTextEdit
 from .transaction_dialog import show_transaction
 from .fee_slider import FeeSlider
-from .popup_widget import ShowPopupLabel, KillPopupLabel, PopupWidget
+from .popup_widget import ShowPopupLabel, KillPopupLabel
 from . import cashacctqt
 from .util import *
 
@@ -151,6 +155,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.externalpluginsdialog = None
         self.hardwarewalletdialog = None
         self.require_fee_update = False
+        self.tx_sound = self.setup_tx_rcv_sound()
         self.cashaddr_toggled_signal = self.gui_object.cashaddr_toggled_signal  # alias for backwards compatibility for plugins -- this signal used to live in each window and has since been refactored to gui-object where it belongs (since it's really an app-global setting)
         self.force_use_single_change_addr = None  # this is set by the CashShuffle plugin to a single string that will go into the tool-tip explaining why this preference option is disabled (see self.settings_dialog)
         self.tl_windows = []
@@ -246,6 +251,29 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         gui_object.timer.timeout.connect(self.timer_actions)
         self.fetch_alias()
+
+    def setup_tx_rcv_sound(self):
+        """Used only in the 'ard moné edition"""
+        if networks.net is not networks.TaxCoinNet:
+            return
+        try:
+            import PyQt5.QtMultimedia
+            from PyQt5.QtCore import QUrl, QResource
+            from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+            fileName = os.path.join(os.path.dirname(__file__), "data", "ard_mone.mp3")
+            url = QUrl.fromLocalFile(fileName)
+            self.print_error("Sound effect: loading from", url.toLocalFile())
+            player = QMediaPlayer(self)
+            player.setMedia(QMediaContent(url))
+            player.setVolume(100)
+            self.print_error("Sound effect: regustered successfully")
+            return player
+        except Exception as e:
+            self.print_error("Sound effect: Failed:", str(e))
+            return
+
+
+
 
     _first_shown = True
     def showEvent(self, event):
@@ -746,7 +774,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         QMessageBox.about(self, "Electron Cash",
             "<p><font size=+3><b>Electron Cash</b></font></p><p>" + _("Version") + f" {self.wallet.electrum_version}" + "</p>" +
             '<span style="font-size:11pt; font-weight:500;"><p>' +
-            _("Copyright © {year_start}-{year_end} Electron Cash LLC and the Electron Cash developers.").format(year_start=2017, year_end=2020) +
+            _("Copyright © {year_start}-{year_end} Electron Cash LLC and the Electron Cash developers.").format(year_start=2017, year_end=2021) +
             "</p><p>" + _("darkdetect for macOS © 2019 Alberto Sottile") + "</p>"
             "</span>" +
             '<span style="font-weight:200;"><p>' +
@@ -2042,6 +2070,46 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             return False
         return True
 
+    def _warn_if_legacy_address(self):
+        """Show a warning if self.payto_e has legacy addresses, since the user
+        might be trying to send BTC instead of BCH."""
+        warn_legacy_address = bool(self.config.get("warn_legacy_address", True))
+        if not warn_legacy_address:
+            return
+        for line in self.payto_e.lines():
+            line = line.strip()
+            if line.lower().startswith(networks.net.CASHADDR_PREFIX + ":"):
+                line = line.split(":", 1)[1]  # strip "bitcoincash:" prefix
+            if "," in line:
+                # if address, amount line, strip address out and ignore rest
+                line = line.split(",", 1)[0]
+            line = line.strip()
+            if Address.is_legacy(line):
+                msg1 = (
+                    _("You are about to send BCH to a legacy address.")
+                    + "<br><br>"
+                    + _("Legacy addresses are deprecated for Bitcoin Cash "
+                        "(BCH), but they are used by Bitcoin (BTC).")
+                )
+                msg2 = _("Proceed if what you intend to do is to send BCH.")
+                msg3 = _("If you intend to send BTC, close the application "
+                         "and use a BTC wallet instead. Electron Cash is a "
+                         "BCH wallet, not a BTC wallet.")
+                res = self.msg_box(
+                    parent=self,
+                    icon=QMessageBox.Warning,
+                    title=_("You are sending to a legacy address"),
+                    rich_text=True,
+                    text=msg1,
+                    informative_text=msg2,
+                    detail_text=msg3,
+                    checkbox_text=_("Never show this again"),
+                    checkbox_ischecked=False,
+                )
+                if res[1]:  # Never ask if checked
+                    self.config.set_key("warn_legacy_address", False)
+                break
+
     def do_preview(self):
         self.do_send(preview = True)
 
@@ -2055,6 +2123,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         if not self._chk_no_segwit_suspects():
             return
+
+        self._warn_if_legacy_address()
 
         r = self.read_send_tab()
         if not r:
@@ -4001,7 +4071,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         lang_combo.currentIndexChanged.connect(on_lang)
         gui_widgets.append((lang_label, lang_combo))
 
-        nz_help = _('Number of zeros displayed after the decimal point. For example, if this is set to 2, "1." will be displayed as "1.00"')
+        nz_help = _('Number of zeros displayed after the decimal point. For example, if this is set to 2, "1." will be '
+                    'displayed as "1.00"')
         nz_label = HelpLabel(_('Zeros after decimal point') + ':', nz_help)
         nz = QSpinBox()
         nz.setMinimum(0)
@@ -4431,97 +4502,109 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             use_schnorr_cb.setToolTip(no_schnorr_reason[0])
         per_wallet_tx_widgets.append((use_schnorr_cb, None))
 
+        # Fiat Tab (only build it if not on testnet)
+        #
+        # Note that at the present time self.fx is always defined, including for --offline mode;
+        # we will check if self.fx is not None here just in case that changes some day.
+        if self.fx and self.fx.is_supported():
+            def update_currencies():
+                if not self.fx: return
+                currencies = sorted(self.fx.get_currencies(self.fx.get_history_config()))
+                ccy_combo.clear()
+                ccy_combo.addItems([pgettext('Referencing Fiat currency', 'None')] + currencies)
+                if self.fx.is_enabled():
+                    ccy_combo.setCurrentIndex(ccy_combo.findText(self.fx.get_currency()))
 
-        def update_currencies():
-            if not self.fx: return
-            currencies = sorted(self.fx.get_currencies(self.fx.get_history_config()))
-            ccy_combo.clear()
-            ccy_combo.addItems([pgettext('Referencing Fiat currency', 'None')] + currencies)
-            if self.fx.is_enabled():
-                ccy_combo.setCurrentIndex(ccy_combo.findText(self.fx.get_currency()))
+            def update_history_cb():
+                if not self.fx: return
+                hist_checkbox.setChecked(self.fx.get_history_config())
+                hist_checkbox.setEnabled(self.fx.is_enabled())
 
-        def update_history_cb():
-            if not self.fx: return
-            hist_checkbox.setChecked(self.fx.get_history_config())
-            hist_checkbox.setEnabled(self.fx.is_enabled())
+            def update_fiat_address_cb():
+                if not self.fx: return
+                fiat_address_checkbox.setChecked(self.fx.get_fiat_address_config())
 
-        def update_fiat_address_cb():
-            if not self.fx: return
-            fiat_address_checkbox.setChecked(self.fx.get_fiat_address_config())
+            def update_exchanges():
+                if not self.fx: return
+                b = self.fx.is_enabled()
+                ex_combo.setEnabled(b)
+                if b:
+                    c = self.fx.get_currency()
+                    h = self.fx.get_history_config()
+                else:
+                    c, h = self.fx.default_currency, False
+                exchanges = self.fx.get_exchanges_by_ccy(c, h)
+                conf_exchange = self.fx.config_exchange()
+                ex_combo.clear()
+                ex_combo.addItems(sorted(exchanges))
+                idx = ex_combo.findText(conf_exchange)  # try and restore previous exchange if in new list
+                if idx < 0:
+                    # hmm, previous exchange wasn't in new h= setting. Try default exchange.
+                    idx = ex_combo.findText(self.fx.default_exchange)
+                idx = 0 if idx < 0 else idx # if still no success (idx < 0) -> default to the first exchange in combo
+                if exchanges: # don't set index if no exchanges, as any index is illegal. this shouldn't happen.
+                    ex_combo.setCurrentIndex(idx)  # note this will emit a currentIndexChanged signal if it's changed
 
-        def update_exchanges():
-            if not self.fx: return
-            b = self.fx.is_enabled()
-            ex_combo.setEnabled(b)
-            if b:
-                c = self.fx.get_currency()
-                h = self.fx.get_history_config()
-            else:
-                c, h = self.fx.default_currency, False
-            exchanges = self.fx.get_exchanges_by_ccy(c, h)
-            conf_exchange = self.fx.config_exchange()
-            ex_combo.clear()
-            ex_combo.addItems(sorted(exchanges))
-            idx = ex_combo.findText(conf_exchange)  # try and restore previous exchange if in new list
-            if idx < 0:
-                # hmm, previous exchange wasn't in new h= setting. Try default exchange.
-                idx = ex_combo.findText(self.fx.default_exchange)
-            idx = 0 if idx < 0 else idx # if still no success (idx < 0) -> default to the first exchange in combo
-            if exchanges: # don't set index if no exchanges, as any index is illegal. this shouldn't happen.
-                ex_combo.setCurrentIndex(idx)  # note this will emit a currentIndexChanged signal if it's changed
+            def on_currency(hh):
+                if not self.fx: return
+                b = bool(ccy_combo.currentIndex())
+                ccy = str(ccy_combo.currentText()) if b else None
+                self.fx.set_enabled(b)
+                if b and ccy != self.fx.ccy:
+                    self.fx.set_currency(ccy)
+                update_history_cb()
+                update_exchanges()
+                self.update_fiat()
 
+            def on_exchange(idx):
+                exchange = str(ex_combo.currentText())
+                if self.fx and self.fx.is_enabled() and exchange and exchange != self.fx.exchange.name():
+                    self.fx.set_exchange(exchange)
 
-        def on_currency(hh):
-            if not self.fx: return
-            b = bool(ccy_combo.currentIndex())
-            ccy = str(ccy_combo.currentText()) if b else None
-            self.fx.set_enabled(b)
-            if b and ccy != self.fx.ccy:
-                self.fx.set_currency(ccy)
+            def on_history(checked):
+                if not self.fx: return
+                changed = bool(self.fx.get_history_config()) != bool(checked)
+                self.fx.set_history_config(checked)
+                update_exchanges()
+                self.history_list.refresh_headers()
+                if self.fx.is_enabled() and checked:
+                    # reset timeout to get historical rates
+                    self.fx.timeout = 0
+                    if changed:
+                        self.history_list.update()  # this won't happen too often as it's rate-limited
+
+            def on_fiat_address(checked):
+                if not self.fx: return
+                self.fx.set_fiat_address_config(checked)
+                self.address_list.refresh_headers()
+                self.address_list.update()
+
+            update_currencies()
             update_history_cb()
+            update_fiat_address_cb()
             update_exchanges()
-            self.update_fiat()
+            ccy_combo.currentIndexChanged.connect(on_currency)
+            hist_checkbox.stateChanged.connect(on_history)
+            fiat_address_checkbox.stateChanged.connect(on_fiat_address)
+            ex_combo.currentIndexChanged.connect(on_exchange)
 
-        def on_exchange(idx):
-            exchange = str(ex_combo.currentText())
-            if self.fx and self.fx.is_enabled() and exchange and exchange != self.fx.exchange.name():
-                self.fx.set_exchange(exchange)
+            hist_checkbox.setText(_('Show history rates'))
+            fiat_address_checkbox.setText(_('Show fiat balance for addresses'))
 
-        def on_history(checked):
-            if not self.fx: return
-            changed = bool(self.fx.get_history_config()) != bool(checked)
-            self.fx.set_history_config(checked)
-            update_exchanges()
-            self.history_list.refresh_headers()
-            if self.fx.is_enabled() and checked:
-                # reset timeout to get historical rates
-                self.fx.timeout = 0
-                if changed:
-                    self.history_list.update()  # this won't happen too often as it's rate-limited
+            fiat_widgets = []
+            fiat_widgets.append((QLabel(_('Fiat currency:')), ccy_combo))
+            fiat_widgets.append((QLabel(_('Source:')), ex_combo))
+            fiat_widgets.append((hist_checkbox, None))
+            fiat_widgets.append((fiat_address_checkbox, None))
 
-        def on_fiat_address(checked):
-            if not self.fx: return
-            self.fx.set_fiat_address_config(checked)
-            self.address_list.refresh_headers()
-            self.address_list.update()
-
-        update_currencies()
-        update_history_cb()
-        update_fiat_address_cb()
-        update_exchanges()
-        ccy_combo.currentIndexChanged.connect(on_currency)
-        hist_checkbox.stateChanged.connect(on_history)
-        fiat_address_checkbox.stateChanged.connect(on_fiat_address)
-        ex_combo.currentIndexChanged.connect(on_exchange)
-
-        hist_checkbox.setText(_('Show history rates'))
-        fiat_address_checkbox.setText(_('Show fiat balance for addresses'))
-
-        fiat_widgets = []
-        fiat_widgets.append((QLabel(_('Fiat currency:')), ccy_combo))
-        fiat_widgets.append((QLabel(_('Source:')), ex_combo))
-        fiat_widgets.append((hist_checkbox, None))
-        fiat_widgets.append((fiat_address_checkbox, None))
+        else:
+            # For testnet(s) and for --taxcoin we do not support Fiat display
+            lbl = QLabel(_("Fiat display is not supported on this chain."))
+            lbl.setAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
+            f = lbl.font()
+            f.setItalic(True)
+            lbl.setFont(f)
+            fiat_widgets = [(lbl, None)]
 
         tabs_info = [
             (gui_widgets, _('General')),
@@ -5293,3 +5376,6 @@ class TxUpdateMgr(QObject, PrintError):
                                           .format(n_cashacct, ca_text))
                         else:
                             parent.notify(_("New transaction: {}").format(ca_text))
+                    # Play the sound effect ('ard moné edition only)
+                    if parent.tx_sound:
+                        parent.tx_sound.play()

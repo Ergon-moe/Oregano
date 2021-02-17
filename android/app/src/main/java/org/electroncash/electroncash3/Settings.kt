@@ -14,12 +14,17 @@ import androidx.preference.PreferenceManager
 import com.chaquo.python.PyObject
 
 
+val guiSettings by lazy { guiMod("settings") }
+
 lateinit var settings: LivePreferences
 
+// According to the documentation, "You must store a strong reference to the listener,
+// or it will be susceptible to garbage collection."
+lateinit var listener: SharedPreferences.OnSharedPreferenceChangeListener
 
-fun initSettings() {
+fun initSettings(): PyObject {
     val sp = PreferenceManager.getDefaultSharedPreferences(app)
-    settings = LivePreferences(sp)
+    settings = LivePreferences(sp, listen=false)
     setDefaultValues(sp)
 
     settings.getBoolean("cashaddr_format").observeForever {
@@ -36,15 +41,26 @@ fun initSettings() {
                 libUtil.get("DEFAULT_BASE_UNIT")!!.toString())
         }
     }
+
+    val config = guiSettings.callAttr("AndroidConfig", sp)
+    listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        // Make sure the Python config object has been updated before running any settings
+        // observers which may call Python code.
+        config.callAttr("set_from_preferences", key, sp.getAll().get(key))
+        settings.onSharedPreferenceChanged(sp, key)
+    }
+    sp.registerOnSharedPreferenceChangeListener(listener)
+    return config
 }
 
 
 fun setDefaultValues(sp: SharedPreferences) {
+    // Avoid new config getting upgraded (see simple_config.py).
+    setDefaultValue(sp, "config_version", 2)
+
     // Network
     setDefaultValue(sp, "auto_connect",
                     libNetwork.get("DEFAULT_AUTO_CONNECT")!!.toBoolean())
-    // null would cause issues with the preference framework, but the empty string has
-    // the same effect of making the daemon choose a random server.
     setDefaultValue(sp, "server", "")
 
     // Transactions
@@ -55,23 +71,21 @@ fun setDefaultValues(sp: SharedPreferences) {
     setDefaultValue(sp, "cashaddr_format",
                     clsAddress.get("FMT_UI") == clsAddress.get("FMT_CASHADDR"))
     setDefaultValue(sp, "base_unit", libUtil.get("DEFAULT_BASE_UNIT")!!.toString())
-    setDefaultValue(sp, "block_explorer", libWeb.get("DEFAULT_EXPLORER")!!.toString())
+    setDefaultValue(sp, "block_explorer", libWeb.callAttr("BE_default_explorer")!!.toString())
 
     // Fiat
     setDefaultValue(sp, "use_exchange_rate",
                     libExchange.get("DEFAULT_ENABLED")!!.toBoolean())
     setDefaultValue(sp, "currency", libExchange.get("DEFAULT_CURRENCY")!!.toString())
     setDefaultValue(sp, "use_exchange", libExchange.get("DEFAULT_EXCHANGE")!!.toString())
-
-    // Set any remaining defaults from XML. Despite what some documentation says, this will NOT
-    // overwrite existing values.
-    PreferenceManager.setDefaultValues(app, R.xml.settings, true)
 }
 
 fun setDefaultValue(sp: SharedPreferences, key: String, default: Boolean) {
     if (!sp.contains(key)) sp.edit().putBoolean(key, default).apply()
 }
-
+fun setDefaultValue(sp: SharedPreferences, key: String, default: Int) {
+    if (!sp.contains(key)) sp.edit().putInt(key, default).apply()
+}
 fun setDefaultValue(sp: SharedPreferences, key: String, default: String) {
     if (!sp.contains(key)) sp.edit().putString(key, default).apply()
 }
@@ -84,7 +98,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.settings, rootKey)
 
         // Appearance
-        setEntries("base_unit", py.builtins.callAttr("list", libUtil.get("base_units")!!))
+        setEntries("base_unit", libUtil.get("base_units")!!)
         setEntries("block_explorer", libWeb.callAttr("BE_sorted_list"))
 
         // Fiat
@@ -103,8 +117,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
         observeGroup(preferenceScreen)
     }
 
-    fun setEntries(key: String, pyList: PyObject) {
-        val arr = pyList.asList().map { it.toString() }.toTypedArray()
+    fun setEntries(key: String, pySequence: PyObject) {
+        val arr = pySequence.toJava(Array<String>::class.java)
         (findPreference(key) as ListPreference).apply {
             entries = arr
             entryValues = arr
@@ -118,12 +132,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 observeGroup(pref)
             } else if (pref is EditTextPreference) {
                 settings.getString(pref.key).observe(this, {
-                    pref.text = it
                     pref.summary = pref.text
                 })
             } else if (pref is ListPreference) {
                 settings.getString(pref.key).observe(this, {
-                    pref.value = it
                     pref.summary = pref.entry
                 })
             }

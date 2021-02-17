@@ -14,12 +14,6 @@ export GIT_SUBMODULE_FLAGS="--recommend-shallow --depth 1"
 
 . "$here"/../base.sh # functions we use below (fail, et al)
 
-# Note: 3.6.9 is our PYTHON_VERSION in other builds, but for some reason
-# Python.org didn't bother to build Python 3.6.9 for Windows (and no .msi files
-# exist for this release).  So, we hard-code 3.6.8 for Windows builds.
-# See: https://www.python.org/downloads/windows/
-PYTHON_VERSION=3.6.8  # override setting in base.sh
-
 if [ ! -z "$1" ]; then
     to_build="$1"
 else
@@ -31,6 +25,7 @@ set -e
 git checkout "$to_build" || fail "Could not branch or tag $to_build"
 
 GIT_COMMIT_HASH=$(git rev-parse HEAD)
+VERSION=`git_describe_filtered`
 
 info "Clearing $here/build and $here/dist..."
 rm "$here"/build/* -fr
@@ -54,26 +49,14 @@ prepare_wine() {
         here=`pwd`
         # Please update these carefully, some versions won't work under Wine
 
-        # !!! WARNING !!! READ THIS BEFORE UPGRADING NSIS
-        # NSIS has a bug in its icon group generation code that causes builds that have not exactly 7 icons to include uninitialized memory.
-        # If you upgrade NSIS, you need to check if the bug still exists in Source/icon.cpp line 267:
-        # https://sourceforge.net/p/nsis/code/HEAD/tree/NSIS/tags/v3021/Source/icon.cpp#l267
-        # Where they are incorrectly using order.size() instead of icon.size() to allocate the buffer and also don't zero the memory.
-        # If the bug hasn't been fixed, you need to check the NSIS generated uninstaller for number of icons and match that count exactly in your .ico file.
-        # See: https://github.com/spesmilo/electrum/commit/570c0aeca39e56c742b77380ec274d178d660c29
-        NSIS_URL='https://github.com/cculianu/Electron-Cash-Build-Tools/releases/download/v1.0/nsis-3.02.1-setup.exe'
-        NSIS_SHA256=736c9062a02e297e335f82252e648a883171c98e0d5120439f538c81d429552e
+        NSIS_URL='https://prdownloads.sourceforge.net/nsis/nsis-3.06.1-setup.exe'
+        NSIS_SHA256=f60488a676308079bfdf6845dc7114cfd4bbff47b66be4db827b89bb8d7fdc52
 
         LIBUSB_REPO='https://github.com/libusb/libusb.git'
-        LIBUSB_COMMIT=a5990ab10f68e5ec7498f627d1664b1f842fec4e
+        LIBUSB_COMMIT=c6a35c56016ea2ab2f19115d2ea1e85e0edae155 # Version 1.0.24
 
         PYINSTALLER_REPO='https://github.com/EchterAgo/pyinstaller.git'
-        PYINSTALLER_COMMIT=1a8b2d47c277c451f4e358d926a47c096a5615ec
-
-        # Satochip pyscard
-        PYSCARD_FILENAME=pyscard-1.9.9-cp36-cp36m-win32.whl  # python 3.6, 32-bit
-        PYSCARD_URL=https://github.com/cculianu/Electron-Cash-Build-Tools/releases/download/v1.0/pyscard-1.9.9-cp36-cp36m-win32.whl
-        PYSCARD_SHA256=99d2b450f322f9ed9682fd2a99d95ce781527e371006cded38327efca8158fe7
+        PYINSTALLER_COMMIT=d6f3d02365ba68ffc84169c56c292701f346110e # Version 4.2 + a patch to drop an unused .rc file
 
         ## These settings probably don't need change
         export WINEPREFIX=$HOME/wine64
@@ -116,11 +99,11 @@ prepare_wine() {
             wine msiexec /i "${msifile}.msi" /qn TARGETDIR=$PYHOME || fail "Failed to install Python component: ${msifile}"
         done
 
-        # The below requirements-wine-build.txt uses hashed packages that we
+        # The below requirements-build-wine.txt uses hashed packages that we
         # need for pyinstaller and other parts of the build.  Using a hashed
         # requirements file hardens the build against dependency attacks.
-        info "Installing build requirements from requirements-wine-build.txt ..."
-        $PYTHON -m pip install --no-warn-script-location -I -U -r $here/requirements-wine-build.txt || fail "Failed to install build requirements"
+        info "Installing build requirements from requirements-build-wine.txt ..."
+        $PYTHON -m pip install --no-deps --no-warn-script-location -r $here/../deterministic-build/requirements-build-wine.txt || fail "Failed to install build requirements"
 
         info "Compiling PyInstaller bootloader with AntiVirus False-Positive Protection™ ..."
         mkdir pyinstaller
@@ -148,12 +131,12 @@ prepare_wine() {
             [ -e PyInstaller/bootloader/Windows-32bit/runw.exe ] || fail "Could not find runw.exe in target dir!"
         ) || fail "PyInstaller bootloader build failed"
         info "Installing PyInstaller ..."
-        $PYTHON -m pip install --no-warn-script-location ./pyinstaller || fail "PyInstaller install failed"
+        $PYTHON -m pip install --no-deps --no-warn-script-location ./pyinstaller || fail "PyInstaller install failed"
 
         wine "C:/python$PYTHON_VERSION/scripts/pyinstaller.exe" -v || fail "Pyinstaller installed but cannot be run."
 
         info "Installing Packages from requirements-binaries ..."
-        $PYTHON -m pip install --no-warn-script-location -r $here/../deterministic-build/requirements-binaries.txt || fail "Failed to install requirements-binaries"
+        $PYTHON -m pip install --no-deps --no-warn-script-location -r $here/../deterministic-build/requirements-binaries.txt || fail "Failed to install requirements-binaries"
 
         info "Installing NSIS ..."
         # Install NSIS installer
@@ -185,11 +168,6 @@ prepare_wine() {
         cp "$here"/../../electroncash/*.dll $WINEPREFIX/drive_c/tmp/ || fail "Could not copy libraries to their destination"
         cp libusb/libusb/.libs/libusb-1.0.dll $WINEPREFIX/drive_c/tmp/ || fail "Could not copy libusb to its destination"
         cp "$here"/../../electroncash/tor/bin/tor.exe $WINEPREFIX/drive_c/tmp/ || fail "Could not copy tor.exe to its destination"
-
-        info "Installing pyscard..."
-        wget -O $PYSCARD_FILENAME "$PYSCARD_URL"
-        verify_hash $PYSCARD_FILENAME "$PYSCARD_SHA256"
-        $PYTHON -m pip install --no-warn-script-location $PYSCARD_FILENAME || fail "Could not install pyscard"
 
         popd  # out of homedir/tmp
         popd  # out of $here
@@ -228,7 +206,6 @@ build_the_app() {
         pushd "$here"/../..  # go to top level
 
 
-        VERSION=`git describe --tags`
         info "Version to release: $VERSION"
         info "Fudging timestamps on all files for determinism ..."
         find -exec touch -d '2000-11-11T11:11:11+00:00' {} +
@@ -238,8 +215,8 @@ build_the_app() {
 
         # Install frozen dependencies
         info "Installing frozen dependencies ..."
-        $PYTHON -m pip install --no-warn-script-location -r "$here"/../deterministic-build/requirements.txt || fail "Failed to install requirements"
-        $PYTHON -m pip install --no-warn-script-location -r "$here"/../deterministic-build/requirements-hw.txt || fail "Failed to install requirements-hw"
+        $PYTHON -m pip install --no-deps --no-warn-script-location -r "$here"/../deterministic-build/requirements.txt || fail "Failed to install requirements"
+        $PYTHON -m pip install --no-deps --no-warn-script-location -r "$here"/../deterministic-build/requirements-hw.txt || fail "Failed to install requirements-hw"
 
         pushd $WINEPREFIX/drive_c/electroncash
         $PYTHON setup.py install || fail "Failed setup.py install"

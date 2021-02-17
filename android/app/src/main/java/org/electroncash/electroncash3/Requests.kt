@@ -1,108 +1,80 @@
 package org.electroncash.electroncash3
 
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.View
 import androidx.appcompat.app.AlertDialog
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.observe
+import com.chaquo.python.Kwarg
 import com.chaquo.python.PyObject
-import kotlinx.android.synthetic.main.amount_box.*
 import kotlinx.android.synthetic.main.main.*
 import kotlinx.android.synthetic.main.request_detail.*
 import kotlinx.android.synthetic.main.requests.*
 
 
-class RequestsFragment : Fragment(R.layout.requests), MainFragment {
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        setupVerticalList(rvRequests)
-        rvRequests.adapter = RequestsAdapter(activity!!)
-        TriggerLiveData().apply {
-            addSource(daemonUpdate)
-            addSource(settings.getString("base_unit"))
-        }.observe(viewLifecycleOwner, { refresh() })
+class RequestsFragment : ListFragment(R.layout.requests, R.id.rvRequests) {
 
-        btnAdd.setOnClickListener { newRequest(activity!!) }
-    }
-
-    fun refresh() {
-        val wallet = daemonModel.wallet
-        (rvRequests.adapter as RequestsAdapter).submitList(
-            if (wallet == null) null else RequestsList(wallet))
-    }
-}
-
-
-fun newRequest(activity: FragmentActivity) {
-    try {
-        val address = daemonModel.wallet!!.callAttr("get_unused_address")
-                      ?: throw ToastException(R.string.no_more)
-        showDialog(activity, RequestDialog(address.callAttr("to_storage_string").toString()))
-    } catch (e: ToastException) { e.show() }
-}
-
-
-class RequestsList(wallet: PyObject) : AbstractList<RequestModel>() {
-    val requests = wallet.callAttr("get_sorted_requests", daemonModel.config).asList()
-
-    override val size: Int
-        get() = requests.size
-
-    override fun get(index: Int) =
-        RequestModel(requests.get(index))
-}
-
-
-class RequestsAdapter(val activity: FragmentActivity)
-    : BoundAdapter<RequestModel>(R.layout.request_list) {
-
-    override fun onBindViewHolder(holder: BoundViewHolder<RequestModel>, position: Int) {
-        super.onBindViewHolder(holder, position)
-        holder.itemView.setOnClickListener {
-            showDialog(activity, RequestDialog(holder.item.address))
+    override fun onListModelCreated(listModel: ListModel) {
+        with (listModel) {
+            trigger.addSource(daemonUpdate)
+            trigger.addSource(settings.getString("base_unit"))
+            data.function = { wallet.callAttr("get_sorted_requests", daemonModel.config)!! }
         }
     }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        btnAdd.setOnClickListener { showDialog(this, NewRequestDialog()) }
+    }
+
+    override fun onCreateAdapter() =
+        ListAdapter(this, R.layout.request_list, ::RequestModel, ::RequestDialog)
 }
 
-class RequestModel(val request: PyObject) {
-    val address = getField("address").toString()
-    val amount = formatSatoshis(getField("amount").toLong())
-    val timestamp = libUtil.callAttr("format_time", getField("time")).toString()
-    val description = getField("memo").toString()
-    val status = formatStatus(getField("status").toInt())
 
-    private fun formatStatus(status: Int): Any {
-        return app.resources.getStringArray(R.array.payment_status)[status]
+class NewRequestDialog : TaskDialog<PyObject>() {
+    val listFragment by lazy { targetFragment as ListFragment }
+
+    override fun doInBackground(): PyObject {
+        if (listFragment.wallet.callAttr("is_watching_only").toBoolean()) {
+            throw ToastException(R.string.this_wallet_is)
+        }
+        return listFragment.wallet.callAttr("get_unused_address")
+               ?: throw ToastException(R.string.no_more)
     }
+
+    override fun onPostExecute(result: PyObject) {
+        showDialog(listFragment, RequestDialog().apply { arguments = Bundle().apply {
+           putString("address", result.callAttr("to_storage_string").toString())
+        }})
+    }
+}
+
+
+class RequestModel(wallet: PyObject, val request: PyObject) : ListItemModel(wallet) {
+    val address by lazy { getField("address").toString() }
+    val amount = getField("amount").toLong()
+    val timestamp = formatTime(getField("time").toLong())
+    val description = getField("memo").toString()
+    val status = (app.resources.getStringArray(R.array.payment_status)
+                  [getField("status").toInt()])!!
 
     private fun getField(key: String): PyObject {
         return request.callAttr("get", key)!!
     }
+
+    override val dialogArguments by lazy {
+        Bundle().apply { putString("address", address) }
+    }
 }
 
 
-
-class RequestDialog() : AlertDialogFragment() {
-    val wallet by lazy { daemonModel.wallet!! }
-
-    init {
-        if (wallet.callAttr("is_watching_only").toBoolean()) {
-            throw ToastException(R.string.this_wallet_is)
-        }
-    }
-
+class RequestDialog : DetailDialog() {
     val address by lazy {
-        clsAddress.callAttr("from_string", arguments!!.getString("address"))
+        clsAddress.callAttr("from_string", arguments!!.getString("address"))!!
     }
-    val existingRequest by lazy {
+    val existingRequest: PyObject? by lazy {
         wallet.callAttr("get_payment_request", address, daemonModel.config)
     }
-
-    constructor(address: String): this() {
-        arguments = Bundle().apply { putString("address", address) }
-    }
+    lateinit var amountBox: AmountBox
 
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         with (builder) {
@@ -116,21 +88,15 @@ class RequestDialog() : AlertDialogFragment() {
     }
 
     override fun onShowDialog() {
+        amountBox = AmountBox(dialog)
+        amountBox.listener = { updateUI() }
+
         btnCopy.setOnClickListener {
             copyToClipboard(getUri(), R.string.request_uri)
         }
         tvAddress.text = address.callAttr("to_ui_string").toString()
-        tvUnit.text = unitName
 
-        val tw = object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) { updateUI() }
-        }
-        for (et in listOf(etAmount, etDescription)) {
-            et.addTextChangedListener(tw)
-        }
-        fiatUpdate.observe(this, { updateUI() })
+        etDescription.addAfterTextChangedListener { updateUI() }
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener { onOK() }
 
         if (existingRequest != null) {
@@ -138,48 +104,44 @@ class RequestDialog() : AlertDialogFragment() {
                 showDialog(this, RequestDeleteDialog(address))
             }
         }
+        updateUI()
     }
 
     override fun onFirstShowDialog() {
         val request = existingRequest
         if (request != null) {
-            val model = RequestModel(request)
-            etAmount.setText(model.amount)
+            val model = RequestModel(wallet, request)
+            amountBox.amount = model.amount
             etDescription.setText(model.description)
+        } else {
+            amountBox.requestFocus()
         }
-        // We don't <requestFocus/> in the layout file, because it's also included by the
-        // Send dialog, where the initial focus should be on the address box.
-        etAmount.requestFocus()
     }
 
     private fun updateUI() {
         showQR(imgQR, getUri())
-        amountBoxUpdate(dialog)
     }
 
     private fun getUri(): String {
-        var amount: Long? = null
-        try {
-            amount = amountBoxGet(dialog)
-        } catch (e: ToastException) {}
-        return libWeb.callAttr("create_URI", address, amount, description).toString()
+        return libWeb.callAttr("create_URI", address, amountBox.amount, description).toString()
     }
 
     private fun onOK() {
-        try {
-            val amount = amountBoxGet(dialog)
+        val amount = amountBox.amount
+        if (amount == null) {
+            toast(R.string.Invalid_amount)
+        } else {
             wallet.callAttr(
                 "add_payment_request",
                 wallet.callAttr("make_payment_request", address, amount, description),
-                daemonModel.config)
-        } catch (e: ToastException) { e.show() }
+                daemonModel.config, Kwarg("save", false))
+            saveRequests(wallet)
+            dismiss()
 
-        daemonUpdate.setValue(Unit)
-        dismiss()
-
-        // If the dialog was opened from the Transactions screen, we should now switch to
-        // the Requests screen so the user can verify that the request has been saved.
-        (activity as MainActivity).navBottom.selectedItemId = R.id.navRequests
+            // If the dialog was opened from the Transactions screen, we should now switch to
+            // the Requests screen so the user can verify that the request has been saved.
+            (activity as MainActivity).navBottom.selectedItemId = R.id.navRequests
+        }
     }
 
     val description
@@ -195,15 +157,25 @@ class RequestDeleteDialog() : AlertDialogFragment() {
     }
 
     override fun onBuildDialog(builder: AlertDialog.Builder) {
+        val requestDialog = targetFragment as RequestDialog
+        val wallet = requestDialog.wallet
         builder.setTitle(R.string.confirm_delete)
             .setMessage(R.string.are_you_sure_you_wish_to_proceed)
             .setPositiveButton(R.string.delete) { _, _ ->
-                daemonModel.wallet!!.callAttr("remove_payment_request",
-                                              makeAddress(arguments!!.getString("address")!!),
-                                              daemonModel.config)
-                daemonUpdate.setValue(Unit)
-                (targetFragment as RequestDialog).dismiss()
+                wallet.callAttr("remove_payment_request",
+                                makeAddress(arguments!!.getString("address")!!),
+                                daemonModel.config, Kwarg("save", false))
+                saveRequests(wallet)
+                requestDialog.dismiss()
             }
             .setNegativeButton(android.R.string.cancel, null)
     }
+}
+
+
+fun saveRequests(wallet: PyObject) {
+    saveWallet(wallet) {
+        wallet.callAttr("save_payment_requests", Kwarg("write", false))
+    }
+    daemonUpdate.setValue(Unit)
 }

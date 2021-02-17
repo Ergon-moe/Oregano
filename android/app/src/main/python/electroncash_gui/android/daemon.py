@@ -4,15 +4,33 @@ import six
 import sys
 import threading
 
+from electroncash import util
 
-# To catch programming errors in the back end, WalletStorage._write doesn't allow daemon
-# threads to write the wallet. But on Android, background threads created from Java will also
-# have the daemon attribute set.
-DummyThread_init_original = threading._DummyThread.__init__
-def DummyThread_init(self):
-    DummyThread_init_original(self)
-    self._daemonic = False
-threading._DummyThread.__init__ = DummyThread_init
+
+def initialize(handler):
+    # The GIL can be a bottleneck for threads which release and acquire it many times in quick
+    # succession (https://bugs.python.org/issue7946). For example, the transaction list has about 8
+    # visible items on a phone-sized screen, and rendering each of them currently makes 8 Python
+    # calls. This makes onBindViewHolder block the UI thread for the following times (best of 5):
+    #
+    #     No active background thread: 140 ms
+    #     CPU-bound thread with setswitchinterval(0.005) (default): 310 ms
+    #     CPU-bound thread with setswitchinterval(0.001): 180 ms
+    sys.setswitchinterval(0.001)
+
+    # To catch programming errors in the back end, WalletStorage._write doesn't allow daemon
+    # threads to write the wallet. But on Android, background threads created from Java will also
+    # have the daemon attribute set.
+    DummyThread_init_original = threading._DummyThread.__init__
+    def DummyThread_init(self):
+        DummyThread_init_original(self)
+        self._daemonic = False
+    threading._DummyThread.__init__ = DummyThread_init
+
+    set_excepthook(handler)
+
+    # Timestamps and thread IDs are already provided by the Logcat service.
+    util.set_verbosity(True, timestamps=False, thread_id=False)
 
 
 # Patch the threading module to reraise any unhandled exceptions on the thread of the given
@@ -37,7 +55,3 @@ def set_excepthook(handler):
                 excepthook(*sys.exc_info())
         self.run = run
     threading.Thread.__init__ = Thread_init
-
-
-def make_callback(daemon_model):
-    return lambda event, *args: daemon_model.onCallback(event)

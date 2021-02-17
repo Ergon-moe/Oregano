@@ -1,5 +1,5 @@
 # Electron Cash - lightweight Bitcoin client
-# Copyright (C) 2019 Axel Gembe <derago@gmail.com>
+# Copyright (C) 2019, 2020 Axel Gembe <derago@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation files
@@ -28,6 +28,7 @@ import sys
 import threading
 import shutil
 import socket
+import inspect
 from enum import IntEnum, unique
 from typing import Tuple, Optional
 
@@ -41,25 +42,30 @@ from ..util import PrintError
 from ..utils import Event
 from ..simple_config import SimpleConfig
 
-# The network code monkey patches socket to use a SOCKS socket in Network.set_proxy.
-# This causes the Tor control connection to go through Tor, which is not a good idea.
-# To work around this, we monkey patch Stem to always create a standard socket for the
-# control connection.
-_orig_socket = socket.socket
-def _make_socket_monkey_patch(self):
-    try:
-        control_socket = _orig_socket(socket.AF_INET, socket.SOCK_STREAM)
-        control_socket.connect((self.address, self.port))
-        return control_socket
-    except socket.error as exc:
-        raise stem.SocketError(exc)
-stem.socket.ControlPort._make_socket = _make_socket_monkey_patch
 
 _TOR_ENABLED_KEY = 'tor_enabled'
 _TOR_ENABLED_DEFAULT = False
 
 _TOR_SOCKS_PORT_KEY = 'tor_socks_port'
 _TOR_SOCKS_PORT_DEFAULT = 0
+
+
+def check_proxy_bypass_tor_control(*args, **kwargs) -> bool:
+    """
+    This function returns True when called by stem.socket.ControlPort to prevent
+    the Tor control connection going through a proxied socket.
+    """
+    stack = inspect.stack()
+    if stack and len(stack) >= 4:
+        # [0] is this function, [1] is the genexpr in _socksocket_filtered,
+        # [2] is _socksocket_filtered and [3] is the caller. In newer stem
+        # versions socket is not called directly but through asyncio.
+        for s in stack[3:7]:
+            caller_self = stack[3].frame.f_locals.get('self')
+            if caller_self and type(caller_self) is stem.socket.ControlPort:
+                return True
+    return False
+
 
 class TorController(PrintError):
     @unique
@@ -111,10 +117,23 @@ class TorController(PrintError):
         self.status_changed.clear()
         self.active_port_changed.clear()
 
-    # Opened Socks listener on 127.0.0.1:53544
-    # Opened Control listener on 127.0.0.1:3300
-    _listener_re = re.compile(r".*\[notice\] Opened ([^ ]*) listener on (.*)$")
-    _endpoint_re = re.compile(r".*:(\d*)")
+    # Version 0.4.5.5
+    # [notice] Opening Socks listener on 127.0.0.1:0
+    # [notice] Socks listener listening on port 36103.
+    # [notice] Opened Socks listener connection (ready) on 127.0.0.1:36103
+    # [notice] Opening Control listener on 127.0.0.1:0
+    # [notice] Control listener listening on port 36104.
+    # [notice] Opened Control listener connection (ready) on 127.0.0.1:36104
+
+    # Version 0.4.2.5
+    # [notice] Opening Socks listener on 127.0.0.1:0
+    # [notice] Socks listener listening on port 36103.
+    # [notice] Opened Socks listener on 127.0.0.1:36103
+    # [notice] Opening Control listener on 127.0.0.1:0
+    # [notice] Control listener listening on port 36104.
+    # [notice] Opened Control listener on 127.0.0.1:36104
+
+    _listener_re = re.compile(r".*\[notice\] ([^ ]*) listener listening on port ([0-9]+)\.?$")
 
     # If a log string matches any of the included regex it is ignored
     _ignored_res = [
@@ -131,17 +150,13 @@ class TorController(PrintError):
         listener_match = TorController._listener_re.match(message)
         if listener_match:
             listener_type = listener_match.group(1)
-            listener_endpoint = listener_match.group(2)
-            endpoint_match = TorController._endpoint_re.match(
-                listener_endpoint)
-            if endpoint_match:
-                endpoint_port = int(endpoint_match.group(1))
-                if listener_type == 'Socks':
-                    self.active_socks_port = endpoint_port
-                elif listener_type == 'Control':
-                    self.active_control_port = endpoint_port
-                    # The control port is the last port opened, so only notify after it
-                    self.active_port_changed(self)
+            listener_port = int(listener_match.group(2))
+            if listener_type == 'Socks':
+                self.active_socks_port = listener_port
+            elif listener_type == 'Control':
+                self.active_control_port = listener_port
+                # The control port is the last port opened, so only notify after it
+                self.active_port_changed(self)
 
     def _read_tor_msg(self):
         try:

@@ -59,8 +59,8 @@ setup(
         'certifi', 'chardet', 'dnspython', 'ecdsa>=0.9', 'idna',
         'jsonrpclib-pelix', 'protobuf',
         'pyaes>=0.1a1',
-        'PySocks>=1.6.6', 'qrcode', 'requests', 'six',
-        'urllib3<1.24', 'python-dateutil==2.6.1'
+        'PySocks>=1.6.6', 'qrcode', 'requests', 'six', 'stem==1.8.0',
+        'urllib3<1.24', 'python-dateutil==2.6.1', 'pathvalidate==2.3.1'
     ],
     options={
         'app': {
@@ -71,7 +71,7 @@ setup(
         # Mobile deployments
         'ios': {
             'app_requires': [
-                'rubicon-objc'
+                'rubicon-objc==0.2.10'
             ]
         },
     }

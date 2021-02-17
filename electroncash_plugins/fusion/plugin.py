@@ -39,7 +39,7 @@ from electroncash.bitcoin import COINBASE_MATURITY
 from electroncash.plugins import BasePlugin, hook, daemon_command
 from electroncash.i18n import _, ngettext, pgettext
 from electroncash.util import profiler, PrintError, InvalidPassword
-from electroncash import Network
+from electroncash import Network, networks
 
 from .conf import Conf, Global
 from .fusion import Fusion, can_fuse_from, can_fuse_to, is_tor_port, MIN_TX_COMPONENTS
@@ -228,7 +228,7 @@ def get_target_params_1(wallet, wallet_conf, active_autofusions, eligible):
         # that are either 1) eligible or 2) being fused. (Should stay constant
         # as fusions are added/cancelled)
         n_coins = sum(len(acoins) for addr,acoins in eligible)
-        n_total = n_coins + sum(len(f.inputs) for f in active_autofusions)
+        n_total = n_coins + sum(len(getattr(f, 'inputs', ())) for f in active_autofusions)
         if n_total < DEFAULT_MAX_COINS*3:
             return 1, True
 
@@ -317,6 +317,9 @@ class FusionPlugin(BasePlugin):
 
     def description(self):
         return _("CashFusion Protocol")
+
+    def is_available(self):
+        return networks.net is not networks.TaxCoinNet
 
     def set_remote_donation_address(self, address : str):
         self.remote_donation_address = ((isinstance(address, str) and address) or '')[:100]

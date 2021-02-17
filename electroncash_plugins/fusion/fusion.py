@@ -30,7 +30,7 @@ Client-side fusion logic. See `class Fusion` for the main exposed API.
 This module has no GUI dependency.
 """
 
-from electroncash import schnorr
+from electroncash import networks, schnorr
 from electroncash.bitcoin import public_key_from_private_key
 from electroncash.i18n import _, ngettext, pgettext
 from electroncash.util import format_satoshis, do_in_main_thread, PrintError, ServerError, TxHashMismatch, TimeoutException
@@ -40,6 +40,7 @@ from . import encrypt
 from . import fusion_pb2 as pb
 from . import pedersen
 from .comms import send_pb, recv_pb, get_current_genesis_hash
+from . import compatibility
 from .connection import open_connection
 from .conf import Conf
 from .covert import CovertSubmitter, is_tor_port
@@ -85,12 +86,13 @@ MIN_TX_COMPONENTS = 11
 def can_fuse_from(wallet):
     """We can only fuse from wallets that are p2pkh, and where we are able
     to extract the private key."""
-    return not (wallet.is_watching_only() or wallet.is_hardware() or isinstance(wallet, Multisig_Wallet))
+    return (not (wallet.is_watching_only() or wallet.is_hardware() or isinstance(wallet, Multisig_Wallet))
+            and networks.net is not networks.TaxCoinNet)
 
 def can_fuse_to(wallet):
     """We can only fuse to wallets that are p2pkh with HD generation. We do
     *not* need the private keys."""
-    return isinstance(wallet, Standard_Wallet)
+    return isinstance(wallet, Standard_Wallet) and networks.net is not networks.TaxCoinNet
 
 
 
@@ -410,8 +412,10 @@ class Fusion(threading.Thread, PrintError):
     def run(self):
         server_connected_and_greeted = False
         try:
-            if not schnorr.has_fast_sign() or not schnorr.has_fast_verify():
-                raise FusionError("Fusion requires libsecp256k1")
+            try:
+                compatibility.check()
+            except RuntimeError as e:
+                raise FusionError("Incompatible: " + str(e))
             if (self.tor_host is not None and self.tor_port is not None
                     and not is_tor_port(self.tor_host, self.tor_port)):
                 raise FusionError(f"Can't connect to Tor proxy at {self.tor_host}:{self.tor_port}")

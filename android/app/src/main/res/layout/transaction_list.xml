@@ -5,6 +5,7 @@
     tools:context=".TransactionsFragment">
     <data>
         <import type="android.view.View"/>
+        <import type="org.electroncash.electroncash3.UtilKt"/>
         <variable
             name="model"
             type="org.electroncash.electroncash3.TransactionModel"/>
@@ -57,7 +58,7 @@
             android:layout_marginRight="8dp"
             android:layout_marginStart="6dp"
             android:layout_marginTop="8dp"
-            android:text="@{model.get(`value`).substring(1)}"
+            android:text="@{UtilKt.formatSatoshis(Math.abs(model.amount))}"
             android:textAppearance="@style/Heavy"
             app:layout_constraintEnd_toStartOf="@+id/tvTimestamp"
             app:layout_constraintStart_toEndOf="@+id/barrier2"
@@ -73,7 +74,7 @@
             android:layout_marginEnd="8dp"
             android:layout_marginRight="8dp"
             android:layout_marginTop="4dp"
-            android:text="@{model.get(`balance`)}"
+            android:text="@{UtilKt.formatSatoshis(model.balance)}"
             android:textAppearance="@style/Medium"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/tvStatus"
@@ -88,7 +89,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
             android:layout_marginRight="16dp"
-            android:text="@{model.get(`date`)}"
+            android:text="@{UtilKt.ltr(model.timestamp)}"
             android:textAppearance="@style/Medium"
             app:layout_constraintBaseline_toBaselineOf="@+id/tvValue"
             app:layout_constraintEnd_toEndOf="parent"
@@ -98,10 +99,10 @@
             android:id="@+id/tvStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text='@{model.confirmationsStr}'
+            android:text="@{model.status}"
             app:layout_constraintBaseline_toBaselineOf="@+id/tvBalance"
             app:layout_constraintEnd_toEndOf="@+id/tvTimestamp"
-            tools:text="1234 confirmations"/>
+            tools:text="@string/confirmations"/>
 
         <TextView
             android:id="@+id/tvDescription"
@@ -110,9 +111,9 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:layout_marginTop="4dp"
-            android:text="@{model.get(`label`)}"
+            android:text="@{model.label}"
             android:textAppearance="@style/Medium"
-            android:visibility="@{model.get(`label`).isEmpty() ? View.GONE: View.VISIBLE}"
+            android:visibility="@{model.label.isEmpty() ? View.GONE: View.VISIBLE}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/tvStatus"
             app:layout_constraintStart_toStartOf="@+id/textView"
@@ -123,8 +124,9 @@
             android:id="@+id/barrier2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:barrierDirection="right"
-            app:constraint_referenced_ids="textView,textView2"/>
+            app:barrierDirection="end"
+            app:constraint_referenced_ids="textView,textView2"
+            tools:layout_editor_absoluteX="272dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

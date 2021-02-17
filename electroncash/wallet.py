@@ -525,6 +525,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
         with self.lock:
             self.up_to_date = up_to_date
             if up_to_date:
+                self.save_addresses()
                 self.save_transactions()
                 # if the verifier is also up to date, persist that too;
                 # otherwise it will persist its results when it finishes
@@ -549,7 +550,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
             ret = ret and not self.pruned_txo_values
             return bool(ret)
 
-    def set_label(self, name, text = None):
+    def set_label(self, name, text=None, save=True):
         with self.lock:
             if isinstance(name, Address):
                 name = name.to_storage_string()
@@ -567,24 +568,28 @@ class Abstract_Wallet(PrintError, SPVDelegate):
 
             if changed:
                 run_hook('set_label', self, name, text)
-                self.storage.put('labels', self.labels)
+                if save:
+                    self.save_labels()
 
             return changed
 
+    def save_labels(self):
+        self.storage.put('labels', self.labels)
+
     def invalidate_address_set_cache(self):
-        ''' This should be called from functions that add/remove addresses
+        """This should be called from functions that add/remove addresses
         from the wallet to ensure the address set caches are empty, in
         particular from ImportedWallets which may add/delete addresses
         thus the length check in is_mine() may not be accurate.
         Deterministic wallets can neglect to call this function since their
         address sets only grow and never shrink and thus the length check
-        of is_mine below is sufficient.'''
+        of is_mine below is sufficient."""
         self._recv_address_set_cached, self._change_address_set_cached = frozenset(), frozenset()
 
     def is_mine(self, address):
-        ''' Note this method assumes that the entire address set is
+        """Note this method assumes that the entire address set is
         composed of self.get_change_addresses() + self.get_receiving_addresses().
-        In subclasses, if that is not the case -- REIMPLEMENT this method! '''
+        In subclasses, if that is not the case -- REIMPLEMENT this method!"""
         assert not isinstance(address, str)
         # assumption here is get_receiving_addresses and get_change_addresses
         # are cheap constant-time operations returning a list reference.
@@ -605,7 +610,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
         # addresses, it starts to add up siince is_mine() is called frequently
         # especially while downloading address history.
         return (address in self._recv_address_set_cached
-                    or address in self._change_address_set_cached)
+                or address in self._change_address_set_cached)
 
     def is_change(self, address):
         assert not isinstance(address, str)
@@ -1255,7 +1260,8 @@ class Abstract_Wallet(PrintError, SPVDelegate):
     def add_transaction(self, tx_hash, tx):
         if not tx.inputs():
             # bad tx came in off the wire -- all 0's or something, see #987
-            self.print_error("add_transaction: WARNING a tx came in from the network with 0 inputs! Bad server? Ignoring tx:", tx_hash)
+            self.print_error("add_transaction: WARNING a tx came in from the network with 0 inputs!"
+                             " Bad server? Ignoring tx:", tx_hash)
             return
         is_coinbase = tx.inputs()[0]['type'] == 'coinbase'
         with self.lock:
@@ -1270,21 +1276,21 @@ class Abstract_Wallet(PrintError, SPVDelegate):
                     d[addr] = l = []
                 l.append((ser, v))
             def find_in_self_txo(prevout_hash: str, prevout_n: int) -> tuple:
-                ''' Returns a tuple of the (Address,value) for a given
+                """Returns a tuple of the (Address,value) for a given
                 prevout_hash:prevout_n, or (None, None) if not found. If valid
                 return, the Address object is found by scanning self.txo. The
                 lookup below is relatively fast in practice even on pathological
-                wallets. '''
+                wallets."""
                 dd = self.txo.get(prevout_hash, {})
                 for addr2, item in dd.items():
                     for n, v, is_cb in item:
                         if n == prevout_n:
                             return addr2, v
                 return (None, None)
-            def txin_get_info(txin):
+            def txin_get_info(txi):
                 prevout_hash = txi['prevout_hash']
                 prevout_n = txi['prevout_n']
-                ser = prevout_hash + ':%d'%prevout_n
+                ser = f'{prevout_hash}:{prevout_n}'
                 return prevout_hash, prevout_n, ser
             def put_pruned_txo(ser, tx_hash):
                 self.pruned_txo[ser] = tx_hash
@@ -1506,6 +1512,8 @@ class Abstract_Wallet(PrintError, SPVDelegate):
                     cur_hist.append((txid, 0))
                     self._history[addr] = cur_hist
 
+    TxHistory = namedtuple("TxHistory", "tx_hash, height, conf, timestamp, amount, balance")
+
     def get_history(self, domain=None, *, reverse=False):
         # get domain
         if domain is None:
@@ -1535,7 +1543,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
         balance = c + u + x
         h2 = []
         for tx_hash, height, conf, timestamp, delta in history:
-            h2.append((tx_hash, height, conf, timestamp, delta, balance))
+            h2.append(self.TxHistory(tx_hash, height, conf, timestamp, delta, balance))
             if balance is None or delta is None:
                 balance = None
             else:
@@ -2019,10 +2027,10 @@ class Abstract_Wallet(PrintError, SPVDelegate):
             return utxo in self.frozen_coins or utxo in self.frozen_coins_tmp
 
     def set_frozen_state(self, addrs, freeze):
-        ''' Set frozen state of the addresses to `freeze`, True or False. Note
+        """Set frozen state of the addresses to `freeze`, True or False. Note
         that address-level freezing is set/unset independent of coin-level
         freezing, however both must be satisfied for a coin to be defined as
-        spendable. '''
+        spendable."""
         if all(self.is_mine(addr) for addr in addrs):
             if freeze:
                 self.frozen_addresses |= set(addrs)
@@ -2034,8 +2042,8 @@ class Abstract_Wallet(PrintError, SPVDelegate):
             return True
         return False
 
-    def set_frozen_coin_state(self, utxos, freeze, *, temporary = False):
-        '''Set frozen state of the `utxos` to `freeze`, True or False. `utxos`
+    def set_frozen_coin_state(self, utxos, freeze, *, temporary=False):
+        """Set frozen state of the `utxos` to `freeze`, True or False. `utxos`
         is a (possibly mixed) list of either "prevout:n" strings and/or
         coin-dicts as returned from get_utxos(). Note that if passing prevout:n
         strings as input, 'is_mine()' status is not checked for the specified
@@ -2052,13 +2060,13 @@ class Abstract_Wallet(PrintError, SPVDelegate):
         Note that setting `freeze = False` effectively unfreezes both the
         temporary and the permanent frozen coin sets all in 1 call. Thus after a
         call to `set_frozen_coin_state(utxos, False), both the temporary and the
-        persistent frozen sets are cleared of all coins in `utxos`. '''
+        persistent frozen sets are cleared of all coins in `utxos`."""
         add_set = self.frozen_coins if not temporary else self.frozen_coins_tmp
         def add(utxo):
-            add_set.add( utxo )
+            add_set.add(utxo)
         def discard(utxo):
-            self.frozen_coins.discard( utxo )
-            self.frozen_coins_tmp.discard( utxo )
+            self.frozen_coins.discard(utxo)
+            self.frozen_coins_tmp.discard(utxo)
         apply_operation = add if freeze else discard
         original_size = len(self.frozen_coins)
         with self.lock:
@@ -2067,7 +2075,13 @@ class Abstract_Wallet(PrintError, SPVDelegate):
                 if isinstance(utxo, str):
                     apply_operation(utxo)
                     ok += 1
-                elif isinstance(utxo, dict) and self.is_mine(utxo['address']):
+                elif isinstance(utxo, dict):
+                    # Note: we could do an is_mine check here for each coin dict here,
+                    # but since all code paths leading to this branch always pass valid
+                    # coins that are "mine", we removed the check to save CPU cycles.
+                    #
+                    # So an O(M logN) algorithm becomes O(M) without the is_mine check,
+                    # where M = number of coins and N = number of addresses.
                     txo = "{}:{}".format(utxo['prevout_hash'], utxo['prevout_n'])
                     apply_operation(txo)
                     utxo['is_frozen_coin'] = bool(freeze)
@@ -2126,11 +2140,19 @@ class Abstract_Wallet(PrintError, SPVDelegate):
             # Now no references to the syncronizer or verifier
             # remain so they will be GC-ed
             self.storage.put('stored_height', self.get_local_height())
-        self.save_transactions()
-        self.save_verified_tx()  # implicit cashacct.save
-        self.storage.put('frozen_coins', list(self.frozen_coins))
-        self.save_change_reservations()
-        self.storage.write()
+        self.save_network_state()
+
+    def save_network_state(self):
+        """Save all the objects which are updated by the network thread. This is called
+        periodically by the Android app during long synchronizations.
+        """
+        with self.lock:
+            self.save_addresses()
+            self.save_transactions()
+            self.save_verified_tx()  # implicit cashacct.save
+            self.storage.put('frozen_coins', list(self.frozen_coins))
+            self.save_change_reservations()
+            self.storage.write()
 
     def start_pruned_txo_cleaner_thread(self):
         self.pruned_txo_cleaner_thread = threading.Thread(target=self._clean_pruned_txo_thread, daemon=True, name='clean_pruned_txo_thread')
@@ -2463,7 +2485,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
         result['address'] = r['address'].to_storage_string()
         return result
 
-    def save_payment_requests(self):
+    def save_payment_requests(self, write=True):
         def delete_address(value):
             del value['address']
             return value
@@ -2471,7 +2493,9 @@ class Abstract_Wallet(PrintError, SPVDelegate):
         requests = {addr.to_storage_string() : delete_address(value.copy())
                     for addr, value in self.receive_requests.items()}
         self.storage.put('payment_requests', requests)
-        self.storage.write()
+        self.save_labels()  # In case address labels were set or cleared.
+        if write:
+            self.storage.write()
 
     def sign_payment_request(self, key, alias, alias_addr, password):
         req = self.receive_requests.get(key)
@@ -2483,15 +2507,16 @@ class Abstract_Wallet(PrintError, SPVDelegate):
         self.receive_requests[key] = req
         self.save_payment_requests()
 
-    def add_payment_request(self, req, config, set_address_label=True):
+    def add_payment_request(self, req, config, set_address_label=True, save=True):
         addr = req['address']
         addr_text = addr.to_storage_string()
         amount = req['amount']
         message = req['memo']
         self.receive_requests[addr] = req
-        self.save_payment_requests()
+        if save:
+            self.save_payment_requests()
         if set_address_label:
-            self.set_label(addr_text, message) # should be a default label
+            self.set_label(addr_text, message, save=save) # should be a default label
 
         rdir = config.get('requests_dir')
         if rdir and amount is not None:
@@ -2512,7 +2537,8 @@ class Abstract_Wallet(PrintError, SPVDelegate):
             with open(os.path.join(path, key + '.json'), 'w', encoding='utf-8') as f:
                 f.write(json.dumps(req))
 
-    def remove_payment_request(self, addr, config, clear_address_label_if_no_tx=True):
+    def remove_payment_request(self, addr, config, clear_address_label_if_no_tx=True,
+                               save=True):
         if isinstance(addr, str):
             addr = Address.from_string(addr)
         if addr not in self.receive_requests:
@@ -2522,7 +2548,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
             memo = r.get('memo')
             # clear it only if the user didn't overwrite it with something else
             if memo and memo == self.labels.get(addr.to_storage_string()):
-                self.set_label(addr, None)
+                self.set_label(addr, None, save=save)
 
         rdir = config.get('requests_dir')
         if rdir:
@@ -2531,7 +2557,8 @@ class Abstract_Wallet(PrintError, SPVDelegate):
                 n = os.path.join(rdir, 'req', key[0], key[1], key, key + s)
                 if os.path.exists(n):
                     os.unlink(n)
-        self.save_payment_requests()
+        if save:
+            self.save_payment_requests()
         return True
 
     def get_sorted_requests(self, config):
@@ -3027,7 +3054,7 @@ class Deterministic_Wallet(Abstract_Wallet):
                 if n > nmax: nmax = n
         return nmax + 1
 
-    def create_new_address(self, for_change=False):
+    def create_new_address(self, for_change=False, save=True):
         for_change = bool(for_change)
         with self.lock:
             addr_list = self.change_addresses if for_change else self.receiving_addresses
@@ -3035,7 +3062,8 @@ class Deterministic_Wallet(Abstract_Wallet):
             x = self.derive_pubkeys(for_change, n)
             address = self.pubkeys_to_address(x)
             addr_list.append(address)
-            self.save_addresses()
+            if save:
+                self.save_addresses()
             self.add_address(address)
             return address
 
@@ -3044,12 +3072,12 @@ class Deterministic_Wallet(Abstract_Wallet):
         while True:
             addresses = self.get_change_addresses() if for_change else self.get_receiving_addresses()
             if len(addresses) < limit:
-                self.create_new_address(for_change)
+                self.create_new_address(for_change, save=False)
                 continue
             if all(map(lambda a: not self.address_is_old(a), addresses[-limit:] )):
                 break
             else:
-                self.create_new_address(for_change)
+                self.create_new_address(for_change, save=False)
 
     def synchronize(self):
         with self.lock:

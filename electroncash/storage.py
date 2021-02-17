@@ -133,6 +133,7 @@ class WalletStorage(PrintError):
         ec_key = bitcoin.EC_KEY(secret)
         return ec_key
 
+    @profiler
     def decrypt(self, password):
         ec_key = self.get_key(password)
         s = zlib.decompress(ec_key.decrypt_message(self.raw)) if self.raw else None
@@ -142,11 +143,14 @@ class WalletStorage(PrintError):
 
     def set_password(self, password, encrypt):
         self.put('use_encryption', bool(password))
+        old_pubkey = self.pubkey
         if encrypt and password:
             ec_key = self.get_key(password)
             self.pubkey = ec_key.get_public_key()
         else:
             self.pubkey = None
+        if self.pubkey != old_pubkey:
+            self.modified = True
 
     def get(self, key, default=None):
         with self.lock:
@@ -158,12 +162,6 @@ class WalletStorage(PrintError):
         return v
 
     def put(self, key, value):
-        try:
-            json.dumps(key)
-            json.dumps(value)
-        except:
-            self.print_error("json error: cannot save", key)
-            return
         with self.lock:
             if value is not None:
                 if self.data.get(key) != value:
@@ -186,7 +184,9 @@ class WalletStorage(PrintError):
             return
         if not self.modified:
             return
-        s = json.dumps(self.data, indent=4, sort_keys=True)
+        s = json.dumps(self.data,
+                       indent=None if self.pubkey else 4,  # Fast settings if encrypted,
+                       sort_keys=not self.pubkey)          # readable settings otherwise.
         if self.pubkey:
             s = bytes(s, 'utf8')
             c = zlib.compress(s)

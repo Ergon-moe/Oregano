@@ -33,7 +33,9 @@ datas = [
     (home+'electroncash/servers_testnet.json', PYPKG),
     (home+'electroncash/servers_testnet4.json', PYPKG),
     (home+'electroncash/servers_scalenet.json', PYPKG),
+    (home+'electroncash/servers_taxcoin.json', PYPKG),
     (home+'electroncash/wordlist/english.txt', PYPKG + '/wordlist'),
+    (home+'electroncash_gui/qt/data/ard_mone.mp3', PYPKG + '_gui' + '/data'),
     (home+'electroncash/locale', PYPKG + '/locale'),
     (home+'electroncash_plugins', PYPKG + '_plugins'),
 ]
@@ -94,7 +96,6 @@ bins2remove=('qtweb', 'qt3d', 'qtgame', 'qtdesigner', 'qtquick', 'qtlocation',
              'qttest', 'qtxml', 'qtqml', 'qtsql', 'qtserialport', 'qtsensors',
              'qtpositioning', 'qtnfc', 'qthelp', 'qtbluetooth',
              'pyqt5/qt/qml', 'pyqt5/qt/plugins/position',
-             'pyqt5/qt/plugins/audio',
              'pyqt5/qt/plugins/sqldrivers', )
 files2remove=('libqsqlmysql.dylib', 'libdeclarative_multimedia.dylib',
               'libqtquickscene2dplugin.dylib', 'libqtquickscene3dplugin.dylib',

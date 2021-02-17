@@ -46,7 +46,7 @@ binaries += [('C:/tmp/tor.exe', '.')]
 # Workaround for "Retro Look":
 binaries += [b for b in collect_dynamic_libs('PyQt5') if 'qwindowsvista' in b[0]]
 
-binaries += [('C:/python*/Lib/site-packages/smartcard/scard/_scard.cp36-win32.pyd', '.')]  # Satochip
+binaries += [('C:/python*/Lib/site-packages/smartcard/scard/_scard.cp*-win32.pyd', '.')]  # Satochip
 
 datas = [
     (home+'electroncash/currencies.json', 'electroncash'),
@@ -54,9 +54,11 @@ datas = [
     (home+'electroncash/servers_testnet.json', 'electroncash'),
     (home+'electroncash/servers_testnet4.json', 'electroncash'),
     (home+'electroncash/servers_scalenet.json', 'electroncash'),
+    (home+'electroncash/servers_taxcoin.json', 'electroncash'),
     (home+'electroncash/wordlist/english.txt', 'electroncash/wordlist'),
     (home+'electroncash/locale', 'electroncash/locale'),
     (home+'electroncash_gui/qt/data/ecsupplemental_win.ttf', 'electroncash_gui/qt/data'),
+    (home+'electroncash_gui/qt/data/ard_mone.mp3', 'electroncash_gui/qt/data'),
     (home+'electroncash_plugins', 'electroncash_plugins'),
 ]
 datas += collect_data_files('trezorlib')

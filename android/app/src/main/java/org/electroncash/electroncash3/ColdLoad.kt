@@ -2,12 +2,8 @@ package org.electroncash.electroncash3
 
 import android.content.ClipboardManager
 import android.content.Intent
-import android.text.Editable
-import android.text.TextWatcher
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.ViewModel
 import com.google.zxing.integration.android.IntentIntegrator
 import kotlinx.android.synthetic.main.load.*
 
@@ -21,11 +17,6 @@ val libTransaction by lazy { libMod("transaction") }
 // Valid transaction quickly show up in transactions.
 
 class ColdLoadDialog : AlertDialogFragment() {
-
-    class Model : ViewModel() {}
-
-    val model: Model by viewModels()
-
     override fun onBuildDialog(builder: AlertDialog.Builder) {
         builder.setTitle(R.string.load_transaction)
                 .setView(R.layout.load)
@@ -36,11 +27,7 @@ class ColdLoadDialog : AlertDialogFragment() {
 
     override fun onShowDialog() {
         super.onShowDialog()
-        etTransaction.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) { updateUI() }
-        })
+        etTransaction.addAfterTextChangedListener{ updateUI() }
         updateUI()
 
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener { onOK() }
@@ -72,11 +59,11 @@ class ColdLoadDialog : AlertDialogFragment() {
 
     fun onOK() {
         val tx = libTransaction.callAttr("Transaction", etTransaction.text.toString())
-        if (!daemonModel.isConnected()) {
-            throw ToastException(R.string.not_connected)
-        }
-        val result = daemonModel.network.callAttr("broadcast_transaction", tx)
         try {
+            if (!daemonModel.isConnected()) {
+                throw ToastException(R.string.not_connected)
+            }
+            val result = daemonModel.network.callAttr("broadcast_transaction", tx)
             checkBroadcastResult(result)
             toast(R.string.the_string, Toast.LENGTH_LONG)
             dismiss()

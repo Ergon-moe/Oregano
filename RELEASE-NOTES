@@ -1036,3 +1036,57 @@ and there is no warning message.
 - Qt UI: Made all tabs except for "Console" ON by default (Calin Culianu)
 - TxDialog: Add "Freeze Coins" button to freeze inputs before broadcast
   (Calin Culianu)
+
+# RELEASE NOTES 4.2.1
+
+- CashFusion: Server-side checks to ensure "fast schnorr" is available on the
+  server. (Mark Lundeberg)
+- Fixed a typo in the transaction dialog ("Unfeeze" -> "Unfreeze") #2027
+  (Axel Gembe)
+- CashFusion: Various tweaks to starting logic, stopping behavior, bugfixes,
+  better handling for confirmed-only case, better handling when network down,
+  improved logic for wallet waiting to receive fusions. #2028, #2030
+  (Mark Lundeberg)
+- Tor subprocess: Ensure daemonized (Mark Lundeberg)
+- Android: Added fiat send, plus various fixes (Malcolm Smith)
+- Added Loping.net block explorers; added TestNet4 / ScaleNet explorer list
+  #2036 (Axel Gembe)
+- Added a "View on block explorer" option for addresses in the TX dialog #2049
+  (Axel Gembe)
+- Added shortcuts to Windows build for TestNet4 and ScaleNet #2050 (Axel Gembe)
+- Fix for ScaleNet: Turns out it has a 2d half-life, not one hour. Bug caused
+  ScaleNet to stop working post-Nov 15th. Now it should work. (Calin Culianu)
+- Various updates to server list. (Axel Gembe)
+- Added checkpoint after HF block, also added CLI arg --taxcoin for ABC's coin.
+  (Calin Culianu)
+- Network Dialog: Added advanced request throttling params (Calin Culianu)
+
+# RELEASE NOTES 4.2.2
+
+- Fixed a regression introduced in 4.2.1 where the checkpoint block being after
+  the asert anchor caused the code in blockchain.py to have a bad time.
+  (Calin Culianu)
+
+# RELEASE NOTES 4.2.3
+
+- Fixed rare None dereference. (Calin Culianu)
+- Android: fix remaining issues with RTL languages such as Arabic
+  (Malcolm Smith)
+- Ledger: Update USB ids for app-bitcoin version >= 1.5.1 (#2061) (Axel Gembe)
+- Taxcoin: Add taxplorer.loping.net block explorer #2067 (Axel Gembe)
+- Taxcoin: Add taxplorer.loping.net server #2066 (Axel Gembe)
+- NetworkDialog: Fix glitches when restoring selection on update()
+  (Calin Culianu)
+- Removed defunct CashShuffle servers (Calin Culianu)
+- Android: move transactions screen from export_history to faster get_history
+  (#2063) (Malcolm Smith)
+- Update macOS build notes (#2073) (Corentin Mercier)
+- Android: refactor common list behavior into a base class (Malcolm Smith)
+- CashFusion: fix minor race leading to exception #2077 (Mark Lundeberg)
+- Android: note that this Chaquopy version is for Electron Cash only
+  (Malcolm Smith)
+- Android: cache config in Python dict for performance (Malcolm Smith)
+- Android: catch "not connected" exception in "Load transaction" (Malcolm Smith)
+- Android: fix deprecated theme attribute in layout (Malcolm Smith)
+- Android: make Send address box automatically parse request URLs
+  (Malcolm Smith)

@@ -172,6 +172,15 @@ function verlt()
     [ "$1" = "$2" ] && return 1 || verlte $1 $2
 }
 
+function git_describe_filtered()
+{
+    if [ ! -z ${1+x} ] ; then
+        git describe --tags --match "$1" --dirty --always
+    else
+        git describe --tags --exclude 'android-*' --exclude 'ios_*' --dirty --always
+    fi
+}
+
 if [ -n "$_BASE_SH_SOURCED" ] ; then
     # Base.sh has been sourced already, no need to source it again
     return 0
@@ -185,8 +194,8 @@ export PYTHONHASHSEED=22
 export SOURCE_DATE_EPOCH=1530212462
 # Note, when upgrading Python, check the Windows python.exe embedded manifest for changes.
 # If the manifest changed, contrib/build-wine/manifest.xml needs to be updated.
-export PYTHON_VERSION=3.6.9  # Windows, OSX & Linux AppImage use this to determine what to download/build
-export PYTHON_SRC_TARBALL_HASH="5e2f5f554e3f8f7f0296f7e73d8600c4e9acbaee6b2555b83206edf5153870da"  # If you change PYTHON_VERSION above, update this by downloading the tarball manually and doing a sha256sum on it.
+export PYTHON_VERSION=3.8.7  # Windows, OSX & Linux AppImage use this to determine what to download/build
+export PYTHON_SRC_TARBALL_HASH="ddcc1df16bb5b87aa42ec5d20a5b902f2d088caa269b28e01590f97a798ec50a"  # If you change PYTHON_VERSION above, update this by downloading the tarball manually and doing a sha256sum on it.
 export DEFAULT_GIT_REPO=https://github.com/Electron-Cash/Electron-Cash
 if [ -z "$GIT_REPO" ] ; then
     # If no override from env is present, use default. Support for overrides
@@ -203,6 +212,11 @@ fi
 export GIT_DIR_NAME=`basename $GIT_REPO`
 export PACKAGE="Electron-Cash"  # Modify this if you like -- Windows, MacOS & Linux srcdist build scripts read this, while AppImage has it hard-coded
 export PYI_SKIP_TAG="${PYI_SKIP_TAG:-0}" # Set this to non-zero to make PyInstaller skip tagging the bootloader
+export DEFAULT_UBUNTU_MIRROR="http://archive.ubuntu.com/ubuntu/"
+export UBUNTU_MIRROR="${UBUNTU_MIRROR:-$DEFAULT_UBUNTU_MIRROR}"
+if [ "$UBUNTU_MIRROR" != "$DEFAULT_UBUNTU_MIRROR" ]; then
+    info "Picked up override from env: UBUNTU_MIRROR=${UBUNTU_MIRROR}"
+fi
 
 # Build a command line argument for docker, enabling interactive mode if stdin
 # is a tty and enabling tty in docker if stdout is a tty.

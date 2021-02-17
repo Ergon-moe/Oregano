@@ -1,20 +1,17 @@
 from __future__ import absolute_import, division, print_function
 
 from code import InteractiveConsole
-import json
 import os
 from os.path import dirname, exists, join, split
 import pkgutil
 from shutil import copyfile
-import unittest
+from time import time
 
-from electroncash import commands, daemon, keystore, simple_config, storage, tests, util
+from electroncash import commands, daemon, interface, keystore, storage, util
 from electroncash.i18n import _
 from electroncash.storage import WalletStorage
 from electroncash.wallet import (ImportedAddressWallet, ImportedPrivkeyWallet, Standard_Wallet,
                                  Wallet)
-
-from android.preference import PreferenceManager
 
 
 CALLBACKS = ["banner", "blockchain_updated", "fee", "interfaces", "new_transaction",
@@ -75,18 +72,25 @@ class Help:
 
 # Adds additional commands which aren't available over JSON RPC.
 class AndroidCommands(commands.Commands):
-    def __init__(self, app):
-        super().__init__(AndroidConfig(app), wallet=None, network=None)
+    def __init__(self, config):
+        super().__init__(config, wallet=None, network=None)
         fd, server = daemon.get_fd_or_server(self.config)
         if not fd:
             raise Exception("Daemon already running")  # Same wording as in daemon.py.
 
-        # Initialize here rather than in start() so the DaemonModel has a chance to register
+        # Create daemon here rather than in start() so the DaemonModel has a chance to register
         # its callback before the daemon threads start.
-        self.daemon = daemon.Daemon(self.config, fd, False, None)
+        self.daemon = daemon.Daemon(self.config, fd, is_gui=False, plugins=None)
+        self.daemon_running = False
+
+        self.gui_callback = None
         self.network = self.daemon.network
         self.network.register_callback(self._on_callback, CALLBACKS)
-        self.daemon_running = False
+        self.network.add_jobs([AutoSaver(self.daemon)])
+
+        # Reduce network timeouts (#971).
+        self.network.NODES_RETRY_INTERVAL = self.network.SERVER_RETRY_INTERVAL = 5
+        interface.PING_INTERVAL = 60
 
     # BEGIN commands from the argparse interface.
 
@@ -157,7 +161,7 @@ class AndroidCommands(commands.Commands):
             storage.put('keystore', ks.dump())
             wallet = Standard_Wallet(storage)
 
-        wallet.update_password(None, password, True)
+        wallet.update_password(None, password, encrypt=True)
 
     # END commands from the argparse interface.
 
@@ -213,6 +217,11 @@ class AndroidCommands(commands.Commands):
         """Run all unit tests. Expect failures with functionality not present on Android,
         such as Trezor.
         """
+
+        # Speed up startup by not importing test code at module level.
+        from electroncash import tests
+        import unittest
+
         suite = unittest.defaultTestLoader.loadTestsFromNames(
             tests.__name__ + "." + info.name
             for info in pkgutil.iter_modules(tests.__path__)
@@ -225,9 +234,9 @@ class AndroidCommands(commands.Commands):
         if not self.daemon_running:
             raise Exception("Daemon not running")  # Same wording as in electron-cash script.
 
-    # Log callbacks on stderr so they'll appear in the console activity.
-    def _on_callback(self, *args):
-        util.print_stderr("[Callback] " + ", ".join(repr(x) for x in args))
+    def _on_callback(self, event, *args):
+        if self.gui_callback:
+            self.gui_callback(event)
 
     def _wallet_path(self, name=""):
         if name is None:
@@ -246,42 +255,25 @@ for name, func in vars(AndroidCommands).items():
         all_commands[name] = commands.Command(func, "")
 
 
-SP_SET_METHODS = {
-    bool: "putBoolean",
-    float: "putFloat",
-    int: "putLong",
-    str: "putString",
-}
+AUTO_SAVE_INTERVAL = 300
 
-# We store the config in the SharedPreferences because it's very easy to base an Android
-# settings UI on that. The reverse approach would be harder (using PreferenceDataStore to make
-# the settings UI access an Electron Cash config file).
-class AndroidConfig(simple_config.SimpleConfig):
-    def __init__(self, app):
-        self.sp = PreferenceManager.getDefaultSharedPreferences(app)
-        super().__init__()
+class AutoSaver(util.ThreadJob):
+    """Save wallets periodically if they've been syncing for a long time. This avoids losing
+    too much progress if the process is killed or the phone is turned off.
+    """
+    def __init__(self, daemon):
+        self.daemon = daemon
+        self.syncing = {}
 
-    def get(self, key, default=None):
-        if self.sp.contains(key):
-            value = self.sp.getAll().get(key)
-            if value == "<json>":
-                json_value = self.sp.getString(key + ".json", None)
-                if json_value is not None:
-                    value = json.loads(json_value)
-            return value
-        else:
-            return default
-
-    def set_key(self, key, value, save=None):
-        spe = self.sp.edit()
-        if value is None:
-            spe.remove(key)
-            spe.remove(key + ".json")
-        else:
-            set_method = SP_SET_METHODS.get(type(value))
-            if set_method:
-                getattr(spe, set_method)(key, value)
+    def run(self):
+        for name, wallet in self.daemon.wallets.items():
+            if wallet.is_fully_settled_down():
+                self.syncing.pop(name, None)
             else:
-                spe.putString(key, "<json>")
-                spe.putString(key + ".json", json.dumps(value))
-        spe.apply()
+                last_save = self.syncing.setdefault(name, time())
+                if time() - last_save > AUTO_SAVE_INTERVAL:
+                    wallet.save_network_state()
+                    self.syncing[name] = time()
+
+        for name in [name for name in self.syncing if name not in self.daemon.wallets]:
+            del self.syncing[name]

@@ -8,7 +8,7 @@ DISTDIR="$PROJECT_ROOT/dist"
 BUILDDIR="$CONTRIB/build-linux/appimage/build/appimage"
 APPDIR="$BUILDDIR/Electron-Cash.AppDir"
 CACHEDIR="$CONTRIB/build-linux/appimage/.cache/appimage"
-PYDIR="$APPDIR"/usr/lib/python3.6
+PYDIR="$APPDIR"/usr/lib/python3.8
 
 export GCC_STRIP_BINARIES="1"
 export GIT_SUBMODULE_FLAGS="--recommend-shallow --depth 1"
@@ -20,7 +20,7 @@ SQUASHFSKIT_COMMIT="ae0d656efa2d0df2fcac795b6823b44462f19386"
 PKG2APPIMAGE_COMMIT="eb8f3acdd9f11ab19b78f5cb15daa772367daf15"
 
 
-VERSION=`git describe --tags --dirty --always`
+VERSION=`git_describe_filtered`
 APPIMAGE="$DISTDIR/Electron-Cash-$VERSION-x86_64.AppImage"
 
 rm -rf "$BUILDDIR"
@@ -49,14 +49,13 @@ tar xf "$CACHEDIR/Python-$PYTHON_VERSION.tar.xz" -C "$BUILDDIR"
     cd "$BUILDDIR/Python-$PYTHON_VERSION"
     LC_ALL=C export BUILD_DATE=$(date -u -d "@$SOURCE_DATE_EPOCH" "+%b %d %Y")
     LC_ALL=C export BUILD_TIME=$(date -u -d "@$SOURCE_DATE_EPOCH" "+%H:%M:%S")
-    # Patch taken from Ubuntu python3.6_3.6.8-1~18.04.1.debian.tar.xz
-    patch -p1 < "$CONTRIB/build-linux/appimage/patches/python-3.6.8-reproducible-buildinfo.diff" || fail "Could not patch Python build system for reproducibility"
+    # Patch taken from Ubuntu http://archive.ubuntu.com/ubuntu/pool/main/p/python3.8/python3.8_3.8.6-1.debian.tar.xz
+    patch -p1 < "$CONTRIB/build-linux/appimage/patches/python-3.8.6-reproducible-buildinfo.diff" || fail "Could not patch Python build system for reproducibility"
     ./configure \
       --cache-file="$CACHEDIR/python.config.cache" \
       --prefix="$APPDIR/usr" \
       --enable-ipv6 \
       --enable-shared \
-      --with-threads \
       -q || fail "Python configure failed"
     make -j$WORKER_COUNT -s || fail "Could not build Python"
     make -s install > /dev/null || fail "Failed to install Python"
@@ -81,7 +80,7 @@ appdir_python() {
   env \
     PYTHONNOUSERSITE=1 \
     LD_LIBRARY_PATH="$APPDIR/usr/lib:$APPDIR/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}" \
-    "$APPDIR/usr/bin/python3.6" "$@"
+    "$APPDIR/usr/bin/python3.8" "$@"
 }
 
 python='appdir_python'
@@ -110,11 +109,11 @@ info "Preparing electrum-locale"
 
 info "Installing Electron Cash and its dependencies"
 mkdir -p "$CACHEDIR/pip_cache"
-"$python" -m pip install --no-warn-script-location --cache-dir "$CACHEDIR/pip_cache" -r "$CONTRIB/deterministic-build/requirements.txt"
-"$python" -m pip install --no-warn-script-location --cache-dir "$CACHEDIR/pip_cache" -r "$CONTRIB/deterministic-build/requirements-binaries.txt"
-"$python" -m pip install --no-warn-script-location --cache-dir "$CACHEDIR/pip_cache" -r "$CONTRIB/deterministic-build/requirements-hw.txt"
-"$python" -m pip install --no-warn-script-location --cache-dir "$CACHEDIR/pip_cache" "$PROJECT_ROOT"
-"$python" -m pip uninstall -y Cython
+"$python" -m pip install --no-deps --no-warn-script-location --no-binary :all: --cache-dir "$CACHEDIR/pip_cache" -r "$CONTRIB/deterministic-build/requirements.txt"
+"$python" -m pip install --no-deps --no-warn-script-location --no-binary :all: --only-binary pyqt5 --cache-dir "$CACHEDIR/pip_cache" -r "$CONTRIB/deterministic-build/requirements-binaries.txt"
+"$python" -m pip install --no-deps --no-warn-script-location --no-binary :all: --cache-dir "$CACHEDIR/pip_cache" -r "$CONTRIB/deterministic-build/requirements-hw.txt"
+"$python" -m pip install --no-deps --no-warn-script-location --cache-dir "$CACHEDIR/pip_cache" "$PROJECT_ROOT"
+"$python" -m pip uninstall -y -r "$CONTRIB/requirements/requirements-build-uninstall.txt"
 
 
 info "Copying desktop integration"
@@ -124,7 +123,7 @@ cp -fp "$PROJECT_ROOT/icons/electron-cash.png" "$APPDIR/electron-cash.png"
 
 # add launcher
 info "Adding launcher"
-cp -fp "$CONTRIB/build-linux/appimage/scripts/common.conf" "$APPDIR/common.conf" || fail "Could not copy python script"
+cp -fp "$CONTRIB/build-linux/appimage/scripts/common.sh" "$APPDIR/common.sh" || fail "Could not copy python script"
 cp -fp "$CONTRIB/build-linux/appimage/scripts/apprun.sh" "$APPDIR/AppRun" || fail "Could not copy AppRun script"
 cp -fp "$CONTRIB/build-linux/appimage/scripts/python.sh" "$APPDIR/python" || fail "Could not copy python script"
 
@@ -139,7 +138,7 @@ info "Finalizing AppDir"
     move_lib
 
     # apply global appimage blacklist to exclude stuff
-    # move usr/include out of the way to preserve usr/include/python3.6m.
+    # move usr/include out of the way to preserve usr/include/python3.8m.
     mv usr/include usr/include.tmp
     delete_blacklisted
     mv usr/include.tmp usr/include
@@ -151,17 +150,6 @@ info "Copying additional libraries"
 # On some systems it can cause problems to use the system libusb
 cp -fp /usr/lib/x86_64-linux-gnu/libusb-1.0.so "$APPDIR"/usr/lib/x86_64-linux-gnu/. || fail "Could not copy libusb"
 
-# Ubuntu 14.04 lacks a recent enough libfreetype / libfontconfig, so we include one here
-mkdir -p "$APPDIR"/usr/lib/fonts/freetype
-mkdir -p "$APPDIR"/usr/lib/fonts/fontconfig
-cp -fp /usr/lib/x86_64-linux-gnu/libfreetype.so.6 "$APPDIR"/usr/lib/fonts/freetype/. || fail "Could not copy libfreetype"
-cp -fp /usr/lib/x86_64-linux-gnu/libfontconfig.so.1 "$APPDIR"/usr/lib/fonts/fontconfig/. || fail "Could not copy libfontconfig"
-cp -f "$CONTRIB/build-linux/appimage/scripts/test-freetype.py" "$APPDIR" || fail "Could not copy test-freetype.py"
-cp -f "$CONTRIB/build-linux/appimage/scripts/test-fontconfig.py" "$APPDIR" || fail "Could not copy test-fontconfig.py"
-
-# libfreetype needs a recent enough zlib
-cp -f /lib/x86_64-linux-gnu/libz.so.1 "$APPDIR"/usr/lib/x86_64-linux-gnu || fail "Could not copy zlib"
-
 # some distros lack libxkbcommon-x11
 cp -f /usr/lib/x86_64-linux-gnu/libxkbcommon-x11.so.0 "$APPDIR"/usr/lib/x86_64-linux-gnu || fail "Could not copy libxkbcommon-x11"
 
@@ -172,7 +160,7 @@ strip_binaries()
 {
   chmod u+w -R "$APPDIR"
   {
-    printf '%s\0' "$APPDIR/usr/bin/python3.6"
+    printf '%s\0' "$APPDIR/usr/bin/python3.8"
     find "$APPDIR" -type f -regex '.*\.so\(\.[0-9.]+\)?$' -print0
   } | xargs -0 --no-run-if-empty --verbose strip -R .note.gnu.build-id -R .comment
 }
@@ -190,23 +178,21 @@ rm -rf "$APPDIR"/usr/{share,include}
 rm -rf "$PYDIR"/{test,ensurepip,lib2to3,idlelib,turtledemo}
 rm -rf "$PYDIR"/{ctypes,sqlite3,tkinter,unittest}/test
 rm -rf "$PYDIR"/distutils/{command,tests}
-rm -rf "$PYDIR"/config-3.6m-x86_64-linux-gnu
-rm -rf "$PYDIR"/site-packages/{opt,pip,setuptools,wheel}
+rm -rf "$PYDIR"/config-3.8-x86_64-linux-gnu
 rm -rf "$PYDIR"/site-packages/Cryptodome/SelfTest
-rm -rf "$PYDIR"/site-packages/{psutil,qrcode,websocket}/tests
-for component in connectivity declarative help location multimedia quickcontrols2 serialport webengine websockets xmlpatterns ; do
+rm -rf "$PYDIR"/site-packages/{psutil,qrcode}/tests
+for component in connectivity declarative location multimedia quickcontrols quickcontrols2 serialport webengine websockets xmlpatterns ; do
   rm -rf "$PYDIR"/site-packages/PyQt5/Qt/translations/qt${component}_*
-  rm -rf "$PYDIR"/site-packages/PyQt5/Qt/resources/qt${component}_*
 done
-rm -rf "$PYDIR"/site-packages/PyQt5/Qt/{qml,libexec}
-rm -rf "$PYDIR"/site-packages/PyQt5/{pyrcc.so,pylupdate.so,uic}
-rm -rf "$PYDIR"/site-packages/PyQt5/Qt/plugins/{bearer,gamepads,geometryloaders,geoservices,playlistformats,position,printsupport,renderplugins,sceneparsers,sensors,sqldrivers,texttospeech,webview}
-for component in Bluetooth Concurrent Designer Help Location NetworkAuth Nfc Positioning PositioningQuick PrintSupport Qml Quick Sensors SerialPort Sql Test Web Xml ; do
+rm -rf "$PYDIR"/site-packages/PyQt5/Qt/{qml,libexec,qsci}
+rm -rf "$PYDIR"/site-packages/PyQt5/{pyrcc.so,pylupdate.so,uic,bindings}
+rm -rf "$PYDIR"/site-packages/PyQt5/Qt/plugins/{assetimporters,bearer,gamepads,geometryloaders,geoservices,playlistformats,position,printsupport,renderplugins,sceneparsers,sensors,sqldrivers,texttospeech,webview}
+for component in Bluetooth Concurrent Designer Help Location NetworkAuth Nfc Positioning PositioningQuick PrintSupport Qml Quick RemoteObjects Sensors SerialPort Sql Test TextToSpeech Web Xml ; do
 
     rm -rf "$PYDIR"/site-packages/PyQt5/Qt/lib/libQt5${component}*
     rm -rf "$PYDIR"/site-packages/PyQt5/Qt${component}*
 done
-rm -rf "$PYDIR"/site-packages/PyQt5/Qt.so
+rm -rf "$PYDIR"/site-packages/PyQt5/Qt.*
 
 # these are deleted as they were not deterministic; and are not needed anyway
 find "$APPDIR" -path '*/__pycache__*' -delete

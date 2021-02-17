@@ -3,6 +3,7 @@ package org.electroncash.electroncash3
 import android.app.Dialog
 import android.content.DialogInterface
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.Menu
@@ -88,13 +89,18 @@ abstract class AlertDialogFragment : DialogFragment() {
         super.onStart()
         focusOnStop = View.NO_ID
 
-        if (!started) {
-            started = true
-            onShowDialog()
-        }
-        if (!model.started) {
-            model.started = true
-            onFirstShowDialog()
+        try {
+            if (!started) {
+                started = true
+                onShowDialog()
+            }
+            if (!model.started) {
+                model.started = true
+                onFirstShowDialog()
+            }
+        } catch (e: ToastException) {
+            e.show()
+            dismiss()
         }
     }
 
@@ -104,28 +110,38 @@ abstract class AlertDialogFragment : DialogFragment() {
         super.onStop()
     }
 
-    // When changing orientation on targetSdkVersion >= 28, onStop is called before
-    // onSaveInstanceState and the focused view is lost.
-    // (https://issuetracker.google.com/issues/152131900),
+    // When changing orientation on API level 28 or higher, onStop is called before
+    // onSaveInstanceState and the focus is lost (https://issuetracker.google.com/issues/152131900).
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         if (focusOnStop != View.NO_ID) {
             val hierarchy = outState.getBundle("android:savedDialogState")
                 ?.getBundle("android:dialogHierarchy")
-            if (hierarchy != null &&
-                hierarchy.getInt("android:focusedViewId", View.NO_ID) == View.NO_ID) {
+            if (hierarchy == null) {
+                val message = "Failed to get android:dialogHierarchy"
+                if (BuildConfig.DEBUG) {
+                    throw Exception(message)
+                } else {
+                    Log.w("AlertDialogFragment", message)
+                }
+            } else {
                 hierarchy.putInt("android:focusedViewId", focusOnStop)
             }
         }
     }
 
-    /** Can be used to do things like configure custom views, or attach listeners to buttons so
-     *  they don't always close the dialog. */
+    /** Called when the dialog is shown. If the dialog is recreated after a configuration
+     * change, it will be called again on the new instance.
+     *
+     * If this method throws a ToastException, it will be displayed, and the dialog will be
+     * closed. */
     open fun onShowDialog() {}
 
-    /** Unlike onShowDialog, this will only be called once, even if the dialog is recreated
-     * after a rotation. This can be used to do things like setting the initial state of
-     * editable views. */
+    /** Called after onShowDialog, but not after a configuration change. This can be used to
+     * set the initial state of editable views.
+     *
+     * If this method throws a ToastException, it will be displayed, and the dialog will be
+     * closed.*/
     open fun onFirstShowDialog() {}
 
     override fun getDialog(): AlertDialog {
@@ -230,8 +246,12 @@ abstract class TaskDialog<Result> : DialogFragment() {
     private fun onFinished(body: () -> Unit) {
         if (model.state == Thread.State.RUNNABLE) {
             model.state = Thread.State.TERMINATED
-            body()
-            dismiss()
+
+            // If we're inside onStart, fragment transactions are unsafe (#2154).
+            postToUiThread {
+                body()
+                dismiss()
+            }
         }
     }
 
@@ -247,21 +267,23 @@ abstract class TaskDialog<Result> : DialogFragment() {
     abstract fun doInBackground(): Result
 
     /** This method is called on the UI thread after doInBackground returns. Unlike
-     * onPreExecute, it may be called on a different fragment instance. */
+     * onPreExecute, it may be called on a different fragment instance.*/
     open fun onPostExecute(result: Result) {}
 }
 
 
 abstract class TaskLauncherDialog<Result> : AlertDialogFragment() {
+    var dismissAfterExecute = true
+
     override fun onShowDialog() {
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-            // It's possible for multiple button clicks to be queued before the listener runs,
-            // but showDialog will ensure that the progress dialog (and therefore the task) is
-            // only created once.
-            showDialog(activity!!, LaunchedTaskDialog<Result>().apply {
-                setTargetFragment(this@TaskLauncherDialog, 0)
-            })
-        }
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener { launchTask() }
+    }
+
+    fun launchTask() {
+        // It's possible for multiple button clicks to be queued before the listener runs,
+        // but showDialog will ensure that the progress dialog (and therefore the task) is
+        // only created once.
+        showDialog(this, LaunchedTaskDialog<Result>())
     }
 
     // See notes in TaskDialog.
@@ -280,7 +302,9 @@ class LaunchedTaskDialog<Result> : TaskDialog<Result>() {
 
     override fun onPostExecute(result: Result) {
         launcher.onPostExecute(result)
-        launcher.dismiss()
+        if (launcher.dismissAfterExecute) {
+            launcher.dismiss()
+        }
     }
 }
 

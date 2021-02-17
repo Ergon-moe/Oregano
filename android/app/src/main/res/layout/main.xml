@@ -27,7 +27,7 @@
             app:contentInsetStartWithNavigation="0dp"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
             tools:navigationIcon="@drawable/ic_menu_24dp"
-            tools:subtitle="0.12345678 BCH (98,765.43 USD)"
+            tools:subtitle="@string/test_value_and_fiat"
             tools:title="@string/test_wallet"
             tools:targetApi="lollipop"/>
 
@@ -60,6 +60,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:fitsSystemWindows="true"
-        tools:menu="@menu/nav_drawer_2"/>
+        tools:menu="@menu/nav_drawer_2"
+        android:theme="@style/NavigationMenuItem"/>
 
 </androidx.drawerlayout.widget.DrawerLayout>
