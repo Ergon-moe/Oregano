@@ -29,6 +29,7 @@ import sys
 import threading
 import urllib
 
+from .rpa import addr as rpa_addr
 from .address import Address
 from . import bitcoin
 from . import networks
@@ -203,7 +204,7 @@ def urldecode(url):
 def parseable_schemes(net = None) -> tuple:
     if net is None:
         net = networks.net
-    return (net.CASHADDR_PREFIX, cashacct.URI_SCHEME)
+    return (net.CASHADDR_PREFIX, cashacct.URI_SCHEME, net.RPA_PREFIX)
 
 class ExtraParametersInURIWarning(RuntimeWarning):
     ''' Raised by parse_URI to indicate the parsing succeeded but that
@@ -249,7 +250,9 @@ def parse_URI(uri, on_pr=None, *, net=None, strict=False, on_exc=None):
     May raise BadSchemeError if unknown scheme.
     May raise Exception subclass on other misc. failure.
 
+    
     Returns a dict of uri_param -> value on success """
+    
     if net is None:
         net = networks.net
     if ':' not in uri:
@@ -257,15 +260,20 @@ def parse_URI(uri, on_pr=None, *, net=None, strict=False, on_exc=None):
         Address.from_string(uri, net=net)
         return {'address': uri}
 
-    u = urllib.parse.urlparse(uri, allow_fragments=False)  # allow_fragments=False allows for cashacct:name#number URIs
+    u = urllib.parse.urlparse(uri, allow_fragments=False)  # allow_fragments=False allows for cashacct:name#number URIs 
     # The scheme always comes back in lower case
-    accept_schemes = parseable_schemes(net=net)
+    accept_schemes = parseable_schemes(net=net) 
     if u.scheme not in accept_schemes:
         raise BadSchemeError(_("Not a {schemes} URI").format(schemes=str(accept_schemes)))
+
     address = u.path
-
+    
     is_cashacct = u.scheme == cashacct.URI_SCHEME
-
+    is_paycode = u.scheme == net.RPA_PREFIX
+    
+    if is_paycode:
+        rprefix, addr_hash = rpa_addr.decode(net.RPA_PREFIX+":"+address)
+      
     # python for android fails to parse query
     if address.find('?') > 0:
         address, query = u.path.split('?')
@@ -278,6 +286,7 @@ def parse_URI(uri, on_pr=None, *, net=None, strict=False, on_exc=None):
             raise DuplicateKeyInURIError(_('Duplicate key in URI'), k)
 
     out = {k: v[0] for k, v in pq.items()}
+    
     if address:
         if is_cashacct:
             if '%' in address:
@@ -288,11 +297,14 @@ def parse_URI(uri, on_pr=None, *, net=None, strict=False, on_exc=None):
             if not cashacct.CashAcct.parse_string(address):
                 raise BadURIParameter('address', ValueError(_("{acct_name} is not a valid cashacct string").format(acct_name=address)))
             address = _strip_cashacct_str(address)
+            out['address'] = address
+        elif is_paycode:
+            out['address'] = address
         else:
             # validate
             try: Address.from_string(address, net=net)
             except Exception as e: raise BadURIParameter('address', e) from e
-        out['address'] = address
+            out['address'] = address
 
     if 'amount' in out:
         try:
@@ -372,6 +384,10 @@ def parse_URI(uri, on_pr=None, *, net=None, strict=False, on_exc=None):
         extra_keys = set(out.keys()) - accept_keys
         if extra_keys:
             raise ExtraParametersInURIWarning(out, *tuple(extra_keys))
+    
+    if is_paycode:
+        out['scheme'] = "paycode"
+        
     return out
 
 def check_www_dir(rdir):

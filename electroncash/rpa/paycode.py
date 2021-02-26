@@ -62,7 +62,10 @@ def _mktx(wallet, config, outputs, fee=None, change_addr=None, domain=None, noch
         final_outputs.append((TYPE_ADDRESS, address, amount))
 
     coins = wallet.get_spendable_coins(domain, config)
-    tx = wallet.make_unsigned_transaction(coins, final_outputs, config, fee, change_addr)
+    try:
+        tx = wallet.make_unsigned_transaction(coins, final_outputs, config, fee, change_addr)
+    except:
+        return 0
     if locktime is not None:
         tx.locktime = locktime
     if not unsigned:
@@ -159,9 +162,6 @@ def generate_transaction_from_paycode(wallet, config, amount, rpa_paycode=None, 
         print_msg("You must enable schnorr signing on this wallet for RPA.  Exiting.")
         return 0
 
-    # Initialize variable for the final return value.
-    final_raw_tx = 0
-
     # Decode the paycode
     rprefix, addr_hash = addr.decode(rpa_paycode)
     paycode_hex = addr_hash.hex().upper()
@@ -199,7 +199,11 @@ def generate_transaction_from_paycode(wallet, config, amount, rpa_paycode=None, 
     unsigned = True
     tx = _mktx(wallet, config, [(rpa_dummy_address, amount)], tx_fee, change_addr, domain, nocheck, unsigned,
                    password, locktime, op_return, op_return_raw)
- 
+                   
+    # HANDLE A FAILURE BY RETURNING ZERO (FOR NOW)
+    if tx == 0:
+        return 0
+    
     # Use the first input (input zero) for our shared secret
     input_zero = tx._inputs[0]
 
@@ -282,14 +286,7 @@ def generate_transaction_from_paycode(wallet, config, amount, rpa_paycode=None, 
     # Generate the raw transaction
     raw_tx_string = tx.as_dict()["hex"]
 
-    # Get the TxId for this raw Tx.
-    double_hash_tx = bytearray(sha256(sha256(bytes.fromhex(raw_tx_string))))
-    double_hash_tx.reverse()
-    txid = double_hash_tx.hex()
- 
-    final_raw_tx = raw_tx_string
-    tx_matches_paycode_prefix = True
-    return final_raw_tx
+    return raw_tx_string
 
 
 def extract_private_key_from_transaction(wallet, raw_tx, password=None):

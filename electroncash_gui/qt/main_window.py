@@ -60,6 +60,8 @@ from electroncash import paymentrequest
 from electroncash.transaction import OPReturn
 from electroncash.wallet import Multisig_Wallet, sweep_preparations
 from electroncash.contacts import Contact
+from electroncash import rpa
+
 try:
     from electroncash.plot import plot_history
 except:
@@ -1980,48 +1982,69 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             return func(self, *args, **kwargs)
         return request_password
 
-    def read_send_tab(self):
+    def read_send_tab(self, get_raw=False):
 
         isInvoice= False;
-
-        if self.payment_request and self.payment_request.has_expired():
-            self.show_error(_('Payment request has expired'))
-            return
         label = self.message_e.text()
-
-        if self.payment_request:
-            isInvoice = True;
-            outputs = self.payment_request.get_outputs()
-        else:
-            errors = self.payto_e.get_errors()
-            if errors:
-                self.show_warning(_("Invalid lines found:") + "\n\n" + '\n'.join([ _("Line #") + str(x[0]+1) + ": " + x[1] for x in errors]))
+        
+        if self.payto_e.is_paycode:
+            paycode_string = self.payto_e.text()[1:-1]
+            if self.amount_e.get_amount() is None:
+                self.show_error(_('Invalid Amount'))
                 return
+            full_unit_amount=self.amount_e.get_amount()/100000000
+            raw_tx = rpa.paycode.generate_transaction_from_paycode(self.wallet,self.config,full_unit_amount,paycode_string)
+            if raw_tx == 0:
+                self.show_error("Problem creating paycode tx.")
+                return
+            unpacked_tx=Transaction.deserialize(Transaction(raw_tx))
+            output_zero_address = unpacked_tx["outputs"][0]['address']
+            # Set the pay-to field address as a tuple with index 0 and the rpa output address
+            self.payto_e.payto_address=(0, output_zero_address)
             outputs = self.payto_e.get_outputs(self.max_button.isChecked())
+        else:    
+            # Proceed with normal (non RPA paycode) scenarios
+            if self.payment_request and self.payment_request.has_expired():
+                self.show_error(_('Payment request has expired'))
+                return
 
-            if self.payto_e.is_alias and not self.payto_e.validated:
-                alias = self.payto_e.toPlainText()
-                msg = _('WARNING: the alias "{}" could not be validated via an additional '
-                        'security check, DNSSEC, and thus may not be correct.').format(alias) + '\n'
-                msg += _('Do you wish to continue?')
-                if not self.question(msg):
+            if self.payment_request:
+                isInvoice = True;
+                outputs = self.payment_request.get_outputs()
+            else:
+                errors = self.payto_e.get_errors()
+                if errors:
+                    self.show_warning(_("Invalid lines found:") + "\n\n" + '\n'.join([ _("Line #") + str(x[0]+1) + ": " + x[1] for x in errors]))
                     return
+                outputs = self.payto_e.get_outputs(self.max_button.isChecked())
 
-        try:
-            # handle op_return if specified and enabled
-            opreturn_message = self.message_opreturn_e.text()
-            if opreturn_message:
-                if self.opreturn_rawhex_cb.isChecked():
-                    outputs.append(OPReturn.output_for_rawhex(opreturn_message))
-                else:
-                    outputs.append(OPReturn.output_for_stringdata(opreturn_message))
-        except OPReturn.TooLarge as e:
-            self.show_error(str(e))
-            return
-        except OPReturn.Error as e:
-            self.show_error(str(e))
-            return
+                if self.payto_e.is_alias and not self.payto_e.validated:
+                    alias = self.payto_e.toPlainText()
+                    msg = _('WARNING: the alias "{}" could not be validated via an additional '
+                        'security check, DNSSEC, and thus may not be correct.').format(alias) + '\n'
+                    msg += _('Do you wish to continue?')
+                    if not self.question(msg):
+                        return
 
+            try:
+                # handle op_return if specified and enabled
+                opreturn_message = self.message_opreturn_e.text()
+                if opreturn_message:
+                    if self.opreturn_rawhex_cb.isChecked():
+                        outputs.append(OPReturn.output_for_rawhex(opreturn_message))
+                    else:
+                        outputs.append(OPReturn.output_for_stringdata(opreturn_message))
+            except OPReturn.TooLarge as e:
+                self.show_error(str(e))
+                return
+            except OPReturn.Error as e:
+                self.show_error(str(e))
+                return
+
+        # END ELSE (Normal Case, not Paycode)
+        # -----------------------------------
+        
+        # Proceed with checking outputs
         if not outputs:
             self.show_error(_('No outputs'))
             return
@@ -2034,7 +2057,15 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         freeze_fee = self.fee_e.isVisible() and self.fee_e.isModified() and (self.fee_e.text() or self.fee_e.hasFocus())
         fee = self.fee_e.get_amount() if freeze_fee else None
         coins = self.get_coins(isInvoice)
-        return outputs, fee, label, coins
+        
+        # Return data.  Include the raw_tx if specified.  
+        # raw_tx used for RPA functionality so we can avoid grinding the transaction twice.
+        # In that case, do_send() calls read_send_tab and doesn't need to create the transaction again.
+
+        if get_raw:
+            return outputs, fee, label, coins,raw_tx
+        else:
+            return outputs, fee, label, coins
 
     def _chk_no_segwit_suspects(self):
         ''' Makes sure the payto_e has no addresses that might be BTC segwit
@@ -2126,12 +2157,22 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         self._warn_if_legacy_address()
 
-        r = self.read_send_tab()
-        if not r:
-            return
-        outputs, fee, tx_desc, coins = r
+        if not self.payto_e.is_paycode:
+            r = self.read_send_tab()
+            if not r:
+                return
+            outputs, fee, tx_desc, coins = r 
+        else:
+            r = self.read_send_tab(get_raw=True)
+            if not r:
+                return
+            outputs, fee, tx_desc, coins, tx_raw = r
+            
         try:
-            tx = self.wallet.make_unsigned_transaction(coins, outputs, self.config, fee)
+            if self.payto_e.is_paycode:
+                tx=self.tx_from_text(tx_raw)
+            else:
+                tx = self.wallet.make_unsigned_transaction(coins, outputs, self.config, fee) 
         except NotEnoughFunds:
             self.show_message(_("Insufficient funds"))
             return
@@ -2441,6 +2482,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         amount = out.get('amount')
         label = out.get('label')
         message = out.get('message')
+        scheme = out.get('scheme')
         op_return = out.get('op_return')
         op_return_raw = out.get('op_return_raw')
 
@@ -2484,6 +2526,14 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             # (they only get resolved when payto_e loses focus)
             self.message_e.setFocus()
 
+        if scheme == "paycode":
+            self.payto_e.setIsPaycode(True)
+            self.payto_e.setText("<paycode:"+address+">")
+            self.payto_e.setGreen()
+            self.payto_e.setReadOnly(True)
+        else:
+            self.payto_e.setIsPaycode(False)
+
     def do_clear(self):
         ''' Clears the send tab, reseting its UI state to its initiatial state.'''
         self.max_button.setChecked(False)
@@ -2491,6 +2541,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.op_return_toolong = False
         self.payment_request = None
         self.payto_e.is_pr = False
+        self.payto_e.setIsPaycode(False)
         self.payto_e.is_alias, self.payto_e.validated = False, False  # clear flags to avoid bad things
         for e in [self.payto_e, self.message_e, self.amount_e, self.fiat_send_e, self.fee_e, self.message_opreturn_e]:
             e.setText('')
