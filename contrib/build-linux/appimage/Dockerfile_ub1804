@@ -22,6 +22,12 @@ RUN apt-get update -q && \
         libzbar0=0.10+doc-10.1build2 \
         faketime=0.9.7-2 \
         libxkbcommon-x11-0=0.8.2-1~ubuntu18.04.1 \
+        libxcb-util1=0.4.0-0ubuntu3 \
+        libxcb-xinerama0=1.13-2~ubuntu18.04 \
+        autopoint=0.19.8.1-6ubuntu0.3 \
+        libfreetype6=2.8.1-2ubuntu2.1 \
+        libfontconfig1=2.12.6-0ubuntu2 \
+        rustc=1.47.0+dfsg1+llvm-1ubuntu1~18.04.1 \
         && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get autoremove -y && \
