@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="Layer_1"
+   data-name="Layer 1"
+   viewBox="0 0 512 512"
+   version="1.1"
+   width="512"
+   height="512"
+   sodipodi:docname="oregano.svg"
+   inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07, custom)">
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1598"
+     inkscape:window-height="995"
+     id="namedview12"
+     showgrid="false"
+     inkscape:zoom="0.82226563"
+     inkscape:cx="-78.263948"
+     inkscape:cy="396.3192"
+     inkscape:window-x="280"
+     inkscape:window-y="32"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="Layer_1"
+     inkscape:document-rotation="0" />
+  <metadata
+     id="metadata115">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>4-bitcoin-cash-logo-flag</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs100">
+    <style
+       id="style98">.cls-1{fill:#0056C0;}.cls-2{fill:#fff;}</style>
+  </defs>
+  <title
+     id="title102">4-bitcoin-cash-logo-flag</title>
+  <rect
+     style="fill:#ffffff;stroke-width:0.377953"
+     id="rect836"
+     width="256.34866"
+     height="328.97266"
+     x="129.05501"
+     y="90.39048" />
+  <path
+     id="path867-3"
+     style="fill:#162d50;fill-opacity:1;stroke-width:3.77953"
+     d="M 255.28932,39.34661 A 216.65419,216.65419 0 0 0 39.344892,256.00014 216.65419,216.65419 0 0 0 255.99842,472.65368 216.65419,216.65419 0 0 0 472.65511,256.00014 216.65419,216.65419 0 0 0 255.99842,39.34661 a 216.65419,216.65419 0 0 0 -0.7091,0 z m 0.79735,61.47825 h 120.34382 v 19.19007 19.18694 H 289.2478 202.06826 V 256.00014 372.7984 h 86.13636 86.13951 v 19.18694 19.1901 H 254.95525 135.56952 l 1.85943,-1.90672 c 1.02289,-1.04777 7.34863,-7.1898 14.0593,-13.65273 l 12.203,-11.75233 V 255.93711 128.01369 l -13.9742,-13.47307 c -7.6858,-7.40898 -13.9742,-13.52547 -13.9742,-13.59285 0,-0.0652 54.15469,-0.12296 120.34382,-0.12296 z m 16.41983,78.90973 c 0.66233,0.25553 78.90783,76.01981 78.79628,76.29706 -0.0928,0.23054 -73.93096,71.59636 -77.84134,75.23498 l -1.31421,1.22598 v -26.72556 -26.72557 l 11.78382,-11.35837 c 6.48117,-6.24648 11.83435,-11.49037 11.89729,-11.65461 0.061,-0.16344 -5.23829,-5.44748 -11.78067,-11.7397 l -11.89415,-11.44032 -0.003,-26.62785 c -0.002,-14.73681 0.15798,-26.56301 0.35613,-26.48604 z"
+     inkscape:export-xdpi="112"
+     inkscape:export-ydpi="112" />
+</svg>
