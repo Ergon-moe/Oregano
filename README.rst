@@ -1,4 +1,4 @@
-Oregano - Lightweight Ergon client
+Oregano - Lightweight Ergon client (Doesn't connect to the network yet!)
 =====================================
 
 ::

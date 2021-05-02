@@ -8,7 +8,7 @@ buildscript {
         maven {
             // This repository is for Oregano only: other apps should use
             // https://chaquo.com/maven .
-            url "https://oregano.org/maven"
+            url "https://electroncash.org/maven"
         }
     }
     dependencies {

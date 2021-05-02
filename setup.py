@@ -199,7 +199,7 @@ setup(
         # On Darwin we don't use that font, so we don't add it to save space.
         **platform_package_data
     },
-    scripts=['oregano'],
+    scripts=['oregano-app'],
     data_files=data_files,
     description="Lightweight Ergon Wallet",
     author="The Oregano Developers",
