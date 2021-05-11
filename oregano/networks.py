@@ -40,8 +40,8 @@ class AbstractNet:
     LEGACY_POW_TARGET_TIMESPAN = 14 * 24 * 60 * 60   # 2 weeks
     LEGACY_POW_TARGET_INTERVAL = 10 * 60  # 10 minutes
     LEGACY_POW_RETARGET_BLOCKS = LEGACY_POW_TARGET_TIMESPAN // LEGACY_POW_TARGET_INTERVAL  # 2016 blocks
-    BASE_UNITS = {'ERG': 8, 'mERG': 5, 'bits': 2}
-    DEFAULT_UNIT = "ERG"
+    BASE_UNITS = {'XRG': 8, 'mXRG': 5, 'Gon': 2}
+    DEFAULT_UNIT = "XRG"
 
 
 class MainNet(AbstractNet):
@@ -53,17 +53,17 @@ class MainNet(AbstractNet):
     ADDRTYPE_P2SH_BITPAY = 40
     CASHADDR_PREFIX = "ergon"
     HEADERS_URL = "http://bitcoincash.com/files/blockchain_headers"  # Unused
-    GENESIS = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+    GENESIS = "000000070e37bfee7e84b94f997f38155a85b22172f5ca25fd4eb3d64c5ad7c5"
     DEFAULT_PORTS = {'t': '50001', 's': '50002'}
     DEFAULT_SERVERS = _read_json_dict('servers.json')  # DO NOT MODIFY IN CLIENT CODE
-    TITLE = 'Oregano'
+    TITLE = 'Oregano Ergon Light Wallet'
 
     # Ergon fork block specification
-    BITCOIN_CASH_FORK_BLOCK_HEIGHT = 478559
-    BITCOIN_CASH_FORK_BLOCK_HASH = "000000000000000000651ef99cb9fcbe0dadde1d424bd9f15ff20136191a5eec"
+    BITCOIN_CASH_FORK_BLOCK_HEIGHT = 0
+    BITCOIN_CASH_FORK_BLOCK_HASH = "000000070e37bfee7e84b94f997f38155a85b22172f5ca25fd4eb3d64c5ad7c5"
 
     # Nov 13. 2017 HF to CW144 DAA height (height of last block mined on old DAA)
-    CW144_HEIGHT = 504031
+    CW144_HEIGHT = 0
 
     # Note: this is not the Merkle root of the verification block itself , but a Merkle root of
     # all blockchain headers up until and including this block. To get this value you need to

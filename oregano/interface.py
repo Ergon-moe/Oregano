@@ -129,9 +129,9 @@ class TcpConnection(threading.Thread, util.PrintError):
         context.check_hostname = False
         context.verify_mode = cert_reqs
 
-        context.options |= ssl.OP_NO_SSLv2
-        context.options |= ssl.OP_NO_SSLv3
-        context.options |= ssl.OP_NO_TLSv1
+        #context.options |= ssl.OP_NO_SSLv2
+        #context.options |= ssl.OP_NO_SSLv3
+        #context.options |= ssl.OP_NO_TLSv1
 
         return context
 

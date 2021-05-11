@@ -77,7 +77,7 @@ def target_to_bits(target):
     return compact | size << 24
 
 HEADER_SIZE = 80 # bytes
-MAX_BITS = 0x1d00ffff
+MAX_BITS = 0x1d0fffff
 MAX_TARGET = bits_to_target(MAX_BITS)
 # indicates no header in data file
 NULL_HEADER = bytes([0]) * HEADER_SIZE
@@ -460,6 +460,58 @@ class Blockchain(util.PrintError):
             anchor = prev
 
     def get_bits(self, header, chunk=None):
+        '''Returns bits for the given height'''
+        resistance = 1000;
+        T = 600
+        daa_minimum = resistance//2 - 1
+        height = header['block_height']
+        prevheight = height-1
+        # Genesis
+        if height == 0:
+            return MAX_BITS
+        elif height < 0:
+            raise ValueError("Height shouldn't be negative")
+        elif prevheight < 4:
+            return 0x1a04b500
+
+
+        prior = self.read_header(height - 1, chunk)
+        if prior is None:
+            raise Exception("get_bits missing header {} with chunk {!r}".format(height - 1, chunk))
+        bits = prior['bits']
+
+        work = bits_to_work(bits)
+
+        daa_starting_height = self.get_suitable_block_height(prevheight-1, chunk)
+        daa_ending_height = self.get_suitable_block_height(prevheight, chunk)
+        # calculate and sanitize elapsed time
+        daa_starting_timestamp = self.read_header(daa_starting_height, chunk)['timestamp']
+        daa_ending_timestamp = self.read_header(daa_ending_height, chunk)['timestamp']
+        t = daa_ending_timestamp - daa_starting_timestamp
+        normalized_time = t // T
+
+        # calculate and return new target
+        if normalized_time > minimum:
+            work -=(work * minimum) // resistance
+            - work // resistance
+            - (work * minimum * minimum) // (resistance*resistance)
+            + 2 * (work * minimum) // (resistance*resistance)
+            - work // (resistance*resistance)
+        else:
+            work -=((work * t // T) // resistance )
+            - (work // resistance)
+            - ((work * (t*t) // (T*T)) // (resistance*resistance) )
+            + (2 * (work * t // T) // (resistance*resistance) )
+            - (work // (resistance*resistance))
+
+        daa_target = (1 << 256) // work - 1
+        daa_retval = target_to_bits(daa_target)
+        daa_retval = int(daa_retval)
+
+        return daa_retval
+
+
+    def get_bits_old(self, header, chunk=None):
         '''Return bits for the given height.'''
         # Difficulty adjustment interval?
         height = header['block_height']
