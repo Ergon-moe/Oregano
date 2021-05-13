@@ -3,10 +3,10 @@
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules, collect_dynamic_libs
 import sys, os
 
-PACKAGE='Electron-Cash'
-BUNDLE_IDENTIFIER='org.electroncash.' + PACKAGE # Used for info.plist
-PYPKG='electroncash'
-MAIN_SCRIPT='electron-cash'
+PACKAGE='Oregano'
+BUNDLE_IDENTIFIER='org.oregano.' + PACKAGE # Used for info.plist
+PYPKG='oregano'
+MAIN_SCRIPT='oregano-app'
 ICONS_FILE='electron.icns'
 
 for i, x in enumerate(sys.argv):
@@ -28,16 +28,16 @@ hiddenimports += collect_submodules('satochip')    # Satochip
 hiddenimports += collect_submodules('smartcard')   # Satochip
 
 datas = [
-    (home+'electroncash/currencies.json', PYPKG),
-    (home+'electroncash/servers.json', PYPKG),
-    (home+'electroncash/servers_testnet.json', PYPKG),
-    (home+'electroncash/servers_testnet4.json', PYPKG),
-    (home+'electroncash/servers_scalenet.json', PYPKG),
-    (home+'electroncash/servers_taxcoin.json', PYPKG),
-    (home+'electroncash/wordlist/english.txt', PYPKG + '/wordlist'),
-    (home+'electroncash_gui/qt/data/ard_mone.mp3', PYPKG + '_gui' + '/data'),
-    (home+'electroncash/locale', PYPKG + '/locale'),
-    (home+'electroncash_plugins', PYPKG + '_plugins'),
+    (home+'oregano/currencies.json', PYPKG),
+    (home+'oregano/servers.json', PYPKG),
+    (home+'oregano/servers_testnet.json', PYPKG),
+    (home+'oregano/servers_testnet4.json', PYPKG),
+    (home+'oregano/servers_scalenet.json', PYPKG),
+    (home+'oregano/servers_taxcoin.json', PYPKG),
+    (home+'oregano/wordlist/english.txt', PYPKG + '/wordlist'),
+    (home+'oregano_gui/qt/data/ard_mone.mp3', PYPKG + '_gui' + '/data'),
+    (home+'oregano/locale', PYPKG + '/locale'),
+    (home+'oregano_plugins', PYPKG + '_plugins'),
 ]
 datas += collect_data_files('trezorlib')
 datas += collect_data_files('btchip')
@@ -52,33 +52,33 @@ binaries += [(home + "contrib/osx/libsecp256k1.0.dylib", ".")]
 # LibZBar for QR code scanning
 binaries += [(home + "contrib/osx/libzbar.0.dylib", ".")]
 # Add Tor binary
-binaries += [(home + "electroncash/tor/bin/tor", "electroncash/tor/bin")]
+binaries += [(home + "oregano/tor/bin/tor", "oregano/tor/bin")]
 
 # Workaround for "Retro Look":
 binaries += [b for b in collect_dynamic_libs('PyQt5') if 'macstyle' in b[0]]
 
 # We don't put these files in to actually include them in the script but to make the Analysis method scan them for imports
 a = Analysis([home+MAIN_SCRIPT,
-              home+'electroncash_gui/qt/main_window.py',
-              home+'electroncash_gui/qt/qrreader/camera_dialog.py',
-              home+'electroncash_gui/text.py',
-              home+'electroncash/util.py',
-              home+'electroncash/wallet.py',
-              home+'electroncash/simple_config.py',
-              home+'electroncash/bitcoin.py',
-              home+'electroncash/dnssec.py',
-              home+'electroncash/commands.py',
-              home+'electroncash/tor/controller.py',
-              home+'electroncash_plugins/cosigner_pool/qt.py',
-              home+'electroncash_plugins/email_requests/qt.py',
-              home+'electroncash_plugins/trezor/clientbase.py',
-              home+'electroncash_plugins/trezor/trezor.py',
-              home+'electroncash_plugins/trezor/qt.py',
-              home+'electroncash_plugins/keepkey/qt.py',
-              home+'electroncash_plugins/ledger/qt.py',
-              home+'electroncash_plugins/satochip/qt.py',  # Satochip
-              home+'electroncash_plugins/fusion/fusion.py', # CashFusion
-              home+'electroncash_plugins/fusion/qt.py', # CashFusion
+              home+'oregano_gui/qt/main_window.py',
+              home+'oregano_gui/qt/qrreader/camera_dialog.py',
+              home+'oregano_gui/text.py',
+              home+'oregano/util.py',
+              home+'oregano/wallet.py',
+              home+'oregano/simple_config.py',
+              home+'oregano/bitcoin.py',
+              home+'oregano/dnssec.py',
+              home+'oregano/commands.py',
+              home+'oregano/tor/controller.py',
+              home+'oregano_plugins/cosigner_pool/qt.py',
+              home+'oregano_plugins/email_requests/qt.py',
+              home+'oregano_plugins/trezor/clientbase.py',
+              home+'oregano_plugins/trezor/trezor.py',
+              home+'oregano_plugins/trezor/qt.py',
+              home+'oregano_plugins/keepkey/qt.py',
+              home+'oregano_plugins/ledger/qt.py',
+              home+'oregano_plugins/satochip/qt.py',  # Satochip
+              home+'oregano_plugins/fusion/fusion.py', # CashFusion
+              home+'oregano_plugins/fusion/qt.py', # CashFusion
               ],
              binaries=binaries,
              datas=datas,

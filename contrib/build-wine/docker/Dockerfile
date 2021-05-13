@@ -45,4 +45,4 @@ RUN rm -rf /var/lib/apt/lists/* && \
 ARG USER_ID
 ARG GROUP_ID
 
-RUN mkdir -p /homedir/wine64/drive_c/electroncash ; chown -R ${USER_ID}:${GROUP_ID} /homedir && ls -al /homedir
+RUN mkdir -p /homedir/wine64/drive_c/oregano ; chown -R ${USER_ID}:${GROUP_ID} /homedir && ls -al /homedir

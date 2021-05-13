@@ -61,7 +61,7 @@ prepare_wine() {
         # Where they are incorrectly using order.size() instead of icon.size() to allocate the buffer and also don't zero the memory.
         # If the bug hasn't been fixed, you need to check the NSIS generated uninstaller for number of icons and match that count exactly in your .ico file.
         # See: https://github.com/spesmilo/electrum/commit/570c0aeca39e56c742b77380ec274d178d660c29
-        NSIS_URL='https://github.com/cculianu/Electron-Cash-Build-Tools/releases/download/v1.0/nsis-3.02.1-setup.exe'
+        NSIS_URL='https://github.com/cculianu/Oregano-Build-Tools/releases/download/v1.0/nsis-3.02.1-setup.exe'
         NSIS_SHA256=736c9062a02e297e335f82252e648a883171c98e0d5120439f538c81d429552e
 
         LIBUSB_REPO='https://github.com/libusb/libusb.git'
@@ -72,7 +72,7 @@ prepare_wine() {
 
         # Satochip pyscard
         PYSCARD_FILENAME=pyscard-1.9.9-cp36-cp36m-win32.whl  # python 3.6, 32-bit
-        PYSCARD_URL=https://github.com/cculianu/Electron-Cash-Build-Tools/releases/download/v1.0/pyscard-1.9.9-cp36-cp36m-win32.whl
+        PYSCARD_URL=https://github.com/cculianu/Oregano-Build-Tools/releases/download/v1.0/pyscard-1.9.9-cp36-cp36m-win32.whl
         PYSCARD_SHA256=99d2b450f322f9ed9682fd2a99d95ce781527e371006cded38327efca8158fe7
 
         ## These settings probably don't need change
@@ -101,7 +101,7 @@ prepare_wine() {
         # if the verification fails you might need to get more keys from python.org
         # keys from https://www.python.org/downloads/#pubkeys
         info "Importing Python dev keyring (may take a few minutes)..."
-        KEYRING_PYTHON_DEV=keyring-electroncash-build-python-dev.gpg
+        KEYRING_PYTHON_DEV=keyring-oregano-build-python-dev.gpg
         gpg -v --no-default-keyring --keyring $KEYRING_PYTHON_DEV --import \
             "$here"/pgp/7ed10b6531d7c8e1bc296021fc624643487034e5.asc \
             || fail "Failed to import Python release signing keys"
@@ -133,7 +133,7 @@ prepare_wine() {
             git checkout -b pinned "${PYINSTALLER_COMMIT}^{commit}"
             rm -fv PyInstaller/bootloader/Windows-*/run*.exe || true  # Make sure EXEs that came with repo are deleted -- we rebuild them and need to detect if build failed
             if [ ${PYI_SKIP_TAG:-0} -eq 0 ] ; then
-                echo "const char *ec_tag = \"tagged by Electron-Cash@$GIT_COMMIT_HASH\";" >> ./bootloader/src/pyi_main.c
+                echo "const char *ec_tag = \"tagged by Oregano@$GIT_COMMIT_HASH\";" >> ./bootloader/src/pyi_main.c
             else
                 warn "Skipping PyInstaller tag"
             fi
@@ -182,9 +182,9 @@ prepare_wine() {
 
         # libsecp256k1, libzbar & libusb
         mkdir -p $WINEPREFIX/drive_c/tmp
-        cp "$here"/../../electroncash/*.dll $WINEPREFIX/drive_c/tmp/ || fail "Could not copy libraries to their destination"
+        cp "$here"/../../oregano/*.dll $WINEPREFIX/drive_c/tmp/ || fail "Could not copy libraries to their destination"
         cp libusb/libusb/.libs/libusb-1.0.dll $WINEPREFIX/drive_c/tmp/ || fail "Could not copy libusb to its destination"
-        cp "$here"/../../electroncash/tor/bin/tor.exe $WINEPREFIX/drive_c/tmp/ || fail "Could not copy tor.exe to its destination"
+        cp "$here"/../../oregano/tor/bin/tor.exe $WINEPREFIX/drive_c/tmp/ || fail "Could not copy tor.exe to its destination"
 
         info "Installing pyscard..."
         wget -O $PYSCARD_FILENAME "$PYSCARD_URL"
@@ -220,7 +220,7 @@ build_the_app() {
         for i in ./locale/*; do
             dir=$i/LC_MESSAGES
             mkdir -p $dir
-            msgfmt --output-file=$dir/electron-cash.mo $i/electron-cash.po || true
+            msgfmt --output-file=$dir/oregano.mo $i/oregano.po || true
         done
         popd
 
@@ -234,14 +234,14 @@ build_the_app() {
         find -exec touch -d '2000-11-11T11:11:11+00:00' {} +
         popd  # go back to $here
 
-        cp -r "$here"/../electrum-locale/locale $WINEPREFIX/drive_c/electroncash/electroncash/
+        cp -r "$here"/../electrum-locale/locale $WINEPREFIX/drive_c/oregano/oregano/
 
         # Install frozen dependencies
         info "Installing frozen dependencies ..."
         $PYTHON -m pip install --no-warn-script-location -r "$here"/../deterministic-build/requirements.txt || fail "Failed to install requirements"
         $PYTHON -m pip install --no-warn-script-location -r "$here"/../deterministic-build/requirements-hw.txt || fail "Failed to install requirements-hw"
 
-        pushd $WINEPREFIX/drive_c/electroncash
+        pushd $WINEPREFIX/drive_c/oregano
         $PYTHON setup.py install || fail "Failed setup.py install"
         popd
 
@@ -272,8 +272,8 @@ build_the_app() {
 
         # build NSIS installer
         info "Running makensis to build setup .exe version ..."
-        # $VERSION could be passed to the electron-cash.nsi script, but this would require some rewriting in the script iself.
-        wine "$WINEPREFIX/drive_c/Program Files (x86)/NSIS/makensis.exe" /DPRODUCT_VERSION=$VERSION electron-cash.nsi || fail "makensis failed"
+        # $VERSION could be passed to the oregano.nsi script, but this would require some rewriting in the script iself.
+        wine "$WINEPREFIX/drive_c/Program Files (x86)/NSIS/makensis.exe" /DPRODUCT_VERSION=$VERSION oregano.nsi || fail "makensis failed"
 
         cd dist
         mv $NAME_ROOT-setup.exe $NAME_ROOT-$VERSION-setup.exe  || fail "Failed to move $NAME_ROOT-$VERSION-setup.exe to the output dist/ directory"

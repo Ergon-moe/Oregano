@@ -1,4 +1,4 @@
-# Electron Cash - lightweight Bitcoin client
+# Oregano - lightweight Bitcoin client
 # Copyright (C) 2019 Axel Gembe <derago@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person

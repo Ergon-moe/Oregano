@@ -5,10 +5,10 @@
 
     <data>
         <import type="android.view.View"/>
-        <import type="org.electroncash.electroncash3.UtilKt"/>
+        <import type="org.oregano.oregano3.UtilKt"/>
         <variable
             name="model"
-            type="org.electroncash.electroncash3.AddressModel"/>
+            type="org.oregano.oregano3.AddressModel"/>
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

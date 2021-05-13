@@ -17,11 +17,11 @@ os.chdir('..')
 
 code_directories = [
     'android/app/src/main/python',
-    'electroncash_gui',
-    'ios/ElectronCash/electroncash_gui',  # ios/ElectronCash could contain duplicate files
+    'oregano_gui',
+    'ios/Oregano/oregano_gui',  # ios/Oregano could contain duplicate files
                                           # copied by make_ios_project.sh.
-    'electroncash',
-    'electroncash_plugins',
+    'oregano',
+    'oregano_plugins',
 ]
 file_types = ('*.py', '*.kv')
 
@@ -41,16 +41,16 @@ with open("app.fil", "w") as f:
         print("Found {} files to translate".format(n))
 
 # Generate fresh translation template
-if not os.path.exists('electroncash/locale'):
-    os.mkdir('electroncash/locale')
-cmd = 'xgettext -s --from-code UTF-8 --language Python --no-wrap -f app.fil --keyword=pgettext:1c,2 --keyword=npgettext:1c,2,3 -c --output=electroncash/locale/messages.pot'
+if not os.path.exists('oregano/locale'):
+    os.mkdir('oregano/locale')
+cmd = 'xgettext -s --from-code UTF-8 --language Python --no-wrap -f app.fil --keyword=pgettext:1c,2 --keyword=npgettext:1c,2,3 -c --output=oregano/locale/messages.pot'
 print('Generate template')
 os.system(cmd)
 
-os.chdir('electroncash')
+os.chdir('oregano')
 
-crowdin_identifier = 'electron-cash'
-crowdin_file_name = 'files[electron-cash-client/messages.pot]'
+crowdin_identifier = 'oregano'
+crowdin_file_name = 'files[oregano-client/messages.pot]'
 locale_file_name = 'locale/messages.pot'
 crowdin_api_key = None
 
@@ -100,6 +100,6 @@ for lang in os.listdir('locale'):
     msg_dir = 'locale/{}/LC_MESSAGES'.format(lang)
     if not os.path.exists(msg_dir):
         os.mkdir(msg_dir)
-    cmd = 'msgfmt --output-file="{0}/electron-cash.mo" "{0}/electron-cash.po"'.format(msg_dir)
+    cmd = 'msgfmt --output-file="{0}/oregano.mo" "{0}/oregano.po"'.format(msg_dir)
     print('Installing', lang)
     os.system(cmd)

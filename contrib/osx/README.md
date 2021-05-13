@@ -3,7 +3,7 @@ Building Mac OS binaries
 
 ✗ _This script does not produce reproducible output (yet!)._
 
-This guide explains how to build Electron Cash binaries for macOS systems.
+This guide explains how to build Oregano binaries for macOS systems.
 We build our binaries on El Capitan (10.11.6) as building it on High Sierra
 makes the binaries incompatible with older versions.
 
@@ -38,4 +38,4 @@ Or, if you wish to sign the app when building, provide an Apple developer identi
 
 ## 4. Done
 
-You should see Electron-Cash.app and Electron-Cash-x.y.z.dmg in ../dist/. If you provided an identity for signing, these files can even be distributed to other Macs and they will run there without warnings from GateKeeper.
+You should see Oregano.app and Oregano-x.y.z.dmg in ../dist/. If you provided an identity for signing, these files can even be distributed to other Macs and they will run there without warnings from GateKeeper.

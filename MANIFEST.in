@@ -1,14 +1,14 @@
 include LICENCE RELEASE-NOTES AUTHORS
 include README.rst
-include electron-cash.conf.sample
-include electron-cash.desktop
+include oregano.conf.sample
+include oregano.desktop
 include *.py
-include electron-cash
+include oregano
 include contrib/requirements/requirements.txt
 include contrib/requirements/requirements-hw.txt
-recursive-include electroncash *.py
-recursive-include electroncash_gui *.py
-recursive-include electroncash_plugins *.py
+recursive-include oregano *.py
+recursive-include oregano_gui *.py
+recursive-include oregano_plugins *.py
 recursive-include packages *.py
 recursive-include packages cacert.pem
 include icons.qrc

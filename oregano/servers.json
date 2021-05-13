@@ -1,0 +1,16 @@
+{
+    "fulcrum.ergon.network": {
+        "pruning": "-",
+        "s": "52138",
+        "t": "52137",
+        "version": "1.4.2"
+    }
+}
+{
+    "blackie.c3-soft.com": {
+        "pruning": "-",
+        "s": "52138",
+        "t": "52137",
+        "version": "1.4.2"
+    }
+}

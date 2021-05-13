@@ -6,7 +6,7 @@
     <data>
         <variable
             name="model"
-            type="org.electroncash.electroncash3.ContactModel"/>
+            type="org.oregano.oregano3.ContactModel"/>
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

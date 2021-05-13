@@ -18,8 +18,8 @@ pushd . > /dev/null
 cd $projdir
 
 a=`find ${compact_name}/ -type f -depth 1 -name \*.py -print`
-b=`find ${compact_name}/electroncash_gui -type f -name \*.py -print`
-c=`find ${compact_name}/electroncash -type f -name \*.py -print`
+b=`find ${compact_name}/oregano_gui -type f -name \*.py -print`
+c=`find ${compact_name}/oregano -type f -name \*.py -print`
 popd > /dev/null
 
 pushd . > /dev/null
@@ -77,9 +77,9 @@ done
 
 for f in $c; do
     file=`echo $f | cut -f 3- -d '/'`
-    f1="../electroncash/${file}"
+    f1="../oregano/${file}"
     f2="${projdir}/${f}"
-    doIt "$f1" "$f2" "../electroncash/"
+    doIt "$f1" "$f2" "../oregano/"
 done
 
 for file in $res; do

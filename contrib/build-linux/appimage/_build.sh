@@ -6,7 +6,7 @@ PROJECT_ROOT="$(dirname "$(readlink -e "$0")")/../../.."
 CONTRIB="$PROJECT_ROOT/contrib"
 DISTDIR="$PROJECT_ROOT/dist"
 BUILDDIR="$CONTRIB/build-linux/appimage/build/appimage"
-APPDIR="$BUILDDIR/Electron-Cash.AppDir"
+APPDIR="$BUILDDIR/Oregano.AppDir"
 CACHEDIR="$CONTRIB/build-linux/appimage/.cache/appimage"
 PYDIR="$APPDIR"/usr/lib/python3.6
 
@@ -21,7 +21,7 @@ PKG2APPIMAGE_COMMIT="eb8f3acdd9f11ab19b78f5cb15daa772367daf15"
 
 
 VERSION=`git describe --tags --dirty --always`
-APPIMAGE="$DISTDIR/Electron-Cash-$VERSION-x86_64.AppImage"
+APPIMAGE="$DISTDIR/Oregano-$VERSION-x86_64.AppImage"
 
 rm -rf "$BUILDDIR"
 mkdir -p "$APPDIR" "$CACHEDIR" "$DISTDIR"
@@ -100,15 +100,15 @@ info "Preparing electrum-locale"
         fail "Please install gettext"
     fi
     for i in ./locale/*; do
-        dir="$PROJECT_ROOT/electroncash/$i/LC_MESSAGES"
+        dir="$PROJECT_ROOT/oregano/$i/LC_MESSAGES"
         mkdir -p $dir
-        msgfmt --output-file="$dir/electron-cash.mo" "$i/electron-cash.po" || true
+        msgfmt --output-file="$dir/oregano.mo" "$i/oregano.po" || true
     done
     popd
 )
 
 
-info "Installing Electron Cash and its dependencies"
+info "Installing Oregano and its dependencies"
 mkdir -p "$CACHEDIR/pip_cache"
 "$python" -m pip install --no-warn-script-location --cache-dir "$CACHEDIR/pip_cache" -r "$CONTRIB/deterministic-build/requirements.txt"
 "$python" -m pip install --no-warn-script-location --cache-dir "$CACHEDIR/pip_cache" -r "$CONTRIB/deterministic-build/requirements-binaries.txt"
@@ -118,8 +118,8 @@ mkdir -p "$CACHEDIR/pip_cache"
 
 
 info "Copying desktop integration"
-cp -fp "$PROJECT_ROOT/electron-cash.desktop" "$APPDIR/electron-cash.desktop"
-cp -fp "$PROJECT_ROOT/icons/electron-cash.png" "$APPDIR/electron-cash.png"
+cp -fp "$PROJECT_ROOT/oregano.desktop" "$APPDIR/oregano.desktop"
+cp -fp "$PROJECT_ROOT/icons/oregano.png" "$APPDIR/oregano.png"
 
 
 # add launcher

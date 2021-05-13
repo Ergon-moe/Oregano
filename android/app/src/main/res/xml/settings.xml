@@ -9,7 +9,7 @@
             android:key="auto_connect"
             android:title="@string/select_server_automatically"
             android:disableDependentsState="true"/>
-        <org.electroncash.electroncash3.ServerPreference
+        <org.oregano.oregano3.ServerPreference
             android:key="server"
             android:title="@string/server"
             android:dependency="auto_connect"/>
@@ -28,7 +28,7 @@
         <ListPreference
             android:key="base_unit"
             android:title="@string/base_unit"
-            tools:summary="BCH"/>
+            tools:summary="ERG"/>
         <ListPreference
             android:key="block_explorer"
             android:title="@string/block_explorer"

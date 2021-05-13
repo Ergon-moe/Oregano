@@ -14,7 +14,7 @@ else
 fi
 
 if [ ! -d 'contrib' ]; then
-    fail "Please run this script form the top-level Electron Cash git directory"
+    fail "Please run this script form the top-level Oregano git directory"
 fi
 
 pushd .
@@ -52,7 +52,7 @@ GROUP_ID=$(id -g $USER)
 # To prevent weird errors, img name must capture user:group id since the
 # Dockerfile receives those as args and sets up a /homedir in the image
 # owned by $USER_ID:$GROUP_ID
-IMGNAME="ec-wine-builder-img_${USER_ID}_${GROUP_ID}"
+IMGNAME="oregano-wine-builder-img_${USER_ID}_${GROUP_ID}"
 
 info "Creating docker image ..."
 $SUDO docker build -t $IMGNAME \
@@ -62,8 +62,8 @@ $SUDO docker build -t $IMGNAME \
     || fail "Failed to create docker image"
 
 # This is the place where we checkout and put the exact revision we want to work
-# on. Docker will run mapping this directory to /homedir/wine64/drive_c/electroncash
-# which inside wine will look like c:\electroncash.
+# on. Docker will run mapping this directory to /homedir/wine64/drive_c/oregano
+# which inside wine will look like c:\oregano.
 FRESH_CLONE=`pwd`/contrib/build-wine/fresh_clone
 FRESH_CLONE_DIR="$FRESH_CLONE/$GIT_DIR_NAME"
 
@@ -86,9 +86,9 @@ FRESH_CLONE_DIR="$FRESH_CLONE/$GIT_DIR_NAME"
     -e BUILD_DEBUG="$BUILD_DEBUG" \
     -e PYI_SKIP_TAG="$PYI_SKIP_TAG" \
     --name ec-wine-builder-cont \
-    -v "$FRESH_CLONE_DIR":/homedir/wine64/drive_c/electroncash:delegated \
+    -v "$FRESH_CLONE_DIR":/homedir/wine64/drive_c/oregano:delegated \
     --rm \
-    --workdir /homedir/wine64/drive_c/electroncash/contrib/build-wine \
+    --workdir /homedir/wine64/drive_c/oregano/contrib/build-wine \
     $IMGNAME \
     ./_build.sh $REV
 ) || fail "Build inside docker container failed"
