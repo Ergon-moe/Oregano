@@ -1,7 +1,7 @@
-Electron-Cash, iOS Native UI
+Oregano, iOS Native UI
 ============================
 
-This subdirectory implements an iOS native UI for Electron Cash, using UIKit via
+This subdirectory implements an iOS native UI for Oregano, using UIKit via
 'rubicon-ios' Python bindings. It uses the 'Briefcase' project to create an Xcode project which contains within it a Python interpreter, plus all scripts and dependent python packages.  Python 3.6 or above is recommended.
 
 - Rubicon-iOS Web Page: https://pybee.org/project/projects/bridges/rubicon/
@@ -55,11 +55,11 @@ For more information, see this stackoverflow post: https://stackoverflow.com/que
 
 Connecting to TestNet
 ---------------------
-If you want to run the app to point to the BCH TestNet network:
+If you want to run the app to point to the ERG TestNet network:
 
-  * Edit / Duplicate the Xcode "Scheme" for Electron Cash and set the envronment variable: `EC_TESTNET`
+  * Edit / Duplicate the Xcode "Scheme" for Oregano and set the envronment variable: `EC_TESTNET`
 
 
 Additional Notes
 ----------------
-The app built by this Xcode project is a fully running standalone Electron Cash as an iPhone app.  It pulls in sources from ../lib and other places when generating the Xcode project, but everything that is needed (.py files, Python interpreter, etc) ends up packaged in the generated iOS .app!
+The app built by this Xcode project is a fully running standalone Oregano as an iPhone app.  It pulls in sources from ../lib and other places when generating the Xcode project, but everything that is needed (.py files, Python interpreter, etc) ends up packaged in the generated iOS .app!

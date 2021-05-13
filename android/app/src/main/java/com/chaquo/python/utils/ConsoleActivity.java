@@ -213,7 +213,7 @@ implements ViewTreeObserver.OnGlobalLayoutListener, ViewTreeObserver.OnScrollCha
 
         // getLayout sometimes returns null even when called from onGlobalLayout. The
         // documentation says this can happen if the "text or width has recently changed", but
-        // does not define "recently". See Electron Cash issues #1330 and #1592.
+        // does not define "recently". See Oregano issues #1330 and #1592.
         Layout layout = tvOutput.getLayout();
         if (layout != null) {
             int line = layout.getLineForOffset(consoleModel.scrollChar);

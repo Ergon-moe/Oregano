@@ -6,7 +6,7 @@ buildscript {
         google()
         jcenter()
         maven {
-            // This repository is for Electron Cash only: other apps should use
+            // This repository is for Oregano only: other apps should use
             // https://chaquo.com/maven .
             url "https://electroncash.org/maven"
         }
@@ -15,8 +15,8 @@ buildscript {
         classpath "com.android.tools.build:gradle:4.1.2"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
 
-        // This version is for Electron Cash only. Other apps should use one of the versions
-        // listed at https://chaquo.com/chaquopy/doc/current/changelog.html .
+        // This version is for Oregano only. Other apps should use version 6.3.0, or the
+        // current version from https://chaquo.com/chaquopy/doc/current/android.html .
         classpath "com.chaquo.python:gradle:9.1.1"
     }
 }

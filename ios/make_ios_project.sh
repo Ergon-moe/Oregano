@@ -49,22 +49,22 @@ if [ -d iOS ]; then
 	rm -fr iOS
 fi
 
-if [ -d ${compact_name}/electroncash ]; then
-	echo "Deleting old ${compact_name}/electroncash..."
-	rm -fr ${compact_name}/electroncash
+if [ -d ${compact_name}/oregano ]; then
+	echo "Deleting old ${compact_name}/oregano..."
+	rm -fr ${compact_name}/oregano
 fi
 
-echo "Pulling 'electroncash' libs into project from ../electroncash ..."
-if [ ! -d ../electroncash/locale ]; then
+echo "Pulling 'oregano' libs into project from ../oregano ..."
+if [ ! -d ../oregano/locale ]; then
 	(cd .. && contrib/make_locale && cd ios)
 	if [ "$?" != 0 ]; then
 		echo ERROR: Could not build locales
 		exit 1
 	fi
 fi
-cp -fpR ../electroncash ${compact_name}/electroncash
-echo "Removing electroncash/tests..."
-rm -fr ${compact_name}/electroncash/tests
+cp -fpR ../oregano ${compact_name}/oregano
+echo "Removing oregano/tests..."
+rm -fr ${compact_name}/oregano/tests
 find ${compact_name} -name \*.pyc -exec rm -f {} \;
 
 echo ""
@@ -117,8 +117,8 @@ if [ -f "${infoplist}" ]; then
 
 	# Stuff related to being able to open .txn and .txt files (open transaction from context menu in other apps)
 	plutil -insert "CFBundleDocumentTypes" -xml '<array><dict><key>CFBundleTypeIconFiles</key><array/><key>CFBundleTypeName</key><string>Transaction</string><key>LSItemContentTypes</key><array><string>public.plain-text</string></array><key>LSHandlerRank</key><string>Owner</string></dict></array>' -- ${infoplist}
-	plutil -insert "UTExportedTypeDeclarations" -xml '<array><dict><key>UTTypeConformsTo</key><array><string>public.plain-text</string></array><key>UTTypeDescription</key><string>Transaction</string><key>UTTypeIdentifier</key><string>com.c3-soft.ElectronCash.txn</string><key>UTTypeSize320IconFile</key><string>signed@2x</string><key>UTTypeSize64IconFile</key><string>signed</string><key>UTTypeTagSpecification</key><dict><key>public.filename-extension</key><array><string>txn</string><string>txt</string></array></dict></dict></array>' -- ${infoplist}
-	plutil -insert "UTImportedTypeDeclarations" -xml '<array><dict><key>UTTypeConformsTo</key><array><string>public.plain-text</string></array><key>UTTypeDescription</key><string>Transaction</string><key>UTTypeIdentifier</key><string>com.c3-soft.ElectronCash.txn</string><key>UTTypeSize320IconFile</key><string>signed@2x</string><key>UTTypeSize64IconFile</key><string>signed</string><key>UTTypeTagSpecification</key><dict><key>public.filename-extension</key><array><string>txn</string><string>txt</string></array></dict></dict></array>' -- ${infoplist}
+	plutil -insert "UTExportedTypeDeclarations" -xml '<array><dict><key>UTTypeConformsTo</key><array><string>public.plain-text</string></array><key>UTTypeDescription</key><string>Transaction</string><key>UTTypeIdentifier</key><string>com.c3-soft.Oregano.txn</string><key>UTTypeSize320IconFile</key><string>signed@2x</string><key>UTTypeSize64IconFile</key><string>signed</string><key>UTTypeTagSpecification</key><dict><key>public.filename-extension</key><array><string>txn</string><string>txt</string></array></dict></dict></array>' -- ${infoplist}
+	plutil -insert "UTImportedTypeDeclarations" -xml '<array><dict><key>UTTypeConformsTo</key><array><string>public.plain-text</string></array><key>UTTypeDescription</key><string>Transaction</string><key>UTTypeIdentifier</key><string>com.c3-soft.Oregano.txn</string><key>UTTypeSize320IconFile</key><string>signed@2x</string><key>UTTypeSize64IconFile</key><string>signed</string><key>UTTypeTagSpecification</key><dict><key>public.filename-extension</key><array><string>txn</string><string>txt</string></array></dict></dict></array>' -- ${infoplist}
 	plutil -insert 'CFBundleURLTypes' -xml '<array><dict><key>CFBundleTypeRole</key><string>Viewer</string><key>CFBundleURLName</key><string>bitcoincash</string><key>CFBundleURLSchemes</key><array><string>bitcoincash</string></array></dict></array>' -- ${infoplist}
 	plutil -replace 'UIRequiresFullScreen' -bool NO -- ${infoplist}
 	plutil -insert 'NSFaceIDUsageDescription' -string 'FaceID is used for wallet authentication' -- ${infoplist}
@@ -246,13 +246,13 @@ fi
 echo ""
 echo "Copying google protobuf paymentrequests.proto to app lib dir..."
 echo ""
-cp -fva ${compact_name}/electroncash/*.proto iOS/app/${compact_name}/electroncash
+cp -fva ${compact_name}/oregano/*.proto iOS/app/${compact_name}/oregano
 if [ "$?" != "0" ]; then
 	echo "** WARNING: Failed to copy google protobuf .proto file to app lib dir!"
 fi
 
-# Clean up no-longer-needed electroncash/ dir that is outside of Xcode project
-rm -fr ${compact_name}/electroncash/*
+# Clean up no-longer-needed oregano/ dir that is outside of Xcode project
+rm -fr ${compact_name}/oregano/*
 
 # Can add this back when it works uniformly without issues
 # /usr/bin/env ruby update_project.rb

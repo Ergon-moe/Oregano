@@ -1,19 +1,19 @@
-name: electron-cash
+name: oregano
 version: master
-summary: Bitcoin Cash thin client
+summary: Ergon thin client
 description: |
-  Lightweight Bitcoin Cash client
+  Lightweight Ergon client
 
 grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: strict
 
 apps:
-  electron-cash:
-    command: desktop-launch electron-cash
+  oregano:
+    command: desktop-launch oregano
     plugs: [network, network-bind, x11, unity7]
 
 parts:
-  electron-cash:
+  oregano:
     source: .
     plugin: python
     python-version: python3

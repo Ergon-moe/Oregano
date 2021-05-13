@@ -1,7 +1,7 @@
 tab_converter.svg & tab_converter_bw.svg
     Author: Leandro Di Marco <<leandrodimarco@gmail.com>>
     License: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
-    from: Sent personally to Electron Cash dev team
+    from: Sent personally to Oregano dev team
 
 confirmed.svg
     Author: GregorDS (https://commons.wikimedia.org/wiki/User:GregorDS)

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:tools="http://schemas.android.com/tools"
-    package="org.electroncash.electroncash3"
+    package="org.oregano.oregano3"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.CAMERA"/>
@@ -62,7 +62,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="org.electroncash.wallet.wallet_exports"
+            android:authorities="org.oregano.wallet.wallet_exports"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

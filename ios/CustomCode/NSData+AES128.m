@@ -1,6 +1,6 @@
 //
 //  NSData+AES128.m
-//  Electron-Cash
+//  Oregano
 //
 //  Created by calin on 9/20/18.
 //  Copyright © 2018 Calin Culianu. All rights reserved.

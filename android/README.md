@@ -1,4 +1,4 @@
-# Electron Cash Android app
+# Oregano Android app
 
 ## Development
 

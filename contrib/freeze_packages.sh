@@ -3,7 +3,7 @@
 
 set -e
 
-venv_dir=~/.electron-cash-venv
+venv_dir=~/.oregano-venv
 contrib=$(dirname "$0")
 
 . $contrib/base.sh || { echo "Cannot find base.sh" && exit 1; }

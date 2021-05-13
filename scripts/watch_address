@@ -2,9 +2,9 @@
 
 import sys
 import time
-from electroncash import SimpleConfig, Network
-from electroncash.util import print_msg, json_encode
-from electroncash.address import Address
+from oregano import SimpleConfig, Network
+from oregano.util import print_msg, json_encode
+from oregano.address import Address
 
 try:
     addr = Address.from_string(sys.argv[1])

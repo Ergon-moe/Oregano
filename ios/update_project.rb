@@ -2,7 +2,7 @@
 require 'xcodeproj'
 require 'open3'
 
-project_path = "iOS/Electron-Cash.xcodeproj";
+project_path = "iOS/Oregano.xcodeproj";
 
 # Create project object
 project = Xcodeproj::Project.open(project_path);

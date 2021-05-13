@@ -19,10 +19,10 @@ with open('contrib/requirements/requirements-hw.txt') as f:
 with open('contrib/requirements/requirements-binaries.txt') as f:
     requirements_binaries = f.read().splitlines()
 
-version = imp.load_source('version', 'electroncash/version.py')
+version = imp.load_source('version', 'oregano/version.py')
 
 if sys.version_info[:3] < (3, 6):
-    sys.exit("Error: Electron Cash requires Python version >= 3.6...")
+    sys.exit("Error: Oregano requires Python version >= 3.6...")
 
 data_files = []
 
@@ -56,13 +56,13 @@ if platform.system() in ['Linux', 'FreeBSD', 'DragonFly']:
         share_dir = user_share
     data_files += [
         # Menu icon
-        (os.path.join(share_dir, 'icons/hicolor/256x256/apps/'),   ['icons/electron-cash.png']),
-        (os.path.join(share_dir, 'pixmaps/'),                      ['icons/electron-cash.png']),
-        (os.path.join(share_dir, 'icons/hicolor/scaleable/apps/'), ['icons/electron-cash.svg']),
+        (os.path.join(share_dir, 'icons/hicolor/256x256/apps/'),   ['icons/oregano.png']),
+        (os.path.join(share_dir, 'pixmaps/'),                      ['icons/oregano.png']),
+        (os.path.join(share_dir, 'icons/hicolor/scaleable/apps/'), ['icons/oregano.svg']),
         # Menu entry
-        (os.path.join(share_dir, 'applications/'), ['electron-cash.desktop']),
+        (os.path.join(share_dir, 'applications/'), ['oregano.desktop']),
         # App stream (store) metadata
-        (os.path.join(share_dir, 'metainfo/'), ['org.electroncash.ElectronCash.appdata.xml']),
+        (os.path.join(share_dir, 'metainfo/'), ['org.oregano.Oregano.appdata.xml']),
     ]
 
 class MakeAllBeforeSdist(setuptools.command.sdist.sdist):
@@ -123,19 +123,19 @@ class MakeAllBeforeSdist(setuptools.command.sdist.sdist):
 
 
 platform_package_data = {
-    'electroncash_gui.qt': [
+    'oregano_gui.qt': [
         'data/ard_mone.mp3'
     ],
 }
 
 if sys.platform in ('linux'):
-    platform_package_data['electroncash_gui.qt'] += [
+    platform_package_data['oregano_gui.qt'] += [
             'data/ecsupplemental_lnx.ttf',
             'data/fonts.xml'
     ]
 
 if sys.platform in ('win32', 'cygwin'):
-    platform_package_data['electroncash_gui.qt'] += [
+    platform_package_data['oregano_gui.qt'] += [
             'data/ecsupplemental_win.ttf'
     ]
 
@@ -143,7 +143,7 @@ setup(
     cmdclass={
         'sdist': MakeAllBeforeSdist,
     },
-    name=os.environ.get('EC_PACKAGE_NAME') or "Electron Cash",
+    name=os.environ.get('EC_PACKAGE_NAME') or "Oregano",
     version=os.environ.get('EC_PACKAGE_VERSION') or version.PACKAGE_VERSION,
     install_requires=requirements,
     extras_require={
@@ -152,33 +152,33 @@ setup(
         'all': requirements_hw + requirements_binaries
     },
     packages=[
-        'electroncash',
-        'electroncash.qrreaders',
-        'electroncash.slp',
-        'electroncash.tor',
-        'electroncash.utils',
-        'electroncash_gui',
-        'electroncash_gui.qt',
-        'electroncash_gui.qt.qrreader',
-        'electroncash_gui.qt.utils',
-        'electroncash_gui.qt.utils.darkdetect',
-        'electroncash_plugins',
-        'electroncash_plugins.audio_modem',
-        'electroncash_plugins.cosigner_pool',
-        'electroncash_plugins.email_requests',
-        'electroncash_plugins.hw_wallet',
-        'electroncash_plugins.keepkey',
-        'electroncash_plugins.labels',
-        'electroncash_plugins.ledger',
-        'electroncash_plugins.trezor',
-        'electroncash_plugins.digitalbitbox',
-        'electroncash_plugins.virtualkeyboard',
-        'electroncash_plugins.shuffle_deprecated',
-        'electroncash_plugins.satochip',
-        'electroncash_plugins.fusion',
+        'oregano',
+        'oregano.qrreaders',
+        'oregano.slp',
+        'oregano.tor',
+        'oregano.utils',
+        'oregano_gui',
+        'oregano_gui.qt',
+        'oregano_gui.qt.qrreader',
+        'oregano_gui.qt.utils',
+        'oregano_gui.qt.utils.darkdetect',
+        'oregano_plugins',
+        'oregano_plugins.audio_modem',
+        'oregano_plugins.cosigner_pool',
+        'oregano_plugins.email_requests',
+        'oregano_plugins.hw_wallet',
+        'oregano_plugins.keepkey',
+        'oregano_plugins.labels',
+        'oregano_plugins.ledger',
+        'oregano_plugins.trezor',
+        'oregano_plugins.digitalbitbox',
+        'oregano_plugins.virtualkeyboard',
+        'oregano_plugins.shuffle_deprecated',
+        'oregano_plugins.satochip',
+        'oregano_plugins.fusion',
     ],
     package_data={
-        'electroncash': [
+        'oregano': [
             'servers.json',
             'servers_testnet.json',
             'servers_testnet4.json',
@@ -189,25 +189,25 @@ setup(
             'wordlist/*.txt',
             'libsecp256k1*',
             'libzbar*',
-            'locale/*/LC_MESSAGES/electron-cash.mo',
+            'locale/*/LC_MESSAGES/oregano.mo',
             'tor/bin/*'
         ],
-        'electroncash_plugins.shuffle_deprecated': [
+        'oregano_plugins.shuffle_deprecated': [
             'servers.json'
         ],
-        'electroncash_plugins.fusion': [
+        'oregano_plugins.fusion': [
             '*.svg', '*.png'
         ],
-        # On Linux and Windows this means adding electroncash_gui/qt/data/*.ttf
+        # On Linux and Windows this means adding oregano_gui/qt/data/*.ttf
         # On Darwin we don't use that font, so we don't add it to save space.
         **platform_package_data
     },
-    scripts=['electron-cash'],
+    scripts=['oregano-app'],
     data_files=data_files,
-    description="Lightweight Bitcoin Cash Wallet",
-    author="The Electron Cash Developers",
-    author_email="jonf@electroncash.org",
+    description="Lightweight Ergon Wallet",
+    author="The Oregano Developers",
+    author_email="jonf@oregano.org",
     license="MIT Licence",
-    url="http://electroncash.org",
-    long_description="""Lightweight Bitcoin Cash Wallet"""
+    url="http://oregano.org",
+    long_description="""Lightweight Ergon Wallet"""
 )
