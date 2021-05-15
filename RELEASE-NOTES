@@ -97,7 +97,7 @@ modules/libraries are imported into pyhon 3.  The build is deterministic for win
 the same binary because of customization to Pyinstaller that was done by Electrum team, as well as separate
 repos for locales and icons).  The fee upgrades may not be visible for existing wallet owners
 unless you reset the max fee in preferences or remove the config file.  There is no minimum fee on the client
-side.  Be careful sending too low of a fee (lower than 1 satoshi/byte) or your transaction may get stuck,
+side.  Be careful sending too low of a fee (lower than 1 fixoshi/byte) or your transaction may get stuck,
 and there is no warning message.
 
 
@@ -144,7 +144,7 @@ and there is no warning message.
   * At some stage support for BitPay address format will be removed, and
     at some later stage support for display of legacy addresses will also
     be removed.
-  * The fee slider has been adjusted to range from 1 to 10 sats/byte.
+  * The fee slider has been adjusted to range from 1 to 10 fixs/byte.
   * Many bug fixes and improvements
 
 
@@ -394,7 +394,7 @@ and there is no warning message.
   (cculianu)
 * Disabled all fee estimates in the codebase.  They are useless on XRG anyway
   and were a holdover from our BTC roots.  XRG tx's always confirm next block
-  if they pay the minimum 1.0 sats/B fee anyway.  Fee estimates are not needed.
+  if they pay the minimum 1.0 fixs/B fee anyway.  Fee estimates are not needed.
   Also disabled the "Estimated confirmation time:" label from the Transaction
   Dialog winow.  This is not informative either for similar reasons. (cculianu)
 * Hardened build system against dependency vulnerabilities (cculianu)
@@ -523,7 +523,7 @@ and there is no warning message.
 * Schnorr: Defaults to off for watching-only wallets. This is to prevent
   air-gapped setups from underestimating fee between generating and signing EC.
   (cculianu)
-* Tx Dialog: Warn if user is attempting to broadcat a low fee tx of <1 sats/B.
+* Tx Dialog: Warn if user is attempting to broadcat a low fee tx of <1 fixs/B.
   (cculianu)
 * Address tab: Allow CTRL+F of addresses prefixed with bitcoincash: to do the
   expected thing. (cculianu)

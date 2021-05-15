@@ -256,7 +256,7 @@ def get_target_params_2(wallet_conf, sum_value):
         select_type, select_amount = wallet_conf.selector
 
         if select_type == 'size' and int(sum_value) != 0:
-            # user wants to get a typical output of this size (in sats)
+            # user wants to get a typical output of this size (in fixs)
             fraction = COIN_FRACTION_FUDGE_FACTOR * select_amount / sum_value
         elif select_type == 'count' and int(select_amount) != 0:
             # user wants this number of coins

@@ -855,8 +855,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         return text
 
     def format_fee_rate(self, fee_rate):
-        sats_per_byte = format_fee_satoshis(fee_rate/1000, max(self.num_zeros, 1))
-        return _('{sats_per_byte} sat/byte').format(sats_per_byte=sats_per_byte)
+        fixs_per_byte = format_fee_satoshis(fee_rate/1000, max(self.num_zeros, 1))
+        return _('{fixs_per_byte} fix/byte').format(fixs_per_byte=fixs_per_byte)
 
     def get_decimal_point(self):
         return self.decimal_point
@@ -1549,9 +1549,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                 "<ul>"
                 "<li> Ergon <b>Address</b> <b>★</b>"
                 "<li> Bitcoin Legacy <b>Address</b> <b>★</b>"
-                "<li> <b>Cash Account</b> <b>★</b> e.g. <i>satoshi#123</i>"
+                "<li> <b>Cash Account</b> <b>★</b> e.g. <i>fixoshi#123</i>"
                 "<li> <b>Contact name</b> <b>★</b> from the Contacts tab"
-                "<li> <b>OpenAlias</b> e.g. <i>satoshi@domain.com</i>"
+                "<li> <b>OpenAlias</b> e.g. <i>fixoshi@domain.com</i>"
                 "</ul><br>"
                 "&nbsp;&nbsp;&nbsp;<b>★</b> = Supports <b>pay-to-many</b>, where"
                 " you may optionally enter multiple lines of the form:"
@@ -1653,7 +1653,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.fee_custom_lbl = HelpLabel(self.get_custom_fee_text(),
                                         _('This is the fee rate that will be used for this transaction.')
                                         + "\n\n" + _('It is calculated from the Custom Fee Rate in preferences, but can be overridden from the manual fee edit on this form (if enabled).')
-                                        + "\n\n" + _('Generally, a fee of 1.0 sats/B is a good minimal rate to ensure your transaction will make it into the next block.'))
+                                        + "\n\n" + _('Generally, a fee of 1.0 fixs/B is a good minimal rate to ensure your transaction will make it into the next block.'))
         self.fee_custom_lbl.setFixedWidth(140)
 
         self.fee_slider_mogrifier()
@@ -1775,7 +1775,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             return ""
         else:
             if fee_rate is None: fee_rate = self.config.custom_fee_rate() / 1000.0
-            return str(round(fee_rate*100)/100) + " sats/B"
+            return str(round(fee_rate*100)/100) + " fixs/B"
 
     def do_update_fee(self):
         '''Recalculate the fee.  If the fee was manually input, retain it, but
@@ -2133,7 +2133,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.show_message(_("Insufficient funds"))
             return
         except ExcessiveFee:
-            self.show_message(_("Your fee is too high.  Max is 50 sat/byte."))
+            self.show_message(_("Your fee is too high.  Max is 50 fix/byte."))
             return
         except BaseException as e:
             traceback.print_exc(file=sys.stderr)
@@ -2178,7 +2178,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         #    msg.append(_('Warning') + ': ' + _("The fee for this transaction seems unusually high."))
 
         if (fee < (tx.estimated_size())):
-            msg.append(_('Warning') + ': ' + _("You're using a fee of less than 1.0 sats/B. It may take a very long time to confirm."))
+            msg.append(_('Warning') + ': ' + _("You're using a fee of less than 1.0 fixs/B. It may take a very long time to confirm."))
             tx.ephemeral['warned_low_fee_already'] = True
 
         if self.config.get('enable_opreturn') and self.message_opreturn_e.text():
@@ -2270,16 +2270,16 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
             return status, msg
 
-        # Check fee and warn if it's below 1.0 sats/B (and not warned already)
+        # Check fee and warn if it's below 1.0 fixs/B (and not warned already)
         fee = None
         try: fee = tx.get_fee()
         except: pass # no fee info available for tx
         # Check fee >= size otherwise warn. FIXME: If someday network relay
-        # rules change to be other than 1.0 sats/B minimum, this code needs
+        # rules change to be other than 1.0 fixs/B minimum, this code needs
         # to be changed.
         if (isinstance(fee, int) and tx.is_complete() and fee < len(str(tx))//2
                 and not tx.ephemeral.get('warned_low_fee_already')):
-            msg = _('Warning') + ': ' + _("You're using a fee of less than 1.0 sats/B. It may take a very long time to confirm.") + "\n\n" + _("Proceed?")
+            msg = _('Warning') + ': ' + _("You're using a fee of less than 1.0 fixs/B. It may take a very long time to confirm.") + "\n\n" + _("Proceed?")
             if not self.question(msg, title = _("Low Fee")):
                 return
         # /end fee check

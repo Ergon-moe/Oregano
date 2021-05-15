@@ -826,7 +826,7 @@ class Transaction:
 
     def get_fee(self):
         ''' Try and calculate the fee based on the input data, and returns it as
-        satoshis (int). Can raise InputValueMissing on tx's where fee data is
+        fixoshis (int). Can raise InputValueMissing on tx's where fee data is
         missing, so client code should catch that. '''
         # first, check if coinbase; coinbase tx always has 0 fee
         if self.inputs() and self._inputs[0].get('type') == 'coinbase':

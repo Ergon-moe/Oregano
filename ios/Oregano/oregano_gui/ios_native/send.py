@@ -147,7 +147,7 @@ class SendVC(SendBase):
         btcedit = self.amt
         fiatedit = self.fiat
         def onAmount(t : ObjCInstance) -> None:
-            #print("On Amount %s, %s satoshis"%(str(t.text),str(t.getAmount())))
+            #print("On Amount %s, %s fixoshis"%(str(t.text),str(t.getAmount())))
             self.amountSats = t.getAmount()
             fiatModified = False
             if fx() and fx().is_enabled():
@@ -198,7 +198,7 @@ class SendVC(SendBase):
         fee_e = tedit
         tedit.placeholder = _("Fee manual edit")
         def onManualFee(t : ObjCInstance) -> None:
-            #print("On Manual fee %s, %s satoshis"%(str(t.text),str(t.getAmount())))
+            #print("On Manual fee %s, %s fixoshis"%(str(t.text),str(t.getAmount())))
             self.feeSats = t.getAmount()
             if t.isModified(): self.updateFee()
             else: self.chkOk()
@@ -279,7 +279,7 @@ class SendVC(SendBase):
         # fee amount label
         lbl = self.feeLbl
         lbl.text = self.feeSlider.getToolTip(-1,-1)
-        # Manual edit .. re-set the amount in satoshis from our cached value, in case they changed units in the prefs screen
+        # Manual edit .. re-set the amount in fixoshis from our cached value, in case they changed units in the prefs screen
         tedit = self.feeTf
         wasModified = tedit.isModified()
         tedit.setAmount_(self.feeSats)
@@ -802,7 +802,7 @@ class SendVC(SendBase):
             parent().show_error(_("Insufficient funds"))
             return
         except ExcessiveFee:
-            parent().show_error(_("Your fee is too high.  Max is 50 sat/byte."))
+            parent().show_error(_("Your fee is too high.  Max is 50 fix/byte."))
             return
         except BaseException as e:
             traceback.print_exc(file=sys.stdout)

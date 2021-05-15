@@ -20,7 +20,7 @@ import kotlinx.android.synthetic.main.send.*
 
 val libPaymentRequest by lazy { libMod("paymentrequest") }
 
-val MIN_FEE = 1  // sat/byte
+val MIN_FEE = 1  // fix/byte
 
 
 class SendDialog : TaskLauncherDialog<Unit>() {

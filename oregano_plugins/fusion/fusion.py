@@ -68,7 +68,7 @@ tag_seed = secrets.token_bytes(16)
 # (Note that if we enter multiply into the same fusion, our limits apply
 # separately for each "player".)
 #
-# Deny server that asks for more than this component feerate (sat/kbyte).
+# Deny server that asks for more than this component feerate (fix/kbyte).
 MAX_COMPONENT_FEERATE = 5000
 # The largest 'excess fee' that we are willing to pay in a fusion (fees beyond
 # those needed to pay for our components' inclusion)
@@ -173,9 +173,9 @@ def gen_components(num_blanks, inputs, outputs, feerate):
     Generate a full set of fusion components, commitments, keys, and proofs.
 
     count: int
-    inputs: dict of {(prevout_hash, prevout_n): (pubkey, integer value in sats)}
+    inputs: dict of {(prevout_hash, prevout_n): (pubkey, integer value in fixs)}
     outputs: list of [(value, addr), (value, addr) ...]
-    feerate: int (sat/kB)
+    feerate: int (fix/kB)
 
     Returns:
         list of InitialCommitment,
@@ -297,7 +297,7 @@ class Fusion(threading.Thread, PrintError):
     def add_coins(self, coins, keypairs):
         """ Add given P2PKH coins to be used as inputs in a fusion.
 
-        - coins: dict of {(prevout_hash, prevout_n): (bytes pubkey, integer value in sats)}
+        - coins: dict of {(prevout_hash, prevout_n): (bytes pubkey, integer value in fixs)}
 
         - keypairs: dict of {hex pubkey: bytes privkey}
         """
@@ -598,10 +598,10 @@ class Fusion(threading.Thread, PrintError):
         for scale in self.available_tiers:
             ### Fuzzing fee range selection ###
             # To keep privacy at higher tiers, we need to randomize our input-output
-            # linkage somehow, which means throwing away some sats as extra fees beyond
+            # linkage somehow, which means throwing away some fixs as extra fees beyond
             # the minimum requirement.
 
-            # For now, just throw on a few unobtrusive extra sats at the higher tiers, at most 9.
+            # For now, just throw on a few unobtrusive extra fixs at the higher tiers, at most 9.
             # TODO: smarter selection for high tiers (how much will users be comfortable paying?)
             fuzz_fee_max = min(9, scale // 1000000)
 
@@ -1005,7 +1005,7 @@ class Fusion(threading.Thread, PrintError):
                 sum_in_str = format_satoshis(sum_in, num_zeros=8)
                 fee_str = str(total_fee)
                 feeloc = _('fee')
-                label = f"CashFusion {len(self.inputs)}⇢{len(self.outputs)}, {sum_in_str} XRG (−{fee_str} sats {feeloc})"
+                label = f"CashFusion {len(self.inputs)}⇢{len(self.outputs)}, {sum_in_str} XRG (−{fee_str} fixs {feeloc})"
                 wallets = set(self.source_wallet_info.keys())
                 wallets.add(self.target_wallet)
                 if len(wallets) > 1:

@@ -433,8 +433,8 @@ class CoinUtils(PrintError):
                 if inputs_len < 3:
                     # short-circuit out of here -- too few inputs (min 3 required for shuffling)
                     return False
-                amount_groups = defaultdict(list)  # dict of amount(sats) -> list of out_n's of tx (for that amount)
-                amount_addresses = defaultdict(set) # dict of amount(sats) -> set of addresses for that amount
+                amount_groups = defaultdict(list)  # dict of amount(fixs) -> list of out_n's of tx (for that amount)
+                amount_addresses = defaultdict(set) # dict of amount(fixs) -> set of addresses for that amount
                 # 1. bin the output-n's by amount spent
                 for out_n, output in enumerate(outputs):
                     typ, addr, amount = output  # TODO: do we enforce that typ must be 'p2pkh'?

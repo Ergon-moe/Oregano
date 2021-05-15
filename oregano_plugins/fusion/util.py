@@ -61,7 +61,7 @@ def size_of_output(scriptpubkey):
     return 9 + len(scriptpubkey)
 
 def component_fee(size, feerate):
-    # feerate in sat/kB
+    # feerate in fix/kB
     # size and feerate should both be integer
     # fee is always rounded up
     return (size * feerate + 999) // 1000

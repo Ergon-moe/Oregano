@@ -361,7 +361,7 @@ class SimpleConfig(PrintError):
         """Checks time since last requested and updated fee estimates.
         Returns True if an update should be requested.
         """
-        return False # For now we disable fee estimates altogether. This is XRG. 1.0 sats/B pretty much works.
+        return False # For now we disable fee estimates altogether. This is XRG. 1.0 fixs/B pretty much works.
         # /
         now = time.time()
         prev_updates = self.fee_estimates_last_updated.values()

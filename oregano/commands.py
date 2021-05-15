@@ -49,8 +49,8 @@ from .paymentrequest import PR_PAID, PR_UNPAID, PR_UNKNOWN, PR_EXPIRED
 known_commands = {}
 
 
-def satoshis(amount):
-    # satoshi conversion must not be performed by the parser
+def fixoshis(amount):
+    # fixoshi conversion must not be performed by the parser
     return int(COIN*PyDecimal(amount)) if amount not in ['!', None] else amount
 
 
@@ -301,7 +301,7 @@ class Commands:
     def serialize(self, jsontx):
         """Create a transaction from json inputs.
         Inputs must have a redeemPubkey.
-        Outputs must be a list of {'address':address, 'value':satoshi_amount}.
+        Outputs must be a list of {'address':address, 'value':fixoshi_amount}.
         """
         keypairs = {}
         inputs = jsontx.get('inputs')
@@ -486,7 +486,7 @@ class Commands:
         privkey to a destination address. The transaction is not
         broadcasted."""
         from .wallet import sweep
-        tx_fee = satoshis(fee)
+        tx_fee = fixoshis(fee)
         privkeys = privkey.split()
         self.nocheck = nocheck
         addr = Address.from_string(destination)
@@ -530,7 +530,7 @@ class Commands:
             final_outputs.append(OPReturn.output_for_rawhex(op_return_raw))
         for address, amount in outputs:
             address = self._resolver(address)
-            amount = satoshis(amount)
+            amount = fixoshis(amount)
             final_outputs.append((TYPE_ADDRESS, address, amount))
 
         coins = self.wallet.get_spendable_coins(domain, self.config)
@@ -550,7 +550,7 @@ class Commands:
     def payto(self, destination, amount, fee=None, from_addr=None, change_addr=None, nocheck=False, unsigned=False, password=None, locktime=None,
               op_return=None, op_return_raw=None, addtransaction=False):
         """Create a transaction. """
-        tx_fee = satoshis(fee)
+        tx_fee = fixoshis(fee)
         domain = from_addr.split(',') if from_addr else None
         tx = self._mktx([(destination, amount)], tx_fee, change_addr, domain, nocheck, unsigned, password, locktime, op_return, op_return_raw, addtransaction=addtransaction)
         return tx.as_dict()
@@ -558,7 +558,7 @@ class Commands:
     @command('wp')
     def paytomany(self, outputs, fee=None, from_addr=None, change_addr=None, nocheck=False, unsigned=False, password=None, locktime=None, addtransaction=False):
         """Create a multi-output transaction. """
-        tx_fee = satoshis(fee)
+        tx_fee = fixoshis(fee)
         domain = from_addr.split(',') if from_addr else None
         tx = self._mktx(outputs, tx_fee, change_addr, domain, nocheck, unsigned, password, locktime, addtransaction=addtransaction)
         return tx.as_dict()
@@ -763,7 +763,7 @@ class Commands:
             else:
                 self.wallet.print_error("Unable to find an unused address. Try running with the --force option to create new addresses.")
                 return False
-        amount = satoshis(amount)
+        amount = fixoshis(amount)
         expiration = int(expiration) if expiration else None
         req = self.wallet.make_payment_request(addr, amount, memo, expiration, payment_url = payment_url, index_url = index_url)
         self.wallet.add_payment_request(req, self.config)

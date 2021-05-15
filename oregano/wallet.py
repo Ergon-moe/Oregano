@@ -161,9 +161,9 @@ def sweep(privkeys, network, config, recipient, fee=None, imax=100, sign_schnorr
         tx = Transaction.from_io(inputs, outputs, sign_schnorr=sign_schnorr)
         fee = config.estimate_fee(tx.estimated_size())
     if total - fee < 0:
-        raise NotEnoughFunds(_('Not enough funds on address.') + '\nTotal: %d satoshis\nFee: %d'%(total, fee))
+        raise NotEnoughFunds(_('Not enough funds on address.') + '\nTotal: %d fixoshis\nFee: %d'%(total, fee))
     if total - fee < dust_threshold(network):
-        raise NotEnoughFunds(_('Not enough funds on address.') + '\nTotal: %d satoshis\nFee: %d\nDust Threshold: %d'%(total, fee, dust_threshold(network)))
+        raise NotEnoughFunds(_('Not enough funds on address.') + '\nTotal: %d fixoshis\nFee: %d\nDust Threshold: %d'%(total, fee, dust_threshold(network)))
 
     outputs = [(TYPE_ADDRESS, recipient, total - fee)]
     locktime = network.get_local_height()
@@ -1747,10 +1747,10 @@ class Abstract_Wallet(PrintError, SPVDelegate):
             #    is_lowfee = fee < low_fee * 0.5
             #else:
             #    is_lowfee = False
-            # and instead if it's less than 1.0 sats/B we flag it as low_fee
+            # and instead if it's less than 1.0 fixs/B we flag it as low_fee
             try:
                 # NB len(tx.raw) is 2x the byte size as it's hex encoded.
-                is_lowfee = int(fee) / (int(len(tx.raw)) / 2.0) < 1.0  # if less than 1.0 sats/B, complain. otherwise don't.
+                is_lowfee = int(fee) / (int(len(tx.raw)) / 2.0) < 1.0  # if less than 1.0 fixs/B, complain. otherwise don't.
             except (TypeError, ValueError):  # If for some reason fee was None or invalid, just pass on through.
                 is_lowfee = False
             # /
@@ -1970,11 +1970,11 @@ class Abstract_Wallet(PrintError, SPVDelegate):
             outputs[i_max] = (_type, data, amount)
             tx = Transaction.from_io(inputs, outputs, sign_schnorr=sign_schnorr)
 
-        # If user tries to send too big of a fee (more than 50 sat/byte), stop them from shooting themselves in the foot
+        # If user tries to send too big of a fee (more than 50 fix/byte), stop them from shooting themselves in the foot
         tx_in_bytes=tx.estimated_size()
         fee_in_satoshis=tx.get_fee()
-        sats_per_byte=fee_in_satoshis/tx_in_bytes
-        if (sats_per_byte > 50):
+        fixs_per_byte=fee_in_satoshis/tx_in_bytes
+        if (fixs_per_byte > 50):
             raise ExcessiveFee()
 
         # Sort the inputs and outputs deterministically

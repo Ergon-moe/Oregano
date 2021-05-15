@@ -156,12 +156,12 @@ def my_custom_utxo_context_menu_setup(window, utxo_list, menu, selected):
 
 def _make_label(window, tot, shufamt, chg, fee, scale):
     is_dusty_fee = not chg and fee - BackgroundShufflingThread.FEE > 0
-    # satoshis -> display format
+    # fixoshis -> display format
     tot, shufamt, chg = window.format_amount(tot), window.format_amount(shufamt), window.format_amount(chg) if chg else ''
     chgtxt = " + {} ".format(chg) if chg else " "
     # Note it's important that the "Shuffle" prefix not be translated because we use it elsewhere
     # in the filter shuffle history callback... and it's also a "proper name" :)
-    return ( "Shuffle" + (" {} {} {} {}{}(-{} sats {})"
+    return ( "Shuffle" + (" {} {} {} {}{}(-{} fixs {})"
                           .format(tot, window.base_unit(),
                                   BackgroundShufflingThread.SCALE_ARROW_DICT.get(scale, BackgroundShufflingThread.SCALE_ARROW_UNKNOWN),
                                   shufamt, chgtxt, fee, _("fee") if not is_dusty_fee else _("dusty fee")
@@ -214,7 +214,7 @@ def update_coin_status(window, coin_name, msg):
             if len(words) >= 2:
                 txid = words[1]
                 try:
-                    tot, shufamt, chg, fee, scale = [int(w) for w in words[2:7]] # parse satoshis
+                    tot, shufamt, chg, fee, scale = [int(w) for w in words[2:7]] # parse fixoshis
                     label = _make_label(window, tot, shufamt, chg, fee, scale)
                 except (IndexError, ValueError, TypeError) as e:
                     # Hmm. Some sort of parse error. We'll label it 'CashShuffle'
@@ -228,7 +228,7 @@ def update_coin_status(window, coin_name, msg):
             try:
                 words = msg.split()
                 utxo, addr = words[1:3]
-                tot, shufamt, chg, fee, scale = [int(x) for x in words[3:8]] # parse satoshis
+                tot, shufamt, chg, fee, scale = [int(x) for x in words[3:8]] # parse fixoshis
                 window._shuffle_tentative[utxo] = (addr, tot, shufamt, chg, fee, scale) # remember this tentative shuffle so we can generate a label for it if we see a matching tx come in later
             except (IndexError, ValueError, TypeError) as e:
                 # Some sort of parse error...

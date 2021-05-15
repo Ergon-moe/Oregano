@@ -1332,7 +1332,7 @@ class ServerWidget(ServerFusionsBaseMixin, QWidget):
         self.t_server_waiting = QTableWidget()
         self.t_server_waiting.setColumnCount(3)
         self.t_server_waiting.setRowCount(len(Params.tiers))
-        self.t_server_waiting.setHorizontalHeaderLabels([_('Tier (sats)'), _('Num players'), ''])
+        self.t_server_waiting.setHorizontalHeaderLabels([_('Tier (fixs)'), _('Num players'), ''])
         for i, t in enumerate(Params.tiers):
             button = QPushButton(_("Start"))
             button.setDefault(False); button.setAutoDefault(False)  # on some platforms if we don't do this, one of the buttons traps "Enter" key
