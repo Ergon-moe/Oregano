@@ -45,8 +45,8 @@ def inv_dict(d):
     return {v: k for k, v in d.items()}
 
 
-DEFAULT_BASE_UNIT = "ERG"
-base_units = {'ERG':8, 'mERG':5, 'bits':2}
+DEFAULT_BASE_UNIT = "XRG"
+base_units = {'XRG':8, 'mXRG':5, 'bits':2}
 
 inv_base_units = {}
 base_unit_labels = tuple()
@@ -55,7 +55,7 @@ base_unit_labels = tuple()
 def recalc_base_units():
     global inv_base_units, base_unit_labels
     inv_base_units = inv_dict(base_units)
-    base_unit_labels = tuple(inv_base_units[dp] for dp in sorted(inv_base_units.keys(), reverse=True))  # ('ERG', 'mERG', 'bits')
+    base_unit_labels = tuple(inv_base_units[dp] for dp in sorted(inv_base_units.keys(), reverse=True))  # ('XRG', 'mXRG', 'bits')
 
 # Called once at app init, but then when network is set, called again
 recalc_base_units()

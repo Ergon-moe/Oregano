@@ -1002,7 +1002,7 @@ class Fusion(threading.Thread, PrintError):
                 sum_in_str = format_satoshis(sum_in, num_zeros=8)
                 fee_str = str(total_fee)
                 feeloc = _('fee')
-                label = f"CashFusion {len(self.inputs)}⇢{len(self.outputs)}, {sum_in_str} ERG (−{fee_str} sats {feeloc})"
+                label = f"CashFusion {len(self.inputs)}⇢{len(self.outputs)}, {sum_in_str} XRG (−{fee_str} sats {feeloc})"
                 wallets = set(self.source_wallet_info.keys())
                 wallets.add(self.target_wallet)
                 if len(wallets) > 1:

@@ -105,8 +105,8 @@ class TestNet(AbstractNet):
     DEFAULT_PORTS = {'t':'51001', 's':'51002'}
     DEFAULT_SERVERS = _read_json_dict('servers_testnet.json')  # DO NOT MODIFY IN CLIENT CODE
     TITLE = 'Oregano Testnet'
-    BASE_UNITS = {'tERG': 8, 'mtERG': 5, 'tbits': 2}
-    DEFAULT_UNIT = "tERG"
+    BASE_UNITS = {'tXRG': 8, 'mtXRG': 5, 'tbits': 2}
+    DEFAULT_UNIT = "tXRG"
 
     # Nov 13. 2017 HF to CW144 DAA height (height of last block mined on old DAA)
     CW144_HEIGHT = 1155875
@@ -156,8 +156,8 @@ class TestNet4(TestNet):
 class ScaleNet(TestNet):
     GENESIS = "00000000e6453dc2dfe1ffa19023f86002eb11dbb8e87d0291a4599f0430be52"
     TITLE = 'Oregano Scalenet'
-    BASE_UNITS = {'sERG': 8, 'msERG': 5, 'sbits': 2}
-    DEFAULT_UNIT = "tERG"
+    BASE_UNITS = {'sXRG': 8, 'msXRG': 5, 'sbits': 2}
+    DEFAULT_UNIT = "tXRG"
 
 
     HEADERS_URL = "http://bitcoincash.com/files/scalenet_headers"  # Unused
@@ -180,7 +180,7 @@ class ScaleNet(TestNet):
 
 class TaxCoinNet(AbstractNet):
     """ This is for supporting ABC tax coin. Use CLI arg --taxcoin to see this network.
-    Users using this network cannot see ERG and vice-versa, due to the checkpoint block.
+    Users using this network cannot see XRG and vice-versa, due to the checkpoint block.
     If one wants to see both chains one can run 2 clients since they will use different data
     directories. """
     TESTNET = False

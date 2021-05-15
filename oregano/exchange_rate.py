@@ -155,7 +155,7 @@ class BitcoinAverage(ExchangeBase):
 
     def get_rates(self, ccy):
         json = self.get_json('apiv2.bitcoinaverage.com', '/indices/global/ticker/short')
-        return dict([(r.replace("ERG", ""), PyDecimal(json[r]['last']))
+        return dict([(r.replace("XRG", ""), PyDecimal(json[r]['last']))
                      for r in json if r != 'timestamp'])
 
     # note: historical rates used to be freely available
@@ -168,7 +168,7 @@ class BitcoinAverage(ExchangeBase):
     #
     #def request_history(self, ccy):
     #    history = self.get_csv('apiv2.bitcoinaverage.com',
-    #                           "/indices/global/history/ERG%s?period=alltime&format=csv" % ccy)
+    #                           "/indices/global/history/XRG%s?period=alltime&format=csv" % ccy)
     #    return dict([(h['DateTime'][:10], h['Average'])
     #                 for h in history])
 
@@ -176,7 +176,7 @@ class BitcoinAverage(ExchangeBase):
 class BitPay(ExchangeBase):
 
     def get_rates(self, ccy):
-        json = self.get_json('bitpay.com', '/rates/ERG')
+        json = self.get_json('bitpay.com', '/rates/XRG')
         return dict([(r['code'], PyDecimal(r['rate'])) for r in json['data']])
 
 
@@ -202,7 +202,7 @@ class Coinbase(ExchangeBase):
 
     def get_rates(self, ccy):
         json = self.get_json('api.coinbase.com',
-                             '/v2/exchange-rates?currency=ERG')
+                             '/v2/exchange-rates?currency=XRG')
         return {ccy: PyDecimal(rate) for (ccy, rate) in json["data"]["rates"].items()}
 
 
@@ -210,7 +210,7 @@ class Kraken(ExchangeBase):
 
     def get_rates(self, ccy):
         ccys = ['EUR', 'USD']
-        pairs = ['ERG%s' % c for c in ccys]
+        pairs = ['XRG%s' % c for c in ccys]
         json = self.get_json('api.kraken.com',
                              '/0/public/Ticker?pair=%s' % ','.join(pairs))
         return dict((k[-3:], PyDecimal(float(v['c'][0])))

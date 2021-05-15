@@ -37,7 +37,7 @@ class SimpleConfig(PrintError):
         2. User configuration (in the user's config directory)
     They are taken in order (1. overrides config options set in 2.)
     """
-    fee_rates = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000]
+    fee_rates = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
     def __init__(self, options=None, read_user_config_function=None,
                  read_user_dir_function=None):
@@ -321,7 +321,7 @@ class SimpleConfig(PrintError):
 
     def has_fee_estimates(self):
         #return len(self.fee_estimates)==4
-        # We disabled fee estimates for ERG.  They do more harm than good.
+        # We disabled fee estimates for XRG.  They do more harm than good.
         # Our blocks aren't full and it is not the intention for them to ever
         # be full according to all the full node implementers.  This is a
         # coreism that must die. :)
@@ -361,7 +361,7 @@ class SimpleConfig(PrintError):
         """Checks time since last requested and updated fee estimates.
         Returns True if an update should be requested.
         """
-        return False # For now we disable fee estimates altogether. This is ERG. 1.0 sats/B pretty much works.
+        return False # For now we disable fee estimates altogether. This is XRG. 1.0 sats/B pretty much works.
         # /
         now = time.time()
         prev_updates = self.fee_estimates_last_updated.values()

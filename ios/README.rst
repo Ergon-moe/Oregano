@@ -54,7 +54,7 @@ For more information, see this stackoverflow post: https://stackoverflow.com/que
 
 Connecting to TestNet
 ---------------------
-If you want to run the app to point to the ERG TestNet network:
+If you want to run the app to point to the XRG TestNet network:
 
   * Edit / Duplicate the Xcode "Scheme" for Oregano and set the envronment variable: `EC_TESTNET`
 

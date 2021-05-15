@@ -255,7 +255,7 @@ class SPV(ThreadJob):
             # chance of returning false positives, about 1 in quadrillion).
             #
             # We no longer need do the "inner node looks like tx" check here,
-            # however, since no such attack has occurred on the BTC or ERG chain
+            # however, since no such attack has occurred on the BTC or XRG chain
             # before Nov. 2018. After Nov. 2018 the tx size is now required to
             # be >= 100 bytes which is larger than the 64 byte size of inner
             # nodes.  Thus, the check is rendered superfluous as the attack

@@ -1064,8 +1064,8 @@ class Bip38Key:
 
     #// coin / network specific info affecting key decription and address decoding:
     # this gets populated by current value of NetworkConstants.net.WIF_PREFIX, etc
-    networkVersion   = 0x00 # byte // usually 0x0 for BTC/ERG
-    privateKeyPrefix = 0x80 # byte // usually 0x80 for BTC/ERG
+    networkVersion   = 0x00 # byte // usually 0x0 for BTC/XRG
+    privateKeyPrefix = 0x80 # byte // usually 0x80 for BTC/XRG
 
     # Internal class-level vars
     _scrypt_1 = None

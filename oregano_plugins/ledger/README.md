@@ -1,4 +1,4 @@
-![Ergon](https://raw.githubusercontent.com/The-Bitcoin-Cash-Fund/Branding/master/Bitcoin_Cash/ERG%20Logo%20Long%20Text%20WhiteBG.png "")
+![Ergon](https://raw.githubusercontent.com/The-Bitcoin-Cash-Fund/Branding/master/Bitcoin_Cash/XRG%20Logo%20Long%20Text%20WhiteBG.png "")
 # Using Oregano with Ledger Nano S
 
 Successfully tested with Ledger Nano S (1.3.1) Oregano (3.1.2) and Ergon Ledger App (1.1.5)

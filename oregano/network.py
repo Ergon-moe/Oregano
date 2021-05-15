@@ -478,7 +478,7 @@ class Network(util.DaemonThread):
         self.queue_request('server.banner', [])
         self.queue_request('server.donation_address', [])
         self.queue_request('server.peers.subscribe', [])
-        #self.request_fee_estimates()  # We disable fee estimates globally in this app for now. ERG doesn't need them and they create more user confusion than anything.
+        #self.request_fee_estimates()  # We disable fee estimates globally in this app for now. XRG doesn't need them and they create more user confusion than anything.
         self.queue_request('blockchain.relayfee', [])
         n_defunct = 0
         method = 'blockchain.scripthash.subscribe'
@@ -503,7 +503,7 @@ class Network(util.DaemonThread):
     def request_fee_estimates(self):
         self.print_error("request_fee_estimates called: DISABLED in network.py")
         return
-        # We disable fee estimates. ERG doesn't need this code. For now 1 sat/B
+        # We disable fee estimates. XRG doesn't need this code. For now 1 sat/B
         # is enough.
         self.config.requested_fee_estimates()
         try:
