@@ -249,14 +249,14 @@ class ProtocolThread(threading.Thread, PrintError):
 class BackgroundShufflingThread(threading.Thread, PrintError):
 
     scales = (
-        100000000000, # 1000.0  ERG ➡
-        10000000000,  # 100.0   ERG ➡
-        1000000000,   # 10.0    ERG ➡
-        100000000,    #  1.0    ERG ➡
-        10000000,     #  0.1    ERG ➝
-        1000000,      #  0.01   ERG ➟
-        100000,       #  0.001  ERG ⇢
-        10000,        #  0.0001 ERG →
+        100000000000, # 1000.0  XRG ➡
+        10000000000,  # 100.0   XRG ➡
+        1000000000,   # 10.0    XRG ➡
+        100000000,    #  1.0    XRG ➡
+        10000000,     #  0.1    XRG ➝
+        1000000,      #  0.01   XRG ➟
+        100000,       #  0.001  XRG ⇢
+        10000,        #  0.0001 XRG →
     )
 
     # Protocol version. Must be an int. Clients on different versions
@@ -283,8 +283,8 @@ class BackgroundShufflingThread(threading.Thread, PrintError):
     SCALE_0 = SORTED_SCALES[0]
     SCALE_N = SORTED_SCALES[-1]
 
-    DEFAULT_UPPER_BOUND = 9999990000    # (default) 99.99 ERG limit to max shuffle coin
-    DEFAULT_LOWER_BOUND = SCALE_0 + FEE # (default) 0.0001 ERG + FEE minimum coin. Note config can never make minimum go below this.
+    DEFAULT_UPPER_BOUND = 9999990000    # (default) 99.99 XRG limit to max shuffle coin
+    DEFAULT_LOWER_BOUND = SCALE_0 + FEE # (default) 0.0001 XRG + FEE minimum coin. Note config can never make minimum go below this.
 
     # The below two get overwritten on the class level from ConfKeys.Global.MIN_COIN_VALUE and MAX_COIN_VALUE in class c'tor
     UPPER_BOUND = DEFAULT_UPPER_BOUND   # minimum: cls.hard_lower_bound()

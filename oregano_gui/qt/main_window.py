@@ -1582,7 +1582,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         grid.addWidget(self.message_e, 2, 1, 1, -1)
 
         msg_opreturn = ( _('OP_RETURN data (optional).') + '\n\n'
-                        + _('Posts a PERMANENT note to the ERG blockchain as part of this transaction.')
+                        + _('Posts a PERMANENT note to the XRG blockchain as part of this transaction.')
                         + '\n\n' + _('If you specify OP_RETURN text, you may leave the \'Pay to\' field blank.') )
         self.opreturn_label = HelpLabel(_('&OP_RETURN'), msg_opreturn)
         grid.addWidget(self.opreturn_label,  3, 0)
@@ -2060,7 +2060,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                            len(segwits)).format(segwit_addresses='\n'.join(segwits))
             detail = _("Legacy '{prefix_char}...' p2sh address support in the Send tab is "
                        "restricted by default in order to prevent inadvertently "
-                       "sending ERG to Segwit BTC addresses.\n\n"
+                       "sending XRG to Segwit BTC addresses.\n\n"
                        "If you are an expert user, go to 'Preferences -> Transactions' "
                        "to enable the use of legacy p2sh addresses in the Send tab.").format(prefix_char=prefix_char)
             self.show_error(msg, detail_text=detail)
@@ -4199,9 +4199,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         misc_widgets.append((cr_gb, None))  # commit crash reporter gb to layout
 
 
-        units = util.base_unit_labels  # ( 'ERG', 'mERG', 'bits' )
+        units = util.base_unit_labels  # ( 'XRG', 'mXRG', 'bits' )
         msg = _('Base unit of your wallet.')\
-              + '\n1 ERG = 1,000 mERG = 1,000,000 bits.\n' \
+              + '\n1 XRG = 1,000 mXRG = 1,000,000 bits.\n' \
               + _(' These settings affects the fields in the Send tab')+' '
         unit_label = HelpLabel(_('Base unit') + ':', msg)
         unit_combo = QComboBox()

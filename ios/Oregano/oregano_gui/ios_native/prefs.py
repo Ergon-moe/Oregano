@@ -32,7 +32,7 @@ TAG_FIAT_CURRENCY = 401
 TAG_FIAT_EXCHANGE = 404
 
 UNITS = base_units
-UNIT_KEYS = base_unit_labels  # ('ERG', 'mERG', 'bits') in decreasing order
+UNIT_KEYS = base_unit_labels  # ('XRG', 'mXRG', 'bits') in decreasing order
 
 
 class PrefsVC(UITableViewController):

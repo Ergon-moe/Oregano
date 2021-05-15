@@ -116,7 +116,7 @@ and there is no warning message.
 
 # Release 2.9.4
   * Implement new Difficulty Adjustment Algorithm for Nov 13, 2017 Hard Fork
-  * Change ticker symobl from BCC to ERG
+  * Change ticker symobl from BCC to XRG
   * Implement changes to allow simultaneous installation with Electrum
   * Upgrade to PyQt5
   * Various fixes for hardware wallets
@@ -212,7 +212,7 @@ and there is no warning message.
 * Windows QR Reader now works.
 * Various performance fixes -- app should be able to handle much larger wallets now with many UTXOs
 * Nework layer fixups
-* Updated Checkpoint to the ERG chain.
+* Updated Checkpoint to the XRG chain.
 * Various minor UI gltiches fixed
 * MacOS binary size significantly reduced
 * Support for OP_RETURN parameters to bitcoincash: URL
@@ -392,8 +392,8 @@ and there is no warning message.
   (cculianu)
 * CLI: encrypt/decrypt commands were broken. They are now working. (#1270)
   (cculianu)
-* Disabled all fee estimates in the codebase.  They are useless on ERG anyway
-  and were a holdover from our BTC roots.  ERG tx's always confirm next block
+* Disabled all fee estimates in the codebase.  They are useless on XRG anyway
+  and were a holdover from our BTC roots.  XRG tx's always confirm next block
   if they pay the minimum 1.0 sats/B fee anyway.  Fee estimates are not needed.
   Also disabled the "Estimated confirmation time:" label from the Transaction
   Dialog winow.  This is not informative either for similar reasons. (cculianu)
@@ -488,7 +488,7 @@ and there is no warning message.
 * Updated libsecp256k1 to latest from Bitcoin-ABC (cculianu)
 * Reduced .dmg, .exe, & .AppImage binary sizes by optimizing images (Axel Gembe)
 * Updated servers.json (imaginaryusername)
-* CashShuffle: Raised default shuffle limit to 99.9999 ERG (cculianu)
+* CashShuffle: Raised default shuffle limit to 99.9999 XRG (cculianu)
 * Replaced the 'clock' icons with new hi-res versions. Please direct all
   hatemail to Calin Culianu for he volunteers to take full responsibility.
   (Jason Pribble, cculianu, James Cramer, Axel Gembe)
@@ -776,7 +776,7 @@ and there is no warning message.
 * Qt history tab: Added workaround for persitent 'Unknown' balances when using
   advanced scripts to spend funds. (cculianu)
 * Qt UI: Add mechanism to prohibit '3..' p2sh by default, which should protect
-  users from accidentally sending ERG to BTC segwit addresses. This protection
+  users from accidentally sending XRG to BTC segwit addresses. This protection
   can be disabled in preferences. Issues #1658 and #1225. (cculianu)
 * Updated README for better instructions on how to run the development/git
   version. (Mark Lundeberg)

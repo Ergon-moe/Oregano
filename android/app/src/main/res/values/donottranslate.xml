@@ -10,8 +10,8 @@
     <string name="test_timestamp">&#x200e;2018-04-01 16:20</string>
     <string name="test_txid">f4184fc596403b9d638783cf57adfe4c75c605f6356fbc91338530e9831e9e16</string>
     <string name="test_value">&#x200e;42.12345678</string>
-    <string name="test_value_signed">&#x200e;+42.12345678 ERG</string>
-    <string name="test_value_and_fiat">&#x200e;0.12345678 ERG (98765.43 USD)</string>
+    <string name="test_value_signed">&#x200e;+42.12345678 XRG</string>
+    <string name="test_value_and_fiat">&#x200e;0.12345678 XRG (98765.43 USD)</string>
     <string name="test_wallet">alpha</string>
 
     <!-- On a medium-sized phone, with the default text size, this is two lines in portrait and

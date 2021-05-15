@@ -326,7 +326,7 @@ class BlindSignatureRequest:
     the 32-byte request that should be sent to the signer. Once you get
     back their 32-byte response, call finalize().
 
-    The resultant Schnorr signatures follow the standard ERG Schnorr
+    The resultant Schnorr signatures follow the standard XRG Schnorr
     convention (using Jacobi symbol, pubkey prefixing and SHA256).
 
     Internally we use two random blinding factors a,b. Due to the jacobi
