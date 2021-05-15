@@ -140,7 +140,7 @@ class CoinChooserBase(PrintError):
             n -= 1
 
         # Last change output.  Round down to maximum precision but lose
-        # no more than 100 satoshis to fees (2dp)
+        # no more than 100 fixoshis to fees (2dp)
         N = pow(10, min(2, zeroes[0]))
         amount = (remaining // N) * N
         amounts.append(amount)

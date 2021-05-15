@@ -20,7 +20,7 @@ import kotlin.properties.Delegates.notNull
 
 val libPaymentRequest by lazy { libMod("paymentrequest") }
 
-val MIN_FEE = 1  // sat/byte
+val MIN_FEE = 1  // fix/byte
 
 
 class SendDialog : AlertDialogFragment() {
@@ -123,7 +123,7 @@ class SendDialog : AlertDialogFragment() {
             }
         }
 
-        var feeLabel = getString(R.string.sat_byte, feeSpb)
+        var feeLabel = getString(R.string.fix_byte, feeSpb)
         if (tx != null) {
             val fee = tx.callAttr("get_fee").toLong()
             feeLabel += " (${ltr(formatSatoshisAndUnit(fee))})"

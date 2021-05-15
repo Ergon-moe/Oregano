@@ -577,7 +577,7 @@ def lookup_cash_account_dialog(
     grid = QGridLayout()
     grid.setContentsMargins(62, 32, 12, 12)
     acct = QLineEdit()
-    acct.setPlaceholderText(_("Cash Account e.g. satoshi#123.45"))
+    acct.setPlaceholderText(_("Cash Account e.g. fixoshi#123.45"))
     acct.setMinimumWidth(280)
     label2 = WWLabel('<a href="https://www.cashaccount.info/#lookup">' + _("Search online...") + "</a>")
     label2.linkActivated.connect(webopen)
@@ -739,7 +739,7 @@ def lookup_cash_account_dialog(
 
 
 def cash_account_detail_dialog(parent : MessageBoxMixin,  # Should be an ElectrumWindow instance
-                               ca_string : str,  # Cash acount string eg: "satoshi#123.1
+                               ca_string : str,  # Cash acount string eg: "fixoshi#123.1
                                *, title : str = None  # The modal dialog window title
     ) -> bool:  # returns True on success, False on failure
     ''' Shows the Cash Account details for any cash account.

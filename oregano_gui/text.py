@@ -401,7 +401,7 @@ class ElectrumGui:
     def settings_dialog(self):
         fee = str(PyDecimal(self.config.fee_per_kb()) / COIN)
         out = self.run_dialog('Settings', [
-            {'label':'Default fee', 'type':'satoshis', 'value': fee }
+            {'label':'Default fee', 'type':'fixoshis', 'value': fee }
             ], buttons = 1)
         if out:
             if out.get('Default fee'):
@@ -437,7 +437,7 @@ class ElectrumGui:
                 label = item.get('label')
                 if item.get('type') == 'list':
                     value = item.get('value','')
-                elif item.get('type') == 'satoshis':
+                elif item.get('type') == 'fixoshis':
                     value = item.get('value','')
                 elif item.get('type') == 'str':
                     value = item.get('value','')
@@ -485,7 +485,7 @@ class ElectrumGui:
                     item['value'] = self.edit_str(item['value'], c)
                     out[item.get('label')] = item ['value']
 
-                elif _type == 'satoshis':
+                elif _type == 'fixoshis':
                     item['value'] = self.edit_str(item['value'], c, True)
                     out[item.get('label')] = item.get('value')
 

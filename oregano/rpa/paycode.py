@@ -23,7 +23,7 @@ from ..util import print_msg
 
 
 def _satoshis(amount):
-    # satoshi conversion must not be performed by the parser
+    # fixoshi conversion must not be performed by the parser
     return int(COIN * PyDecimal(amount)) if amount not in ['!', None] else amount
 
 

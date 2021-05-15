@@ -68,7 +68,7 @@ class Messages:
         """
         This method makes a greeting message for entering the pool with verification_key
         Params:
-            `amount`: the tier in satoshis
+            `amount`: the tier in fixoshis
             `typ`: Shuffle type. One of the types above (DEFAULT or DUST)
             `version`: A version integer. Defaults to 0. Use version ints to
             keep clients speaking different versions of the protocol

@@ -494,7 +494,7 @@ def make_dir(path):
 
 
 def format_satoshis_plain(x, decimal_point = 8):
-    """Display a satoshi amount scaled.  Always uses a '.' as a decimal
+    """Display a fixoshi amount scaled.  Always uses a '.' as a decimal
     point and has no thousands separator"""
     if x is None:
         return _('Unknown')

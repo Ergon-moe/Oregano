@@ -503,7 +503,7 @@ class Network(util.DaemonThread):
     def request_fee_estimates(self):
         self.print_error("request_fee_estimates called: DISABLED in network.py")
         return
-        # We disable fee estimates. XRG doesn't need this code. For now 1 sat/B
+        # We disable fee estimates. XRG doesn't need this code. For now 1 fix/B
         # is enough.
         self.config.requested_fee_estimates()
         try:
@@ -1845,7 +1845,7 @@ class Network(util.DaemonThread):
                 from .wallet import dust_threshold
                 dust_thold = dust_threshold(Network.get_instance())
             except: pass
-            return _("Transaction could not be broadcast due to dust outputs (dust threshold is {} satoshis).").format(dust_thold)
+            return _("Transaction could not be broadcast due to dust outputs (dust threshold is {} fixoshis).").format(dust_thold)
         elif r'Missing inputs' in server_msg or r'Inputs unavailable' in server_msg or r"bad-txns-inputs-spent" in server_msg or r"bad-txns-inputs-missingorspent" in server_msg:
             return _("Transaction could not be broadcast due to missing, already-spent, or otherwise invalid inputs.")
         elif r"transaction already in block chain" in server_msg:

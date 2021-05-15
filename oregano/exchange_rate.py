@@ -454,11 +454,11 @@ class FxThread(ThreadJob):
         return _("  (No FX rate available)") if rate is None else " 1 %s~%s %s" % (base_unit,
             self.value_str(COIN / (10**(8 - decimal_point)), rate, default_prec ), self.ccy )
 
-    def value_str(self, satoshis, rate, default_prec=2, is_diff=False, commas=True):
-        if satoshis is None:  # Can happen with incomplete history
+    def value_str(self, fixoshis, rate, default_prec=2, is_diff=False, commas=True):
+        if fixoshis is None:  # Can happen with incomplete history
             return _("Unknown")
         if rate:
-            value = PyDecimal(satoshis) / COIN * PyDecimal(rate)
+            value = PyDecimal(fixoshis) / COIN * PyDecimal(rate)
             return "%s" % (self.ccy_amount_str(value, commas, default_prec, is_diff=is_diff))
         return _("No data")
 
@@ -476,14 +476,14 @@ class FxThread(ThreadJob):
             self.history_used_spot = True
         return PyDecimal(rate) if rate is not None else None
 
-    def historical_value_str(self, satoshis, d_t):
+    def historical_value_str(self, fixoshis, d_t):
         rate = self.history_rate(d_t)
-        return self.value_str(satoshis, rate)
+        return self.value_str(fixoshis, rate)
 
-    def historical_value(self, satoshis, d_t):
+    def historical_value(self, fixoshis, d_t):
         rate = self.history_rate(d_t)
         if rate:
-            return PyDecimal(satoshis) / COIN * PyDecimal(rate)
+            return PyDecimal(fixoshis) / COIN * PyDecimal(rate)
 
     def timestamp_rate(self, timestamp):
         from .util import timestamp_to_datetime

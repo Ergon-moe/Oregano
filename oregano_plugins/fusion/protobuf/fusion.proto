@@ -83,9 +83,9 @@ message ClientHello { // from client
 message ServerHello { // from server
     repeated uint64 tiers = 1;
     required uint32 num_components = 2;
-    required uint64 component_feerate = 4; // sats/kB
-    required uint64 min_excess_fee = 5; // sats
-    required uint64 max_excess_fee = 6; // sats
+    required uint64 component_feerate = 4; // fixs/kB
+    required uint64 min_excess_fee = 5; // fixs
+    required uint64 max_excess_fee = 6; // fixs
 
     optional string donation_address = 15; // XRG Address "bitcoincash:qpx..."
 }
