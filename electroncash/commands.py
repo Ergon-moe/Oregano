@@ -549,15 +549,23 @@ class Commands:
 
     @command('w')
     def rpa_generate_paycode(self):
+        if self.wallet.wallet_type is not 'rpa':
+            return {'error': 'This command may only be used on an RPA wallet.' }
         return rpa.paycode.generate_paycode(self.wallet)
 
     @command('w')
     def rpa_generate_transaction_from_paycode(self, amount, paycode):
         # WARNING: Amount is in full Bitcoin Cash units
+        if self.wallet.wallet_type is not 'rpa':
+            return {'error': 'This command may only be used on an RPA wallet.' }
+            
         return rpa.paycode.generate_transaction_from_paycode(self.wallet, self.config, amount, paycode)
 
     @command('wp')
     def rpa_extract_private_key_from_transaction(self, raw_tx, password=None):
+        if self.wallet.wallet_type is not 'rpa':
+            return {'error': 'This command may only be used on an RPA wallet.' }
+            
         return rpa.paycode.extract_private_key_from_transaction(self.wallet, raw_tx, password)
 
     @command('wp')

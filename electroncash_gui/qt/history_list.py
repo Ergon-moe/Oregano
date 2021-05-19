@@ -264,9 +264,11 @@ class HistoryList(MyTreeWidget):
         label = self.wallet.get_label(tx_hash) or None
         menu.addAction(_("&Details"), lambda: self.parent.show_transaction(tx, label))
         if is_unconfirmed and tx:
-            child_tx = self.wallet.cpfp(tx, 0)
-            if child_tx:
-                menu.addAction(_("Child pays for parent"), lambda: self.parent.cpfp(tx, child_tx))
+            dummyvar=0
+			# THIS NEEDS CLEANUP.  LOOK AT THE REMOVAL of CPFP WHEN MERGING TO MAINLINE.
+            #child_tx = self.wallet.cpfp(tx, 0)
+            #if child_tx:
+            #    menu.addAction(_("Child pays for parent"), lambda: self.parent.cpfp(tx, child_tx))
         if pr_key:
             menu.addAction(self.invoiceIcon, _("View invoice"), lambda: self.parent.show_invoice(pr_key))
         if tx_URL:
