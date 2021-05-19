@@ -3101,6 +3101,18 @@ class RpaWallet(ImportedWalletBase):
     def get_receiving_paycode(self):
         return rpa.generate_paycode(self, prefix_size="10")
 
+    def fetch_rpa_mempool_txs_from_server(self):
+	    # This function is intended to be called when the clients wants 
+		# to check for new incoming RPA transactions from the mempool.  Functions
+		# like fetch_rpa_candidate_txs_from_server except that it queries
+		# the mempool rather than confirmed transactions.
+    
+        # Define the "grind string" (the RPA prefix)
+        rpa_grind_string = rpa.get_grind_string(self)
+		# Make the network call to request transactions
+        self.network.request_rpa_mempool(rpa_grind_string,self)
+        return
+    
     def fetch_rpa_candidate_txs_from_server(self, rpa_height, server_height):
         # This function is intended to be called when the client wants
         # to check for new incoming RPA transaction (for example when a new block arrives)
@@ -3109,6 +3121,7 @@ class RpaWallet(ImportedWalletBase):
         # and then it will call import_rpa_tx, passing the response back to the
         # wallet module.
 
+        # Make sure everything is properly connected (for example on wallet startup)
         if not(self.network.interface and server_height > 0):
             return
 

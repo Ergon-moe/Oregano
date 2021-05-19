@@ -896,6 +896,8 @@ class Network(util.DaemonThread):
                 self.on_server_version(interface, result)
         elif method == 'blockchain.reusable.get_history':
             self.process_rpa_transactions(interface, result, self.rpawallet)
+        elif method == 'blockchain.reusable.get_mempool':
+            self.process_rpa_transactions(interface, result, self.rpawallet)
         elif method == 'blockchain.headers.subscribe':
             if error is None:
                 # on_notify_header below validates result is right type or
@@ -1410,6 +1412,12 @@ class Network(util.DaemonThread):
                     'catch up done', interface.blockchain.height())
                 interface.blockchain.catch_up = None
         self.notify('blockchain_updated')
+
+    def request_rpa_mempool(self, byte_prefix_string, wallet):
+        params = [byte_prefix_string]
+        self.queue_request('blockchain.reusable.get_mempool', params)
+        self.rpawallet = wallet
+        return True
 
     def request_rpa_txs(self, height, number_of_blocks,
                         byte_prefix_string, wallet):
