@@ -1619,28 +1619,31 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         hbox = QHBoxLayout()
         hbox.addLayout(vbox_g)
-        vbox2 = QVBoxLayout()
-        vbox2.setContentsMargins(0, 0, 0, 0)
-        vbox2.setSpacing(4)
-        vbox2.addWidget(self.receive_qr, Qt.AlignHCenter | Qt.AlignTop)
-        self.receive_qr.setToolTip(
-            _('Receive request QR code (click for details)'))
-        but = uribut = QPushButton(_('Copy &URI'))
-
+        
+        
         def on_copy_uri():
             if self.receive_qr.data:
                 uri = str(self.receive_qr.data)
                 self.copy_to_clipboard(
                     uri, _('Receive request URI copied to clipboard'), uribut)
-        but.clicked.connect(on_copy_uri)
-        but.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        but.setToolTip(
-            _('Click to copy the receive request URI to the clipboard'))
-        vbox2.addWidget(but)
-        vbox2.setAlignment(but, Qt.AlignHCenter | Qt.AlignVCenter)
+        
+        # The QR code for the receive tab.
+        if self.wallet.wallet_type is not 'rpa':
+            # Do not attempt to show a QR code for RPA paycode wallets.  There is no URI scheme yet for RPA.
+            vbox2 = QVBoxLayout()
+            vbox2.setContentsMargins(0, 0, 0, 0)
+            vbox2.setSpacing(4)
+            vbox2.addWidget(self.receive_qr, Qt.AlignHCenter | Qt.AlignTop)
+            self.receive_qr.setToolTip(_('Receive request QR code (click for details)'))
+            but = uribut = QPushButton(_('Copy &URI'))
+            but.clicked.connect(on_copy_uri)
+            but.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            but.setToolTip(_('Click to copy the receive request URI to the clipboard'))
+            vbox2.addWidget(but)
+            vbox2.setAlignment(but, Qt.AlignHCenter | Qt.AlignVCenter)
+            hbox.addLayout(vbox2)
 
-        hbox.addLayout(vbox2)
-
+        
         class ReceiveTab(QWidget):
             def showEvent(slf, e):
                 super().showEvent(e)
