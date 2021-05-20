@@ -31,7 +31,7 @@ from . import bitcoin
 from . import keystore
 from . import mnemonic
 from . import util
-from .wallet import (ImportedAddressWallet, ImportedPrivkeyWallet,
+from .wallet import (ImportedAddressWallet, ImportedPrivkeyWallet,RpaWallet,
                      Standard_Wallet, Multisig_Wallet, wallet_types)
 from .i18n import _
 
@@ -86,6 +86,7 @@ class BaseWizard(util.PrintError):
             ('standard',  _("Standard wallet")),
             ('multisig',  _("Multi-signature wallet")),
             ('imported',  _("Import Bitcoin Cash addresses or private keys")),
+            ('rpa', _("Reusable payment address")),
         ]
         choices = [pair for pair in wallet_kinds if pair[0] in wallet_types]
         self.choice_dialog(title=title, message=message, choices=choices, run_next=self.on_wallet_type)
@@ -98,6 +99,8 @@ class BaseWizard(util.PrintError):
             action = 'choose_multisig'
         elif choice == 'imported':
             action = 'import_addresses_or_keys'
+        elif choice == 'rpa':
+            action = 'on_rpa'    
         self.run(action)
 
     def choose_multisig(self):
@@ -109,10 +112,17 @@ class BaseWizard(util.PrintError):
         self.multisig_dialog(run_next=on_multisig)
 
     def choose_keystore(self):
-        assert self.wallet_type in ['standard', 'multisig']
+        assert self.wallet_type in ['standard', 'multisig','rpa']
         i = len(self.keystores)
         title = _('Add cosigner') + ' (%d of %d)'%(i+1, self.n) if self.wallet_type=='multisig' else _('Keystore')
-        if self.wallet_type =='standard' or i==0:
+        if self.wallet_type == 'rpa':
+            message = _(
+                'Do you want to create a new seed, or to restore a wallet using an existing seed?')
+            choices = [
+                ('create_standard_seed', _('Create a new seed')),
+                ('restore_from_seed', _('I already have a seed')),
+            ]
+        elif self.wallet_type =='standard' or i==0:
             message = _('Do you want to create a new seed, or to restore a wallet using an existing seed?')
             choices = [
                 ('create_standard_seed', _('Create a new seed')),
@@ -144,6 +154,11 @@ class BaseWizard(util.PrintError):
     def bip38_prompt_for_pw(self, bip38_keys):
         ''' Implemented in Qt InstallWizard subclass '''
         raise NotImplementedError('bip38_prompt_for_pw not implemented')
+
+    def on_rpa(self):
+        self.run('choose_keystore')
+        self.request_password(run_next=self.on_password)
+        self.terminate()
 
     def on_import(self, text):
         if keystore.is_address_list(text):
@@ -355,7 +370,10 @@ class BaseWizard(util.PrintError):
         if has_xpub:
             from .bitcoin import xpub_type
             t1 = xpub_type(k.xpub)
-        if self.wallet_type == 'standard':
+        if self.wallet_type == 'rpa':
+            keys = k.dump()
+            self.keystores.append(k)
+        elif self.wallet_type == 'standard':
             if has_xpub and t1 not in ['standard']:
                 self.show_error(_('Wrong key type') + ' %s'%t1)
                 self.run('choose_keystore')
@@ -400,7 +418,13 @@ class BaseWizard(util.PrintError):
         for k in self.keystores:
             if k.may_have_password():
                 k.update_password(None, password)
-        if self.wallet_type == 'standard':
+        if self.wallet_type == 'rpa':
+            keys = self.keystores[0].dump()
+            self.storage.put('keystore_rpa_aux', keys)
+            self.storage.put('seed_type', self.seed_type)
+            text = ""
+            self.wallet = RpaWallet.from_text(self.storage, text, password)
+        elif self.wallet_type == 'standard':
             self.storage.put('seed_type', self.seed_type)
             keys = self.keystores[0].dump()
             self.storage.put('keystore', keys)

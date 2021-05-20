@@ -533,6 +533,10 @@ class Network(util.DaemonThread):
     def get_status_value(self, key):
         if key == 'status':
             value = self.connection_status
+        elif key == 'import_rpa_tx':
+            value = (self.import_rpa_tx, self.rpawallet)
+        elif key == 'import_rpa_mempool_tx':
+            value = (self.import_rpa_mempool_tx, self.rpawallet)    
         elif key == 'banner':
             value = self.banner
         elif key == 'fee':
@@ -553,7 +557,12 @@ class Network(util.DaemonThread):
         return value
 
     def notify(self, key):
-        if key in ('updated',):
+        if key == 'import_rpa_tx' or key == 'import_rpa_mempool_tx':
+            rpa_data = self.get_status_value(key)
+            rpa_tx_data = rpa_data[0]
+            rpa_wallet = rpa_data[1]
+            self.trigger_callback(key, rpa_tx_data, rpa_wallet)
+        elif key in ('updated',):
             # Legacy support.  Will warn that updated is deprecated.
             self.trigger_callback(key)
         else:
@@ -786,6 +795,14 @@ class Network(util.DaemonThread):
         self.recent_servers = self.recent_servers[0:20]
         self.save_recent_servers()
 
+    def process_rpa_transactions(self, interface, data, wallet):
+        self.import_rpa_tx = data
+        self.notify('import_rpa_tx')
+
+    def process_rpa_mempool_transactions(self, interface, data, wallet):
+        self.import_rpa_mempool_tx = data
+        self.notify('import_rpa_mempool_tx')
+    
     def process_response(self, interface, request, response, callbacks):
         if self.debug:
             self.print_error("<--", response)
@@ -805,6 +822,10 @@ class Network(util.DaemonThread):
         if method == 'server.version':
             if isinstance(result, list):
                 self.on_server_version(interface, result)
+        elif method == 'blockchain.reusable.get_history':
+            self.process_rpa_transactions(interface, result, self.rpawallet)
+        elif method == 'blockchain.reusable.get_mempool':
+            self.process_rpa_mempool_transactions(interface, result, self.rpawallet)
         elif method == 'blockchain.headers.subscribe':
             if error is None:
                 # on_notify_header below validates result is right type or format
@@ -1246,6 +1267,19 @@ class Network(util.DaemonThread):
                 interface.blockchain.catch_up = None
         self.notify('blockchain_updated')
 
+    def request_rpa_mempool(self, byte_prefix_string, wallet):
+        params = [byte_prefix_string]
+        self.queue_request('blockchain.reusable.get_mempool', params)
+        self.rpawallet = wallet
+        return True
+
+    def request_rpa_txs(self, height, number_of_blocks,
+                        byte_prefix_string, wallet):
+        params = [height, number_of_blocks, byte_prefix_string]
+        self.queue_request('blockchain.reusable.get_history', params)
+        self.rpawallet = wallet
+        return True
+
     def request_header(self, interface, height):
         """
         This works for all modes except for 'default'.
@@ -1265,6 +1299,8 @@ class Network(util.DaemonThread):
             params = [height, networks.net.VERIFICATION_BLOCK_HEIGHT]
         self.queue_request('blockchain.block.header', params, interface)
         return True
+        
+        
 
     def on_header(self, interface, request, response):
         """Handle receiving a single block header"""

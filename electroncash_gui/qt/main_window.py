@@ -60,6 +60,7 @@ from electroncash import paymentrequest
 from electroncash.transaction import OPReturn
 from electroncash.wallet import Multisig_Wallet, sweep_preparations
 from electroncash.contacts import Contact
+from electroncash import rpa
 try:
     from electroncash.plot import plot_history
 except:
@@ -234,7 +235,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         if self.network:
             self.network_signal.connect(self.on_network_qt)
-            interests = ['blockchain_updated', 'wallet_updated',
+            interests = ['blockchain_updated', 'wallet_updated', 'import_rpa_tx', 'import_rpa_mempool_tx',
                          'new_transaction', 'status', 'banner', 'verified2',
                          'fee', 'ca_verified_tx', 'ca_verification_failed']
             # To avoid leaking references to "self" that prevent the
@@ -385,11 +386,33 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                 pass
             self.show_error(str(exc_info[1]))
 
+    def import_rpa_tx(self, data):
+        # This should only be called by RPA wallet.  on_network function should be checking
+        # for the correct wallet, so we should never be in a situation with a
+        # wrong wallet type.
+        assert(self.wallet.wallet_type is 'rpa')
+        password = self.wallet.rpa_pwd
+        self.wallet.import_rpa_tx(data, password)
+
+    def import_rpa_mempool_tx(self, data):
+        # This should only be called by RPA wallet.  on_network function should be checking
+        # for the correct wallet, so we should never be in a situation with a
+        # wrong wallet type.
+        assert(self.wallet.wallet_type is 'rpa')
+        password = self.wallet.rpa_pwd
+        self.wallet.import_rpa_mempool_tx(data, password)
+
     def on_network(self, event, *args):
         #self.print_error("on_network:", event, *args)
         if event == 'wallet_updated':
             if args[0] is self.wallet:
                 self.need_update.set()
+        elif event == 'import_rpa_tx':
+            if args[1] is self.wallet:
+                self.network_signal.emit(event, args)
+        elif event == 'import_rpa_mempool_tx':
+            if args[1] is self.wallet:
+                self.network_signal.emit(event, args)
         elif event == 'blockchain_updated':
             self.need_update.set()
         elif event == 'new_transaction':
@@ -414,6 +437,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         # Handle a network message in the GUI thread
         if event == 'status':
             self.update_status()
+        elif event == 'import_rpa_tx':
+            self.import_rpa_tx(args)
+        elif event == 'import_rpa_mempool_tx':
+            self.import_rpa_mempool_tx(args)
         elif event == 'banner':
             self.console.showMessage(args[0])
         elif event == 'fee':
@@ -474,6 +501,17 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.watching_only_changed()
         self.history_updated_signal.emit() # inform things like address_dialog that there's a new history
         run_hook('load_wallet', self.wallet, self)
+        if self.wallet.wallet_type == "rpa":
+            if self.wallet.has_password():
+                password = self.password_dialog("To perform RPA syncing in the background, please enter your password.")
+                self.wallet.rpa_pwd = password
+                try:
+                    self.wallet.check_password(password)
+                except Exception as e:
+                    self.show_error(str(e))
+                    # This is not the precise way to shut down the client, as we can see
+                    # errors in the terminal.  Needs cleanup.
+                    self.gui_object.close_window(self)
 
     def init_geometry(self):
         winpos = self.wallet.storage.get("winpos-qt")
@@ -706,6 +744,11 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         paytomany_menu = tools_menu.addAction(_("&Pay to Many"), self.paytomany, QKeySequence("Ctrl+M"))
 
+        if self.wallet.wallet_type == 'rpa':
+            tools_menu.addAction(
+                _("&Refresh RPA Transactions"),
+                self.wallet.fetch_rpa_mempool_txs_from_server)
+        
         raw_transaction_menu = tools_menu.addMenu(_("&Load Transaction"))
         raw_transaction_menu.addAction(_("From &File") + "...", self.do_process_from_file)
         raw_transaction_menu.addAction(_("From &Text") + "...", self.do_process_from_text, QKeySequence("Ctrl+T"))
@@ -1019,6 +1062,20 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         if self.wallet.up_to_date or not self.network or not self.network.is_connected():
             self.update_tabs()
 
+        if self.wallet.wallet_type == "rpa":
+            server_height = self.network.get_server_height()
+            rpa_height = self.wallet.storage.get('rpa_height')
+
+            # Establish rpa_height in the wallet as the current height because we
+            # don't need to sync anything prior to wallet creation.
+            if rpa_height is None:
+                rpa_height = self.network.get_server_height()
+                self.wallet.storage.put('rpa_height', rpa_height)
+                self.wallet.storage.write()
+
+            self.wallet.fetch_rpa_candidate_txs_from_server(
+                rpa_height, server_height)
+
     @rate_limited(1.0, classlevel=True, ts_after=True) # Limit tab updates to no more than 1 per second, app-wide. Multiple calls across instances will be collated into 1 deferred series of calls (1 call per extant instance)
     def update_tabs(self):
         if self.cleaned_up: return
@@ -1098,8 +1155,23 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         label.setBuddy(self.receive_address_e)
         self.receive_address_e.textChanged.connect(self.update_receive_qr)
         self.gui_object.cashaddr_toggled_signal.connect(self.update_receive_address_widget)
+        
+        if self.wallet.wallet_type == 'rpa':
+            self.receive_paycode_e = ButtonsLineEdit()
+            self.receive_paycode_e.addCopyButton()
+            grid.addWidget(self.receive_paycode_e, 0, 1, 1, -1)
+            self.receive_paycode_e.setText(self.wallet.get_receiving_paycode())
+            self.receive_paycode_e.setReadOnly(True)
+            self.receive_paycode_e.setStyleSheet(
+                "QLineEdit { qproperty-cursorPosition: 0; }")
+            label = HelpLabel(_('&Receiving paycode'), msg)
+            label.setBuddy(self.receive_paycode_e)
+        else:
+            grid.addWidget(self.receive_address_e, 0, 1, 1, -1)
+            label = HelpLabel(_('&Receiving address'), msg)
+            label.setBuddy(self.receive_address_e)
+
         grid.addWidget(label, 0, 0)
-        grid.addWidget(self.receive_address_e, 0, 1, 1, -1)
 
         # Cash Account for this address (if any)
         msg = _("The Cash Account (if any) associated with this address. It doesn't get saved with the request, but it is shown here for your convenience.\n\nYou may use the Cash Accounts button to register a new Cash Account for this address.")
@@ -1264,23 +1336,29 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         hbox = QHBoxLayout()
         hbox.addLayout(vbox_g)
-        vbox2 = QVBoxLayout()
-        vbox2.setContentsMargins(0,0,0,0)
-        vbox2.setSpacing(4)
-        vbox2.addWidget(self.receive_qr, Qt.AlignHCenter|Qt.AlignTop)
-        self.receive_qr.setToolTip(_('Receive request QR code (click for details)'))
-        but = uribut = QPushButton(_('Copy &URI'))
+
         def on_copy_uri():
             if self.receive_qr.data:
                 uri = str(self.receive_qr.data)
-                self.copy_to_clipboard(uri, _('Receive request URI copied to clipboard'), uribut)
-        but.clicked.connect(on_copy_uri)
-        but.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        but.setToolTip(_('Click to copy the receive request URI to the clipboard'))
-        vbox2.addWidget(but)
-        vbox2.setAlignment(but, Qt.AlignHCenter|Qt.AlignVCenter)
+                self.copy_to_clipboard(
+                    uri, _('Receive request URI copied to clipboard'), uribut)
 
-        hbox.addLayout(vbox2)
+        # The QR code for the receive tab.
+        if self.wallet.wallet_type is not 'rpa':
+            # Do not attempt to show a QR code for RPA paycode wallets.  There is no URI scheme yet for RPA.
+            vbox2 = QVBoxLayout()
+            vbox2.setContentsMargins(0, 0, 0, 0)
+            vbox2.setSpacing(4)
+            vbox2.addWidget(self.receive_qr, Qt.AlignHCenter | Qt.AlignTop)
+            self.receive_qr.setToolTip(_('Receive request QR code (click for details)'))
+            but = uribut = QPushButton(_('Copy &URI'))
+            but.clicked.connect(on_copy_uri)
+            but.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            but.setToolTip(_('Click to copy the receive request URI to the clipboard'))
+            vbox2.addWidget(but)
+            vbox2.setAlignment(but, Qt.AlignHCenter | Qt.AlignVCenter)
+            hbox.addLayout(vbox2)
+
 
         class ReceiveTab(QWidget):
             def showEvent(slf, e):
@@ -1977,7 +2055,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             return func(self, *args, **kwargs)
         return request_password
 
-    def read_send_tab(self):
+    def read_send_tab(self,get_raw=False):
 
         isInvoice= False;
 
@@ -1985,39 +2063,76 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.show_error(_('Payment request has expired'))
             return
         label = self.message_e.text()
-
-        if self.payment_request:
-            isInvoice = True;
-            outputs = self.payment_request.get_outputs()
-        else:
-            errors = self.payto_e.get_errors()
-            if errors:
-                self.show_warning(_("Invalid lines found:") + "\n\n" + '\n'.join([ _("Line #") + str(x[0]+1) + ": " + x[1] for x in errors]))
+        if not self.wallet.is_multisig() and self.payto_e.is_paycode:
+            paycode_string = self.payto_e.text()[1:-1]
+            if self.amount_e.get_amount() is None:
+                self.show_error(_('Invalid Amount'))
                 return
+            full_unit_amount = self.amount_e.get_amount() / 100000000
+            
+            
+            rpa_pwd = None
+            if self.wallet.wallet_type == 'rpa':
+                rpa_pwd = self.wallet.rpa_pwd
+            else:
+                if self.wallet.has_password():
+                    msg = []
+                    msg.append("")
+                    msg.append(_("Enter your password to proceed"))
+                    password = self.password_dialog('\n'.join(msg))
+                    if not password:
+                        return
+                    rpa_pwd = password
+                
+            raw_tx = rpa.paycode.generate_transaction_from_paycode(
+                self.wallet, self.config, full_unit_amount, paycode_string,password=rpa_pwd)
+            if raw_tx == 0:
+                self.show_error("Problem creating paycode tx.")
+                return
+            unpacked_tx = Transaction.deserialize(Transaction(raw_tx))
+            output_zero_address = unpacked_tx["outputs"][0]['address']
+            # Set the pay-to field address as a tuple with index 0 and the rpa
+            # output address
+            self.payto_e.payto_address = (0, output_zero_address)
             outputs = self.payto_e.get_outputs(self.max_button.isChecked())
-
-            if self.payto_e.is_alias and not self.payto_e.validated:
-                alias = self.payto_e.toPlainText()
-                msg = _('WARNING: the alias "{}" could not be validated via an additional '
-                        'security check, DNSSEC, and thus may not be correct.').format(alias) + '\n'
-                msg += _('Do you wish to continue?')
-                if not self.question(msg):
+        else:
+            # Proceed with normal (non RPA paycode) scenarios
+            if self.payment_request:
+                isInvoice = True;
+                outputs = self.payment_request.get_outputs()
+            else:
+                errors = self.payto_e.get_errors()
+                if errors:
+                    self.show_warning(_("Invalid lines found:") + "\n\n" + '\n'.join([ _("Line #") + str(x[0]+1) + ": " + x[1] for x in errors]))
                     return
+                outputs = self.payto_e.get_outputs(self.max_button.isChecked())
 
-        try:
-            # handle op_return if specified and enabled
-            opreturn_message = self.message_opreturn_e.text()
-            if opreturn_message:
-                if self.opreturn_rawhex_cb.isChecked():
-                    outputs.append(OPReturn.output_for_rawhex(opreturn_message))
-                else:
-                    outputs.append(OPReturn.output_for_stringdata(opreturn_message))
-        except OPReturn.TooLarge as e:
-            self.show_error(str(e))
-            return
-        except OPReturn.Error as e:
-            self.show_error(str(e))
-            return
+                if self.payto_e.is_alias and not self.payto_e.validated:
+                    alias = self.payto_e.toPlainText()
+                    msg = _('WARNING: the alias "{}" could not be validated via an additional '
+                        'security check, DNSSEC, and thus may not be correct.').format(alias) + '\n'
+                    msg += _('Do you wish to continue?')
+                    if not self.question(msg):
+                        return
+
+            try:
+                # handle op_return if specified and enabled
+                opreturn_message = self.message_opreturn_e.text()
+                if opreturn_message:
+                    if self.opreturn_rawhex_cb.isChecked():
+                        outputs.append(OPReturn.output_for_rawhex(opreturn_message))
+                    else:
+                        outputs.append(OPReturn.output_for_stringdata(opreturn_message))
+            except OPReturn.TooLarge as e:
+                self.show_error(str(e))
+                return
+            except OPReturn.Error as e:
+                self.show_error(str(e))
+                return
+
+        # END ELSE (Normal Case, not Paycode)
+        # -----------------------------------
+        # Proceed with checking outputs
 
         if not outputs:
             self.show_error(_('No outputs'))
@@ -2031,7 +2146,16 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         freeze_fee = self.fee_e.isVisible() and self.fee_e.isModified() and (self.fee_e.text() or self.fee_e.hasFocus())
         fee = self.fee_e.get_amount() if freeze_fee else None
         coins = self.get_coins(isInvoice)
-        return outputs, fee, label, coins
+        
+        # Return data.  Include the raw_tx if specified.
+        # raw_tx used for RPA functionality so we can avoid grinding the transaction twice.
+        # In that case, do_send() calls read_send_tab and doesn't need to
+        # create the transaction again.
+
+        if get_raw:
+            return outputs, fee, label, coins, raw_tx
+        else:
+            return outputs, fee, label, coins
 
     def _chk_no_segwit_suspects(self):
         ''' Makes sure the payto_e has no addresses that might be BTC segwit
@@ -2123,12 +2247,23 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         self._warn_if_legacy_address()
 
-        r = self.read_send_tab()
-        if not r:
-            return
-        outputs, fee, tx_desc, coins = r
+        if not self.payto_e.is_paycode:
+            r = self.read_send_tab()
+            if not r:
+                return
+            outputs, fee, tx_desc, coins = r
+        else:
+            r = self.read_send_tab(get_raw=True)
+            if not r:
+                return
+            outputs, fee, tx_desc, coins, tx_raw = r
+
         try:
-            tx = self.wallet.make_unsigned_transaction(coins, outputs, self.config, fee)
+            if self.payto_e.is_paycode:
+                tx = self.tx_from_text(tx_raw)
+            else:
+                tx = self.wallet.make_unsigned_transaction(
+                    coins, outputs, self.config, fee)
         except NotEnoughFunds:
             self.show_message(_("Insufficient funds"))
             return
@@ -2438,6 +2573,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         amount = out.get('amount')
         label = out.get('label')
         message = out.get('message')
+        scheme = out.get('scheme')
         op_return = out.get('op_return')
         op_return_raw = out.get('op_return_raw')
 
@@ -2481,6 +2617,14 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             # (they only get resolved when payto_e loses focus)
             self.message_e.setFocus()
 
+        if scheme == "paycode" and not self.wallet.is_multisig():
+            self.payto_e.setIsPaycode(True)
+            self.payto_e.setText("<paycode:" + address + ">")
+            self.payto_e.setGreen()
+            self.payto_e.setReadOnly(True)
+        else:
+            self.payto_e.setIsPaycode(False)
+
     def do_clear(self):
         ''' Clears the send tab, reseting its UI state to its initiatial state.'''
         self.max_button.setChecked(False)
@@ -2488,6 +2632,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.op_return_toolong = False
         self.payment_request = None
         self.payto_e.is_pr = False
+        self.payto_e.setIsPaycode(False)
         self.payto_e.is_alias, self.payto_e.validated = False, False  # clear flags to avoid bad things
         for e in [self.payto_e, self.message_e, self.amount_e, self.fiat_send_e, self.fee_e, self.message_opreturn_e]:
             e.setText('')
@@ -3076,7 +3221,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         if not self.wallet.has_seed():
             self.show_message(_('This wallet has no seed'))
             return
-        keystore = self.wallet.get_keystore()
+        if self.wallet.wallet_type == 'rpa':
+            keystore = self.wallet.get_keystore_rpa_aux()
+        else:
+            keystore = self.wallet.get_keystore()
         try:
             seed = keystore.get_seed(password)
             passphrase = keystore.get_passphrase(password)  # may be None or ''

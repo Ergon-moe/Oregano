@@ -71,7 +71,7 @@ from .paymentrequest import InvoiceStore, PR_PAID, PR_UNPAID, PR_UNKNOWN, PR_EXP
 from .contacts import Contacts
 from . import cashacct
 from . import slp
-
+from .rpa import paycode as rpa
 
 def _(message): return message
 
@@ -2961,7 +2961,300 @@ class ImportedPrivkeyWallet(ImportedWalletBase):
         if pubkey in self.keystore.keypairs:
             return pubkey.address
 
+class RpaWallet(ImportedWalletBase):
+    # wallet made of imported private keys
 
+    wallet_type = 'rpa'
+    txin_type = 'p2pkh'
+    rpa_pwd = None
+
+    def __init__(self, storage):
+        Abstract_Wallet.__init__(self, storage)
+        self.keystore_rpa_aux = None
+        self.rpa_height = 0
+
+    @classmethod
+    def from_text(cls, storage, text, password=None):
+        wallet = cls(storage)
+        storage.put('use_encryption', bool(password))
+        for privkey in text.split():
+            wallet.import_private_key(privkey, password)
+        return wallet
+
+    def is_watching_only(self):
+        return False
+
+    def get_keystores(self):
+        return [self.keystore]
+
+    def get_keystore_rpa_aux(self):
+        return self.keystore_rpa_aux
+
+    def can_import_privkey(self):
+        return True
+
+    def has_seed(self):
+        return self.keystore_rpa_aux.has_seed()
+
+    def get_seed(self, password):
+        return self.keystore_rpa_aux.get_seed(password)
+
+    def load_keystore_rpa_aux(self):
+        if self.storage.get('keystore_rpa_aux'):
+            self.keystore_rpa_aux = load_keystore(
+                self.storage, 'keystore_rpa_aux')
+
+    def load_keystore(self):
+        self.load_keystore_rpa_aux()
+        if self.storage.get('keystore'):
+            self.keystore = load_keystore(self.storage, 'keystore')
+        else:
+            self.keystore = Imported_KeyStore({})
+
+    def save_keystore(self):
+        self.storage.put('keystore', self.keystore.dump())
+
+    def check_password(self, password):
+        self.keystore_rpa_aux.check_password(password)
+
+    def save_keystore_rpa_aux(self):
+        self.storage.put('keystore_rpa_aux', self.keystore_rpa_aux.dump())
+
+    def load_addresses(self):
+        pass
+
+    def save_addresses(self):
+        pass
+
+    def update_password(self, old_pw, new_pw, encrypt=False):
+        if old_pw is None and self.has_password():
+            raise InvalidPassword()
+        if self.keystore is not None and self.keystore.can_change_password():
+            self.keystore.update_password(old_pw, new_pw)
+            self.save_keystore()
+        if self.keystore_rpa_aux is not None and self.keystore_rpa_aux.can_change_password():
+            self.keystore_rpa_aux.update_password(old_pw, new_pw)
+            self.save_keystore_rpa_aux()
+        self.storage.set_password(new_pw, encrypt)
+        self.storage.write()
+        self.rpa_pwd = new_pw
+
+    def can_change_password(self):
+        return True
+
+    def can_import_address(self):
+        return False
+
+    def get_addresses(self, include_change=False):
+        return self.keystore.get_addresses()
+
+    def delete_address_derived(self, address):
+        self.keystore.remove_address(address)
+        self.save_keystore()
+
+    def get_address_index(self, address):
+        return self.get_public_key(address)
+
+    def get_public_key(self, address):
+        return self.keystore.address_to_pubkey(address)
+
+    def import_private_key(self, sec, pw):
+        pubkey = self.keystore.import_privkey(sec, pw)
+        self.save_keystore()
+        self.add_address(pubkey.address)
+        self.cashacct.save()
+        self.save_addresses()
+        self.storage.write()  # no-op if above already wrote
+        return pubkey.address.to_ui_string()
+
+    def export_private_key(self, address, password):
+        '''Returned in WIF format.'''
+        pubkey = self.keystore.address_to_pubkey(address)
+        return self.keystore.export_private_key(pubkey, password)
+
+    def export_private_key_from_index(self, index, password):
+        # returns a private from the HD (rpa auxilliary) keystore based on the index
+        # The index is a tuple consisting of Change (boolean) and Address number.
+        # for example (False,0) is the first receiving address.
+        pk, compressed = self.keystore_rpa_aux.get_private_key(index, password)
+        return bitcoin.serialize_privkey(pk, compressed, self.txin_type)
+
+    def add_input_sig_info(self, txin, address):
+        assert txin['type'] == 'p2pkh'
+        pubkey = self.keystore.address_to_pubkey(address)
+        txin['num_sig'] = 1
+        txin['x_pubkeys'] = [pubkey.to_ui_string()]
+        txin['signatures'] = [None]
+
+    def pubkeys_to_address(self, pubkey):
+        pubkey = PublicKey.from_string(pubkey)
+        if pubkey in self.keystore.keypairs:
+            return pubkey.address
+
+    def derive_pubkeys(self, c, i):
+        if not self.keystore_rpa_aux:
+            self.load_keystore_rpa_aux()
+        k = self.get_keystore_rpa_aux()
+        return k.derive_pubkey(c, i)
+
+    def get_receiving_paycode(self):
+        return rpa.generate_paycode(self, prefix_size="10")
+
+    def fetch_rpa_mempool_txs_from_server(self):
+        # This function is intended to be called when the clients wants
+        # to check for new incoming RPA transactions from the mempool.  Functions
+        # like fetch_rpa_candidate_txs_from_server except that it queries
+        # the mempool rather than confirmed transactions.
+
+        # Define the "grind string" (the RPA prefix)
+        rpa_grind_string = rpa.get_grind_string(self)
+        # Make the network call to request transactions
+        self.network.request_rpa_mempool(rpa_grind_string, self)
+        return
+
+    def fetch_rpa_candidate_txs_from_server(self, rpa_height, server_height):
+        # This function is intended to be called when the client wants
+        # to check for new incoming RPA transaction (for example when a new block arrives)
+        # So, we need to ask the network layer for the transactions at the current block height.
+        # The network layer will then set up an rpa event that the main window can listen for,
+        # and then it will call import_rpa_tx, passing the response back to the
+        # wallet module.
+
+        # Make sure everything is properly connected (for example on wallet startup)
+        if not(self.network.interface and server_height > 0):
+            return
+
+        rpa_chunk_size = 50
+        number_of_blocks_to_fetch = server_height - rpa_height
+
+        # Theoretically the rpa height should never be greater than the server height, but check for zero and sanity check negative number.
+        # The least we can do is fetch a single block.
+        if number_of_blocks_to_fetch < 1:
+            number_of_blocks_to_fetch = 1
+
+        # rpa_chunk_size is the maximum number of blocks to fetch in one server
+        # call.
+        if number_of_blocks_to_fetch > rpa_chunk_size:
+            number_of_blocks_to_fetch = rpa_chunk_size
+
+        # Define the "grind string" (the RPA prefix)
+        rpa_grind_string = rpa.get_grind_string(self)
+
+        # Make a network request for RPA transactions.
+        self.network.request_rpa_txs(
+            rpa_height,
+            number_of_blocks_to_fetch,
+            rpa_grind_string,
+            self)
+        return
+
+    def import_rpa_tx(self, data, password):
+
+        # Initial variables
+        payload = data[0]
+
+        # A non-RPA server will return none to here.  Exit.
+        if payload is None:
+            return
+        self.rpa_height = self.storage.get('rpa_height')
+
+        # Some variables to keep track of how far we got in the sync process.
+        # Whenever we get to a new height, we need to update self.rpa_height
+        last_height_fully_processed = 0
+        tx_height = 0
+
+        rpa_height = 0
+        for i in payload:
+            txid = i['tx_hash']
+            ok, rawtx = self.network.get_raw_tx_for_txid(txid, timeout=10.0)
+            # If for some reason the server doesnt respond with a valid rawtx, quit.
+            # The call to network.get_raw_tx_for_txid can return an error
+            # message, so check for hex format.
+            valid_rawtx = all(c in ('0123456789abcdefABCDEF') for c in rawtx)
+            if not valid_rawtx:
+                f = open("rpa-log.txt", "a")
+                rpa_log_msg = "Failed to get a server response for txid " + txid
+                f.write(rpa_log_msg)
+                f.close()
+                continue
+
+            # Define last_height_fully_processed by subtracting one from the current transaction height.
+            # (If we're still looping, then a new height is the only way to know if the previous height was "fully processed")
+            tx_height = i['height']
+            last_height_fully_processed = tx_height - 1
+
+            # Attempt to extract the private key from the transaction and if successful, import it into the keystore.
+            extracted_private_key = rpa.extract_private_key_from_transaction(
+                self, rawtx, password)
+            if extracted_private_key is not 0:
+                self.import_private_key(extracted_private_key, password)
+
+            # Update the height if necessary.
+            if last_height_fully_processed > self.rpa_height:
+                self.rpa_height = last_height_fully_processed
+                # Update storage as we go rather than just once after the entire loop completes, because
+                # this will facillitate syncing when a user shuts down the client before a batch finishes.
+                self.storage.put('rpa_height', self.rpa_height)
+                self.storage.write()
+
+        # If there were no transactions in this payload, tx_height will still have the initialized value of 0, so just set it to rpa height
+        # Which will get incremented a few lines later.  Strictly speaking, this is not optimally efficient.  For example, a 3 block chunk
+        # with no payload starting on block 680000 would then lead to checking another 3 block chunk starting on block 680001 rather than 680003.
+        # However in practice, it's an edge case since the longer the chunk, the more unlikely it will be to have a completely empty payload.  Also,
+        # there would be added complexity trying to perfect this, since the information about how many blocks were requested is not present
+        # in the payload.
+        if tx_height == 0:
+            tx_height = self.rpa_height
+
+        # After the loop finishes, the variable tx_height should contain the last height processed.
+        # Because the loop completed, we can consider this height fully processed, so update self.rpa_height.
+        if tx_height > 0:
+            self.rpa_height = tx_height + 1
+            # There's an edge case where the rpa height can go too high: Prevent
+            # rpa_height from exceeding server height.
+            if self.rpa_height > self.network.get_server_height():
+                self.rpa_height = self.network.get_server_height()
+            self.storage.put('rpa_height', self.rpa_height)
+            self.storage.write()
+
+        # Finally, make another call back to fetch_rpa_candidate_tx_from_server
+        # This creates a loop in the code flow in which we will keep
+        # calling fetch_rpa_candidate_tx_from_server until we reach
+        # the tip of the blockchain.
+        server_height = self.network.get_server_height()
+        if self.rpa_height < server_height:
+            self.fetch_rpa_candidate_txs_from_server(self.rpa_height, server_height)
+
+
+    def import_rpa_mempool_tx(self, data, password):
+
+        # Initial variables
+        payload = data[0]
+
+        # A non-RPA server will return none to here.  Exit.
+        if payload is None:
+            return
+       
+        for i in payload:
+            txid = i['tx_hash']
+            ok, rawtx = self.network.get_raw_tx_for_txid(txid, timeout=10.0)
+            # If for some reason the server doesnt respond with a valid rawtx, quit.
+            # The call to network.get_raw_tx_for_txid can return an error
+            # message, so check for hex format.
+            valid_rawtx = all(c in ('0123456789abcdefABCDEF') for c in rawtx)
+            if not valid_rawtx:
+                f = open("rpa-log.txt", "a")
+                rpa_log_msg = "Failed to get a server response for txid " + txid
+                f.write(rpa_log_msg)
+                f.close()
+                continue
+
+            # Attempt to extract the private key from the transaction and if successful, import it into the keystore.
+            extracted_private_key = rpa.extract_private_key_from_transaction(
+                self, rawtx, password)
+            if extracted_private_key is not 0:
+                self.import_private_key(extracted_private_key, password)
+ 
 class Deterministic_Wallet(Abstract_Wallet):
 
     def __init__(self, storage):
@@ -3218,8 +3511,8 @@ class Multisig_Wallet(Deterministic_Wallet):
     def is_multisig(self):
         return True
 
+wallet_types = ['standard', 'multisig', 'imported', 'rpa']
 
-wallet_types = ['standard', 'multisig', 'imported']
 
 def register_wallet_type(category):
     wallet_types.append(category)
@@ -3230,6 +3523,7 @@ wallet_constructors = {
     'xpub': Standard_Wallet,
     'imported_privkey': ImportedPrivkeyWallet,
     'imported_addr': ImportedAddressWallet,
+    'rpa': RpaWallet,
 }
 
 def register_constructor(wallet_type, constructor):
