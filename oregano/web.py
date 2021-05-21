@@ -37,39 +37,16 @@ from . import cashacct
 from .i18n import _
 
 
-DEFAULT_EXPLORER = "Blockchair.com"
+DEFAULT_EXPLORER = "Ergon.Network"
 
 mainnet_block_explorers = {
-    'Bitcoin.com': ('https://explorer.bitcoin.com/bch',
+    'Ergon.Network': ('https://explorer.ergon.network',
                     Address.FMT_CASHADDR,
                     {'tx': 'tx', 'addr': 'address', 'block' : 'block'}),
-    'Blockchair.com': ('https://blockchair.com/bitcoin-cash',
-                       Address.FMT_CASHADDR,
-                       {'tx': 'transaction', 'addr': 'address', 'block' : 'block'}),
-    'BTC.com': ('https://bch.btc.com',
-                       Address.FMT_CASHADDR,
-                       {'tx': '', 'addr': '', 'block' : 'block'}),
-    'ViaBTC.com': ('https://explorer.viawallet.com/bch',
-                   Address.FMT_CASHADDR,
-                   {'tx': 'tx', 'addr': 'address', 'block' : 'block'}),
-    'BlockExplorer.one': ('https://blockexplorer.one/bch/mainnet',
-                   Address.FMT_CASHADDR,
-                   {'tx': 'tx', 'addr': 'address', 'block' : 'blockHash'}),
-    'oregano.de': ('https://explorer.oregano.de',
-                        Address.FMT_CASHADDR,
-                        {'tx': 'tx', 'addr': 'address', 'block': 'block-height'}),
-    'Blockchain.com': ('https://www.blockchain.com/bch',
-                       Address.FMT_CASHADDR,
-                       {'tx': 'tx', 'addr': 'address', 'block': 'block'}),
-    'Bitcoin Unlimited': ('https://explorer.bitcoinunlimited.info',
-                          Address.FMT_CASHADDR,
-                          {'tx': 'tx', 'addr': 'address', 'block': 'block-height'}),
-    'Loping.net': ('https://bch.loping.net',
-                   Address.FMT_CASHADDR,
-                   {'tx': 'tx', 'addr': 'address', 'block': 'block-height'}),
+
 }
 
-DEFAULT_EXPLORER_TESTNET = 'Bitcoin.com'
+DEFAULT_EXPLORER_TESTNET = 'Ergon.Network'
 
 testnet_block_explorers = {
     'Bitcoin.com'   : ('https://explorer.bitcoin.com/tbch',
