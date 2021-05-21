@@ -46,7 +46,7 @@ def inv_dict(d):
 
 
 DEFAULT_BASE_UNIT = "XRG"
-base_units = {'XRG':8, 'mXRG':5, 'bits':2}
+base_units = {'XRG':8, 'mXRG':5, 'Gon':2}
 
 inv_base_units = {}
 base_unit_labels = tuple()
@@ -55,7 +55,7 @@ base_unit_labels = tuple()
 def recalc_base_units():
     global inv_base_units, base_unit_labels
     inv_base_units = inv_dict(base_units)
-    base_unit_labels = tuple(inv_base_units[dp] for dp in sorted(inv_base_units.keys(), reverse=True))  # ('XRG', 'mXRG', 'bits')
+    base_unit_labels = tuple(inv_base_units[dp] for dp in sorted(inv_base_units.keys(), reverse=True))  # ('XRG', 'mXRG', 'Gon')
 
 # Called once at app init, but then when network is set, called again
 recalc_base_units()
@@ -506,6 +506,8 @@ from .caches import ExpiringCache
 # This cache will eat about ~6MB of memory per 20,000 items, but it does make
 # format_satoshis() run over 3x faster.
 _fmt_sats_cache = ExpiringCache(maxlen=20000, name='format_satoshis cache')
+
+
 def format_satoshis(x, num_zeros=0, decimal_point=8, precision=None, is_diff=False, whitespaces=False):
     global _cached_dp
     if x is None:

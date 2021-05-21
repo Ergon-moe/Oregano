@@ -9,7 +9,7 @@ from . import util
 from copy import deepcopy
 from .util import user_dir, make_dir, print_error, PrintError
 
-from .bitcoin import MAX_FEE_RATE, FEE_TARGETS
+from .bitcoin import MAX_FEE_RATE, FEE_TARGETS, BYTES_PER_FIX
 
 config = None
 
@@ -37,7 +37,8 @@ class SimpleConfig(PrintError):
         2. User configuration (in the user's config directory)
     They are taken in order (1. overrides config options set in 2.)
     """
-    fee_rates = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    basic_fee_rates = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000]
+    fee_rates = [fee//BYTES_PER_FIX for fee in basic_fee_rates]
 
     def __init__(self, options=None, read_user_config_function=None,
                  read_user_dir_function=None):

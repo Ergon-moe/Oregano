@@ -98,7 +98,7 @@ def dust_threshold(network):
     # Change < dust threshold is added to the tx fee
     #return 182 * 3 * relayfee(network) / 1000 # original Electrum logic
     #return 1 # <-- was this value until late Sept. 2018
-    return 546 # hard-coded Ergon dust threshold. Was changed to this as of Sept. 2018
+    return 3 # hard-coded Ergon dust threshold. Was changed to this as of Sept. 2018
 
 
 def sweep_preparations(privkeys, network, imax=100):
@@ -1745,7 +1745,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
             # and instead if it's less than 1.0 fixs/B we flag it as low_fee
             try:
                 # NB len(tx.raw) is 2x the byte size as it's hex encoded.
-                is_lowfee = int(fee) / (int(len(tx.raw)) / 2.0) < 1.0  # if less than 1.0 fixs/B, complain. otherwise don't.
+                is_lowfee = int(fee) / (int(len(tx.raw)) / 2.0 * BYTES_PER_FIX) < 1.0  # if less than 0.01 fixs/B, complain. otherwise don't.
             except (TypeError, ValueError):  # If for some reason fee was None or invalid, just pass on through.
                 is_lowfee = False
             # /

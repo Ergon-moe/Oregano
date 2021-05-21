@@ -40,7 +40,7 @@ from PyQt5.QtWidgets import *
 
 from oregano import keystore, get_config
 from oregano.address import Address, ScriptOutput
-from oregano.bitcoin import COIN, TYPE_ADDRESS, TYPE_SCRIPT
+from oregano.bitcoin import COIN, TYPE_ADDRESS, TYPE_SCRIPT, BYTES_PER_FIX
 from oregano import networks
 from oregano.plugins import run_hook
 from oregano.i18n import _, ngettext, pgettext
@@ -852,7 +852,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         return text
 
     def format_fee_rate(self, fee_rate):
-        fixs_per_byte = format_fee_satoshis(fee_rate/1000, max(self.num_zeros, 1))
+        fixs_per_byte = format_fee_satoshis(fee_rate/1000, max(self.num_zeros, 3))
         return _('{fixs_per_byte} fix/byte').format(fixs_per_byte=fixs_per_byte)
 
     def get_decimal_point(self):
@@ -2134,7 +2134,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         #if fee > confirm_rate * tx.estimated_size() / 1000:
         #    msg.append(_('Warning') + ': ' + _("The fee for this transaction seems unusually high."))
 
-        if (fee < (tx.estimated_size())):
+        if (fee < (tx.estimated_size()//BYTES_PER_FIX)):
             msg.append(_('Warning') + ': ' + _("You're using a fee of less than 1.0 fixs/B. It may take a very long time to confirm."))
             tx.ephemeral['warned_low_fee_already'] = True
 
@@ -2234,7 +2234,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         # Check fee >= size otherwise warn. FIXME: If someday network relay
         # rules change to be other than 1.0 fixs/B minimum, this code needs
         # to be changed.
-        if (isinstance(fee, int) and tx.is_complete() and fee < len(str(tx))//2
+        if (isinstance(fee, int) and tx.is_complete() and fee < len(str(tx))//(2*BYTES_PER_FIX)
                 and not tx.ephemeral.get('warned_low_fee_already')):
             msg = _('Warning') + ': ' + _("You're using a fee of less than 1.0 fixs/B. It may take a very long time to confirm.") + "\n\n" + _("Proceed?")
             if not self.question(msg, title = _("Low Fee")):
@@ -4153,9 +4153,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         misc_widgets.append((cr_gb, None))  # commit crash reporter gb to layout
 
 
-        units = util.base_unit_labels  # ( 'XRG', 'mXRG', 'bits' )
+        units = util.base_unit_labels  # ( 'XRG', 'mXRG', 'Gon' )
         msg = _('Base unit of your wallet.')\
-              + '\n1 XRG = 1,000 mXRG = 1,000,000 bits.\n' \
+              + '\n1 XRG = 1,000 mXRG = 1,000,000 Gon.\n' \
               + _(' These settings affects the fields in the Send tab')+' '
         unit_label = HelpLabel(_('Base unit') + ':', msg)
         unit_combo = QComboBox()
