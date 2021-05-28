@@ -49,15 +49,15 @@ fi
 DOCKER_SUFFIX=ub1804
 
 info "Creating docker image ..."
-$SUDO docker build -t electroncash-appimage-builder-img-$DOCKER_SUFFIX \
+$SUDO docker build -t oregano-appimage-builder-img-$DOCKER_SUFFIX \
     -f contrib/build-linux/appimage/Dockerfile_$DOCKER_SUFFIX \
     --build-arg UBUNTU_MIRROR=$UBUNTU_MIRROR \
     contrib/build-linux/appimage \
     || fail "Failed to create docker image"
 
 # This is the place where we checkout and put the exact revision we want to work
-# on. Docker will run mapping this directory to /opt/electroncash
-# which inside wine will look lik c:\electroncash
+# on. Docker will run mapping this directory to /opt/oreagno
+# which inside wine will look lik c:\oregano
 FRESH_CLONE=`pwd`/contrib/build-linux/fresh_clone
 FRESH_CLONE_DIR=$FRESH_CLONE/$GIT_DIR_NAME
 
@@ -76,15 +76,15 @@ mkdir "$FRESH_CLONE_DIR/contrib/build-linux/home" || fail "Failed to create home
     # NOTE: We propagate forward the GIT_REPO override to the container's env,
     # just in case it needs to see it.
     $SUDO docker run $DOCKER_RUN_TTY \
-    -e HOME="/opt/electroncash/contrib/build-linux/home" \
+    -e HOME="/opt/oregano/contrib/build-linux/home" \
     -e GIT_REPO="$GIT_REPO" \
     -e BUILD_DEBUG="$BUILD_DEBUG" \
-    --name electroncash-appimage-builder-cont-$DOCKER_SUFFIX \
-    -v $FRESH_CLONE_DIR:/opt/electroncash:delegated \
+    --name oregano-appimage-builder-cont-$DOCKER_SUFFIX \
+    -v $FRESH_CLONE_DIR:/opt/oregano:delegated \
     --rm \
-    --workdir /opt/electroncash/contrib/build-linux/appimage \
+    --workdir /opt/oregano/contrib/build-linux/appimage \
     -u $(id -u $USER):$(id -g $USER) \
-    electroncash-appimage-builder-img-$DOCKER_SUFFIX \
+    oregano-appimage-builder-img-$DOCKER_SUFFIX \
     ./_build.sh $REV
 ) || fail "Build inside docker container failed"
 
