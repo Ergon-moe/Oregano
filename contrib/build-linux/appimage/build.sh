@@ -14,7 +14,7 @@ else
 fi
 
 if [ ! -d 'contrib' ]; then
-    fail "Please run this script form the top-level Oregano git directory"
+    fail "Please run this script form the top-level Electron Cash git directory"
 fi
 
 pushd .
@@ -46,28 +46,18 @@ if [ -z ${SUDO+x} ] ; then
     fi
 fi
 
-# Ubuntu 18.04 based docker file. Seems to have trouble on older systems
-# due to incompatible GLIBC and other libs being too new inside the squashfs.
-# BUT it has OpenSSL 1.1.  We will switch to this one sometime in the future
-# "when the time is ripe".
-#DOCKER_SUFFIX=ub1804
-# Ubuntu 16.04 based docker file. Works on a wide variety of older and newer
-# systems but only has OpenSSL 1.0. We will use this one for now until
-# the world upgrades -- and since OpenSSL 1.1 isn't a hard requirement
-# for us, we'll live.  (Note that it's also possible to build our own OpenSSL
-# in the docker image if we get desperate for OpenSSL 1.1 but still want to
-# benefit from the compatibility granted to us by using an older Ubuntu).
-DOCKER_SUFFIX=ub1604
+DOCKER_SUFFIX=ub1804
 
 info "Creating docker image ..."
-$SUDO docker build -t oregano-appimage-builder-img-$DOCKER_SUFFIX \
+$SUDO docker build -t electroncash-appimage-builder-img-$DOCKER_SUFFIX \
     -f contrib/build-linux/appimage/Dockerfile_$DOCKER_SUFFIX \
+    --build-arg UBUNTU_MIRROR=$UBUNTU_MIRROR \
     contrib/build-linux/appimage \
     || fail "Failed to create docker image"
 
 # This is the place where we checkout and put the exact revision we want to work
-# on. Docker will run mapping this directory to /opt/oregano
-# which inside wine will look lik c:\oregano
+# on. Docker will run mapping this directory to /opt/electroncash
+# which inside wine will look lik c:\electroncash
 FRESH_CLONE=`pwd`/contrib/build-linux/fresh_clone
 FRESH_CLONE_DIR=$FRESH_CLONE/$GIT_DIR_NAME
 
@@ -86,15 +76,15 @@ mkdir "$FRESH_CLONE_DIR/contrib/build-linux/home" || fail "Failed to create home
     # NOTE: We propagate forward the GIT_REPO override to the container's env,
     # just in case it needs to see it.
     $SUDO docker run $DOCKER_RUN_TTY \
-    -e HOME="/opt/oregano/contrib/build-linux/home" \
+    -e HOME="/opt/electroncash/contrib/build-linux/home" \
     -e GIT_REPO="$GIT_REPO" \
     -e BUILD_DEBUG="$BUILD_DEBUG" \
-    --name oregano-appimage-builder-cont-$DOCKER_SUFFIX \
-    -v $FRESH_CLONE_DIR:/opt/oregano:delegated \
+    --name electroncash-appimage-builder-cont-$DOCKER_SUFFIX \
+    -v $FRESH_CLONE_DIR:/opt/electroncash:delegated \
     --rm \
-    --workdir /opt/oregano/contrib/build-linux/appimage \
+    --workdir /opt/electroncash/contrib/build-linux/appimage \
     -u $(id -u $USER):$(id -g $USER) \
-    oregano-appimage-builder-img-$DOCKER_SUFFIX \
+    electroncash-appimage-builder-img-$DOCKER_SUFFIX \
     ./_build.sh $REV
 ) || fail "Build inside docker container failed"
 

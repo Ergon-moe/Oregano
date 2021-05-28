@@ -1,4 +1,4 @@
-AppImage binary for Oregano
+AppImage binary for Electron Cash
 ============================
 
 ✓ _This binary is reproducible: you should be able to generate
@@ -31,4 +31,4 @@ folder.
 ## FAQ
 
 ### How can I see what is included in the AppImage?
-Execute the binary as follows: `./Oregano*.AppImage --appimage-extract`
+Execute the binary as follows: `./Electron-Cash*.AppImage --appimage-extract`
