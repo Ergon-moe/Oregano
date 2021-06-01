@@ -5,7 +5,7 @@
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation files
 # (the "Software"), to deal in the Software without restriction,
-# including without limitation the rights to use, copy, modify, merge,
+# includindg without limitation the rights to use, copy, modify, merge,
 # publish, distribute, sublicense, and/or sell copies of the Software,
 # and to permit persons to whom the Software is furnished to do so,
 # subject to the following conditions:
@@ -532,11 +532,7 @@ class Network(util.DaemonThread):
 
     def get_status_value(self, key):
         if key == 'status':
-            value = self.connection_status
-        elif key == 'import_rpa_tx':
-            value = (self.import_rpa_tx, self.rpawallet)
-        elif key == 'import_rpa_mempool_tx':
-            value = (self.import_rpa_mempool_tx, self.rpawallet)    
+            value = self.connection_status  
         elif key == 'banner':
             value = self.banner
         elif key == 'fee':
@@ -557,12 +553,7 @@ class Network(util.DaemonThread):
         return value
 
     def notify(self, key):
-        if key == 'import_rpa_tx' or key == 'import_rpa_mempool_tx':
-            rpa_data = self.get_status_value(key)
-            rpa_tx_data = rpa_data[0]
-            rpa_wallet = rpa_data[1]
-            self.trigger_callback(key, rpa_tx_data, rpa_wallet)
-        elif key in ('updated',):
+        if key in ('updated',):
             # Legacy support.  Will warn that updated is deprecated.
             self.trigger_callback(key)
         else:
@@ -795,14 +786,6 @@ class Network(util.DaemonThread):
         self.recent_servers = self.recent_servers[0:20]
         self.save_recent_servers()
 
-    def process_rpa_transactions(self, interface, data, wallet):
-        self.import_rpa_tx = data
-        self.notify('import_rpa_tx')
-
-    def process_rpa_mempool_transactions(self, interface, data, wallet):
-        self.import_rpa_mempool_tx = data
-        self.notify('import_rpa_mempool_tx')
-    
     def process_response(self, interface, request, response, callbacks):
         if self.debug:
             self.print_error("<--", response)
@@ -810,6 +793,8 @@ class Network(util.DaemonThread):
         result = response.get('result')
         method = response.get('method')
         params = response.get('params')
+ 
+        #print ("DEBUG network 815")
 
         # FIXME:
         # Do more to enforce result correctness, has the right data type, etc.
@@ -822,11 +807,7 @@ class Network(util.DaemonThread):
         if method == 'server.version':
             if isinstance(result, list):
                 self.on_server_version(interface, result)
-        elif method == 'blockchain.reusable.get_history':
-            self.process_rpa_transactions(interface, result, self.rpawallet)
-        elif method == 'blockchain.reusable.get_mempool':
-            self.process_rpa_mempool_transactions(interface, result, self.rpawallet)
-        elif method == 'blockchain.headers.subscribe':
+        if method == 'blockchain.headers.subscribe':
             if error is None:
                 # on_notify_header below validates result is right type or format
                 self.on_notify_header(interface, result)
@@ -943,7 +924,7 @@ class Network(util.DaemonThread):
         messages = list(messages)
         if messages: # Guard against empty message-list which is a no-op and just wastes CPU to enque/dequeue (not even callback is called). I've seen the code send empty message lists before in synchronizer.py
             with self.pending_sends_lock:
-                self.pending_sends.append((messages, callback))
+               self.pending_sends.append((messages, callback))
 
     def process_pending_sends(self):
         # Requests needs connectivity.  If we don't have an interface,
@@ -1266,19 +1247,6 @@ class Network(util.DaemonThread):
                 interface.print_error('catch up done', interface.blockchain.height())
                 interface.blockchain.catch_up = None
         self.notify('blockchain_updated')
-
-    def request_rpa_mempool(self, byte_prefix_string, wallet):
-        params = [byte_prefix_string]
-        self.queue_request('blockchain.reusable.get_mempool', params)
-        self.rpawallet = wallet
-        return True
-
-    def request_rpa_txs(self, height, number_of_blocks,
-                        byte_prefix_string, wallet):
-        params = [height, number_of_blocks, byte_prefix_string]
-        self.queue_request('blockchain.reusable.get_history', params)
-        self.rpawallet = wallet
-        return True
 
     def request_header(self, interface, height):
         """
@@ -1792,6 +1760,7 @@ class Network(util.DaemonThread):
         txid = str(txid).strip()
         try:
             r = self.synchronous_get(('blockchain.transaction.get',[txid]), timeout=timeout)
+            print ("DEBUG network 1803 r is ",r)
             return True, r
         except BaseException as e:
             self.print_error("Exception retrieving transaction for '{}': {}".format(txid, repr(e)))

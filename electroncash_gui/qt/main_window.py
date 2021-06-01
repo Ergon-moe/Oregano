@@ -235,7 +235,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         if self.network:
             self.network_signal.connect(self.on_network_qt)
-            interests = ['blockchain_updated', 'wallet_updated', 'import_rpa_tx', 'import_rpa_mempool_tx',
+            interests = ['blockchain_updated', 'wallet_updated',  
                          'new_transaction', 'status', 'banner', 'verified2',
                          'fee', 'ca_verified_tx', 'ca_verification_failed']
             # To avoid leaking references to "self" that prevent the
@@ -386,14 +386,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                 pass
             self.show_error(str(exc_info[1]))
 
-    def import_rpa_tx(self, data):
-        # This should only be called by RPA wallet.  on_network function should be checking
-        # for the correct wallet, so we should never be in a situation with a
-        # wrong wallet type.
-        assert(self.wallet.wallet_type is 'rpa')
-        password = self.wallet.rpa_pwd
-        self.wallet.import_rpa_tx(data, password)
-
     def import_rpa_mempool_tx(self, data):
         # This should only be called by RPA wallet.  on_network function should be checking
         # for the correct wallet, so we should never be in a situation with a
@@ -407,12 +399,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         if event == 'wallet_updated':
             if args[0] is self.wallet:
                 self.need_update.set()
-        elif event == 'import_rpa_tx':
-            if args[1] is self.wallet:
-                self.network_signal.emit(event, args)
-        elif event == 'import_rpa_mempool_tx':
-            if args[1] is self.wallet:
-                self.network_signal.emit(event, args)
         elif event == 'blockchain_updated':
             self.need_update.set()
         elif event == 'new_transaction':
@@ -437,10 +423,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         # Handle a network message in the GUI thread
         if event == 'status':
             self.update_status()
-        elif event == 'import_rpa_tx':
-            self.import_rpa_tx(args)
-        elif event == 'import_rpa_mempool_tx':
-            self.import_rpa_mempool_tx(args)
         elif event == 'banner':
             self.console.showMessage(args[0])
         elif event == 'fee':
@@ -1061,20 +1043,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.update_status()
         if self.wallet.up_to_date or not self.network or not self.network.is_connected():
             self.update_tabs()
-
-        if self.wallet.wallet_type == "rpa":
-            server_height = self.network.get_server_height()
-            rpa_height = self.wallet.storage.get('rpa_height')
-
-            # Establish rpa_height in the wallet as the current height because we
-            # don't need to sync anything prior to wallet creation.
-            if rpa_height is None:
-                rpa_height = self.network.get_server_height()
-                self.wallet.storage.put('rpa_height', rpa_height)
-                self.wallet.storage.write()
-
-            self.wallet.fetch_rpa_candidate_txs_from_server(
-                rpa_height, server_height)
 
     @rate_limited(1.0, classlevel=True, ts_after=True) # Limit tab updates to no more than 1 per second, app-wide. Multiple calls across instances will be collated into 1 deferred series of calls (1 call per extant instance)
     def update_tabs(self):
