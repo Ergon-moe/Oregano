@@ -3001,7 +3001,7 @@ class RpaWallet(ImportedWalletBase):
 
     def can_import_privkey(self):
         return True
-
+        
     def has_seed(self):
         return self.keystore_rpa_aux.has_seed()
 
@@ -3105,6 +3105,11 @@ class RpaWallet(ImportedWalletBase):
             self.load_keystore_rpa_aux()
         k = self.get_keystore_rpa_aux()
         return k.derive_pubkey(c, i)
+        
+    def dummy_address(self):
+        pubkey = self.derive_pubkeys(0, 0)
+        dummy_address = Address.from_pubkey(pubkey)
+        return dummy_address
         
     def get_grind_string(self):
         rpa_grind_string = rpa.get_grind_string(self)
