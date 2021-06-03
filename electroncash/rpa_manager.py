@@ -80,7 +80,10 @@ class Rpa_manager(ThreadJob):
         # Define height variables.     
         server_height = self.network.get_server_height() 
         rpa_height = self.wallet.storage.get('rpa_height')
-        
+        if rpa_height is None:
+            rpa_height = server_height - 100
+            self.wallet.storage.put('rpa_height',rpa_height)
+            self.wallet.storage.write()
        
        # Only request blocks if the rpa_height is lagging behind the tip.
         if rpa_height < server_height:
