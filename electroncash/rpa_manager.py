@@ -89,6 +89,10 @@ class Rpa_manager(ThreadJob):
         if rpa_height < server_height:
         
             number_of_blocks = 50
+            # Only request enough blocks to get to the tip.  Otherwise, the next request will be too far ahead
+            if rpa_height+number_of_blocks > server_height:
+                number_of_blocks = server_height-rpa_height
+            
             # Define the "grind string" (the RPA prefix)
             rpa_grind_string = self.wallet.get_grind_string()
             params = [rpa_height, number_of_blocks, rpa_grind_string]
@@ -113,6 +117,10 @@ class Rpa_manager(ThreadJob):
         payload = response.get('result')
         method = response.get('method')
         params = response.get('params')
+        
+        # Payload can be empty occassionally, especially if there's poor network connectivity.
+        if payload is None:
+            return
         
         for i in payload:
             txid = i['tx_hash']
