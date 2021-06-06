@@ -76,7 +76,11 @@ class Rpa_manager(ThreadJob):
         # we don't want to request more blocks from the server until we're caught up.
         if self.rpa_q_rawtx.qsize() > 0:
             return
-             
+            
+        # Make sure the password is available.  If not, do nothing.
+        if self.wallet.has_password() and self.wallet.rpa_pwd is None:
+           return
+            
         # Define height variables.     
         server_height = self.network.get_server_height() 
         rpa_height = self.wallet.storage.get('rpa_height')
