@@ -2025,6 +2025,13 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
     def read_send_tab(self,get_raw=False):
 
+        # This is a wrapper function around the call the generate the rpa transaction.  We can pass this function to the waiting dialog.
+        def rpa_grind():
+            def update_prog_grinding(x):
+                if dlg: dlg.update_progress(int(x))
+            self.raw_tx = rpa.paycode.generate_transaction_from_paycode(self.wallet, self.config, full_unit_amount, paycode_string,password=rpa_pwd,progress_callback = update_prog_grinding)
+            return 
+
         isInvoice= False;
 
         if self.payment_request and self.payment_request.has_expired():
@@ -2052,8 +2059,14 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                         return
                     rpa_pwd = password
                 
-            raw_tx = rpa.paycode.generate_transaction_from_paycode(
-                self.wallet, self.config, full_unit_amount, paycode_string,password=rpa_pwd)
+            self.raw_tx = None    
+            dlg = WaitingDialog(self, _('Please allow a few moments while Electron Cash creates your RPA transaction.  It needs to grind through many transaction signatures.'), rpa_grind, None,None, progress_bar=True, progress_min=0, progress_max=100)
+            val=dlg.exec_()
+            # If the user closes the waiting dialog, we need to still wait until the grinding function finishes.
+            while self.raw_tx == None:
+                time.sleep (0.1)
+                
+            raw_tx = self.raw_tx
             if raw_tx == 0:
                 self.show_error("Problem creating paycode tx.")
                 return
