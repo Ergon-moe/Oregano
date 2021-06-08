@@ -13,7 +13,7 @@ StartupNotify=true
 StartupWMClass=Oregano
 Terminal=false
 Type=Application
-MimeType=x-scheme-handler/bitcoincash;x-scheme-handler/cashacct;
+MimeType=x-scheme-handler/ergon;x-scheme-handler/cashacct;
 Actions=Testnet;
 
 [Desktop Action Testnet]
