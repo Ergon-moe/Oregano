@@ -95,7 +95,7 @@ class SimpleConfig(PrintError):
     def electrum_path(self):
         # Read electrum_cash_path from command line
         # Otherwise use the user's default data directory.
-        path = self.get('electron_cash_path')
+        path = self.get('oregano_path')
         if path is None:
             path = self.user_dir()
 

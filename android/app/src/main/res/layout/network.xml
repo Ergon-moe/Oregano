@@ -72,7 +72,7 @@
             app:layout_constraintEnd_toEndOf="@+id/tvStatus"
             app:layout_constraintStart_toStartOf="@+id/tvStatus"
             app:layout_constraintTop_toBottomOf="@+id/tvStatus"
-            tools:text="electron.example.com:50002"/>
+            tools:text="oregano.example.com:50002"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.recyclerview.widget.RecyclerView

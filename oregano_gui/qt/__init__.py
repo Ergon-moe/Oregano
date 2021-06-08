@@ -407,11 +407,11 @@ class ElectrumGui(QObject, PrintError):
             # icon, otherwise we get the generic Python icon.
             # In non-running-from-source mode, macOS will get the icon from
             # the .app bundle Info.plist spec (which ends up being
-            # electron.icns).  However, in .app mode, Qt will not know about
+            # oregano.icns).  However, in .app mode, Qt will not know about
             # this icon and won't be able to use it for e.g. the About dialog.
             # In the latter case the branch below will tell Qt to use
             # oregano.svg as the "window icon".
-            icon = QIcon("electron.icns") if os.path.exists("electron.icns") else None
+            icon = QIcon("oregano.icns") if os.path.exists("oregano.icns") else None
         if not icon:
             # Set this on all other platforms (and macOS built .app) as it can
             # only help and never harm, and is always available.
@@ -523,9 +523,9 @@ class ElectrumGui(QObject, PrintError):
 
     def tray_icon(self):
         if self.dark_icon:
-            return QIcon(':icons/electron_dark_icon.svg')
+            return QIcon(':icons/oregano_dark_icon.svg')
         else:
-            return QIcon(':icons/electron_light_icon.svg')
+            return QIcon(':icons/oregano_light_icon.svg')
 
     def toggle_tray_icon(self):
         self.dark_icon = not self.dark_icon

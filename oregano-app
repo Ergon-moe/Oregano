@@ -383,7 +383,7 @@ def run_start(config, config_options, subcommand):
         daemon_thread = daemon.Daemon(config, file_desc, False, plugins)
         daemon_thread.start()
         if config.get("websocket_server"):
-            from electroncash import websockets  # pylint: disable=C0415
+            from oregano import websockets  # pylint: disable=C0415
             websockets.WebSocketServer(config, daemon_thread.network).start()
         if config.get("requests_dir"):
             requests_path = os.path.join(config.get("requests_dir"), "index.html")
@@ -422,7 +422,7 @@ def run_cmdline(config, config_options, cmdname):
     else:
         cmd = known_commands[cmdname]
         if cmd.requires_network:
-            print_msg("Daemon not running; try 'electron-cash daemon start'")
+            print_msg("Daemon not running; try 'oregano-app daemon start'")
             sys.exit(1)
         else:
             init_plugins(config, "cmdline")
@@ -459,8 +459,8 @@ def process_config_options(args):
         config_options["portable"] = False
 
     if config_options.get("portable"):
-        config_options["electron_cash_path"] = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "electron_cash_data"
+        config_options["oregano_path"] = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "oregano_data"
         )
 
     set_verbosity(config_options.get("verbose"))

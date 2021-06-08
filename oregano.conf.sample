@@ -4,7 +4,7 @@
 # copy this file to /etc/oregano.conf if you want read-only settings
 
 [client]
-server = electron.coinucopia.io:50001:t
+server = fulcrum.ergon.network:52137:t
 proxy = None
 gap_limit = 5
 # booleans use python syntax

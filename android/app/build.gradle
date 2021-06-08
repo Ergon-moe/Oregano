@@ -124,7 +124,7 @@ afterEvaluate {
     task("generateStrings", type: Exec) {
         def scriptFilename = "generate_strings.py"
         inputs.file scriptFilename
-        inputs.file "src/main/python/electroncash_gui/android/strings.py"
+        inputs.file "src/main/python/oregano_gui/android/strings.py"
         outputs.upToDateWhen { file(STRINGS_DIR).exists() }
         doFirst {
             delete(STRINGS_DIR)

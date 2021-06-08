@@ -4,7 +4,7 @@ import six
 import sys
 import threading
 
-from electroncash import util
+from oregano import util
 
 
 def initialize(handler):

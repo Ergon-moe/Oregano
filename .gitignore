@@ -17,8 +17,8 @@ env/
 bin/
 /app.fil
 tmp/
-electroncash/*.so.0
-electroncash/*.dylib
+oregano/*.so.0
+oregano/*.dylib
 contrib/osx/*.dylib
 
 # tox files

@@ -105,7 +105,7 @@ class ScanQRTextEdit(_QrCodeTextEdit, MessageBoxMixin):
         self.setText(scanned_qr[0].data)
 
     def scan_qr_from_image(self, image):
-        from electroncash.qrreaders import get_qr_reader
+        from oregano.qrreaders import get_qr_reader
         qr_reader = get_qr_reader()
         if not qr_reader:
             self.show_error(_("Unable to scan image.") + "\n" +

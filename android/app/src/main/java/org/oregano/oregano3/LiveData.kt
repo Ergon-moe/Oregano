@@ -1,4 +1,4 @@
-package org.electroncash.electroncash3
+package org.oregano.oregano3
 
 import android.os.SystemClock
 import androidx.lifecycle.LiveData

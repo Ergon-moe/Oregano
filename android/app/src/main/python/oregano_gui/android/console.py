@@ -219,7 +219,7 @@ class AndroidCommands(commands.Commands):
         """
 
         # Speed up startup by not importing test code at module level.
-        from electroncash import tests
+        from oregano import tests
         import unittest
 
         suite = unittest.defaultTestLoader.loadTestsFromNames(
