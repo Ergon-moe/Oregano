@@ -4,7 +4,7 @@
 
 [Desktop Entry]
 Comment=Lightweight Ergon Client
-Exec=oregano %u
+Exec=oregano-app %u
 GenericName=Ergon Wallet
 Icon=oregano
 Name=Oregano
@@ -17,5 +17,5 @@ MimeType=x-scheme-handler/ergon;x-scheme-handler/cashacct;
 Actions=Testnet;
 
 [Desktop Action Testnet]
-Exec=oregano --testnet %u
+Exec=oregano-app --testnet %u
 Name=Testnet mode

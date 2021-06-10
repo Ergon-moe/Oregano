@@ -208,6 +208,6 @@ setup(
     author="The Oregano Developers",
     author_email="jonf@oregano.org",
     license="MIT Licence",
-    url="http://oregano.org",
+    url="http://ergon.moe",
     long_description="""Lightweight Ergon Wallet"""
 )
