@@ -28,7 +28,7 @@
                             <constraint firstAttribute="height" constant="283" id="Svz-Gr-vQB"/>
                         </constraints>
                     </imageView>
-                    <imageView opaque="NO" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="ElecTRONCash.png" translatesAutoresizingMaskIntoConstraints="NO" id="dNk-Ct-yXb">
+                    <imageView opaque="NO" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="OreGANO.png" translatesAutoresizingMaskIntoConstraints="NO" id="dNk-Ct-yXb">
                         <rect key="frame" x="17" y="277.5" width="341" height="112"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="341" id="SNt-9s-I4m"/>
@@ -64,7 +64,7 @@
         </viewController>
     </objects>
     <resources>
-        <image name="ElecTRONCash.png" width="341" height="112"/>
+        <image name="OreGANO.png" width="341" height="112"/>
         <image name="OreganoFunkyBG.png" width="251" height="283"/>
     </resources>
 </document>

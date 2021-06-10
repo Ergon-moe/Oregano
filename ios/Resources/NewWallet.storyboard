@@ -1105,7 +1105,7 @@
                             <imageView opaque="NO" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="OreganoFunkyBG.png" translatesAutoresizingMaskIntoConstraints="NO" id="yud-pJ-xw6">
                                 <rect key="frame" x="64" y="129" width="251" height="566"/>
                             </imageView>
-                            <imageView opaque="NO" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="ElecTRONCash.png" translatesAutoresizingMaskIntoConstraints="NO" id="5p7-9Z-k5r">
+                            <imageView opaque="NO" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="OreGANO.png" translatesAutoresizingMaskIntoConstraints="NO" id="5p7-9Z-k5r">
                                 <rect key="frame" x="17" y="236" width="341" height="224"/>
                             </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Welcome to" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="omj-Bk-8vK">
@@ -3203,7 +3203,7 @@
     <resources>
         <image name="Back_Chevron_White.png" width="7" height="13"/>
         <image name="BeLectron_Insignia.png" width="154" height="138"/>
-        <image name="ElecTRONCash.png" width="341" height="112"/>
+        <image name="OreGANO.png" width="341" height="112"/>
         <image name="OreganoFunkyBG.png" width="251" height="283"/>
         <image name="OreganoFunkyBG_2.png" width="306" height="316"/>
         <image name="OreganoFunkyBG_3.png" width="300" height="297"/>

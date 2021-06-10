@@ -2,7 +2,7 @@
 <component type="desktop-application">
 	<id>org.oregano.Oregano</id>
 	<name>Oregano</name>
-	<developer_name>Jonald Fyookball</developer_name>
+	<developer_name>Licho</developer_name>
 	<summary>Lightweight Ergon Client</summary>
 	<description>
 		<p>Oregano is an SPV wallet for Ergon</p>
@@ -12,18 +12,18 @@
 		<keyword>cryptocurrency</keyword>
 		<keyword>finance</keyword>
 		<keyword>bitcoin</keyword>
-		<keyword>bitcoincash</keyword>
+		<keyword>Ergon</keyword>
 		<keyword>wallet</keyword>
 		<keyword>SPV</keyword>
 		<keyword>crypto</keyword>
 	</keywords>
 	<metadata_license>CC0-1.0</metadata_license>
 	<project_license>MIT</project_license>
-	<url type="homepage">https://www.oregano.org/</url>
-	<url type="help">https://github.com/Oregano/Oregano/issues?q=is%3Aissue</url>
+	<url type="homepage">https://www.ergon.moe/</url>
+	<url type="help">https://github.com/Ergon-moe/Oregano</url>
 	<screenshots>
 		<screenshot type="default">
-			<image type="source">https://www.oregano.org/images/wallet-shot-3.png</image>
+			<image type="source">https://www.ergon.moe/images/wallet-shot-3.png</image>
 			<caption>Main application window</caption>
 		</screenshot>
 	</screenshots>
@@ -35,7 +35,6 @@
 		<python3>oregano_plugins</python3>
 	</provides>
 	<mimetypes>
-		<mimetype>x-scheme-handler/bitcoincash</mimetype>
-		<mimetype>x-scheme-handler/cashacct</mimetype>
+		<mimetype>x-scheme-handler/ergon</mimetype>
 	</mimetypes>
 </component>
