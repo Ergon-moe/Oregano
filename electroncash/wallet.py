@@ -3038,6 +3038,10 @@ class RpaWallet(ImportedWalletBase):
     def update_password(self, old_pw, new_pw, encrypt=False):
         if old_pw is None and self.has_password():
             raise InvalidPassword()
+          
+        if self.keystore is not None and len(self.keystore.keypairs) > 0 and self.keystore.can_change_password():
+            self.keystore.update_password(old_pw,new_pw)
+            self.save_keystore()
         if self.keystore_rpa_aux is not None and self.keystore_rpa_aux.can_change_password():
             self.keystore_rpa_aux.update_password(old_pw, new_pw)
             self.save_keystore_rpa_aux()
