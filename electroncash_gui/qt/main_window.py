@@ -2062,9 +2062,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.raw_tx = None    
             dlg = WaitingDialog(self, _('Please allow a few moments while Electron Cash creates your RPA transaction.  It needs to grind through many transaction signatures.'), rpa_grind, None,None, progress_bar=True, progress_min=0, progress_max=100)
             val=dlg.exec_()
-            # If the user closes the waiting dialog, we need to still wait until the grinding function finishes.
+            # If the user closes the waiting dialog, we should just exit.
             while self.raw_tx == None:
-                time.sleep (0.1)
+                return
                 
             raw_tx = self.raw_tx
             if raw_tx == 0:
