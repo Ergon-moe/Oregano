@@ -63,8 +63,8 @@ class UpdateChecker(QWidget, PrintError):
     _dl_prog = pyqtSignal(object, int) # [0 -> 100] range
 
     #url = "https://www.c3-soft.com/downloads/BitcoinCash/Oregano/update_check" # Testing URL
-    url = "https://raw.github.com/Oregano/Oregano/master/contrib/update_checker/releases.json" # Release URL
-    download_url = "https://oregano.org/#download"
+    url = "https://raw.github.com/Ergon-moe/Oregano/master/contrib/update_checker/releases.json" # Release URL
+    download_url = "https://ergon.moe/#download"
 
     VERSION_ANNOUNCEMENT_SIGNING_ADDRESSES = ()
 

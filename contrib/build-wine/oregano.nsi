@@ -87,7 +87,7 @@
   !define MUI_ABORTWARNING
   !define MUI_ABORTWARNING_TEXT "Are you sure you wish to abort the installation of ${PRODUCT_NAME}?"
 
-  !define MUI_ICON "\oregano\icons\electron.ico"
+  !define MUI_ICON "\oregano\icons\oregano.ico"
 
 ;--------------------------------
 ;Pages
@@ -170,7 +170,7 @@ Section
 
   ;Files to pack into the installer
   File /r "dist\oregano\*.*"
-  File "..\..\icons\electron.ico"
+  File "..\..\icons\oregano.ico"
 
   !insertmacro UNINSTALL.LOG_CLOSE_INSTALL
 
@@ -205,7 +205,7 @@ Section
   ;Links cashacct: URI's to Oregano
   WriteRegStr ${INSTDIR_REG_ROOT} "Software\Classes\cashacct" "" "URL:cashacct Protocol"
   WriteRegStr ${INSTDIR_REG_ROOT} "Software\Classes\cashacct" "URL Protocol" ""
-  WriteRegStr ${INSTDIR_REG_ROOT} "Software\Classes\cashacct" "DefaultIcon" "$\"$INSTDIR\electron.ico, 0$\""
+  WriteRegStr ${INSTDIR_REG_ROOT} "Software\Classes\cashacct" "DefaultIcon" "$\"$INSTDIR\oregano.ico, 0$\""
   WriteRegStr ${INSTDIR_REG_ROOT} "Software\Classes\cashacct\shell\open\command" "" "$\"$INSTDIR\${INTERNAL_NAME}.exe$\" $\"%1$\""
 
   ;Adds an uninstaller possibilty to Windows Uninstall or change a program section
@@ -214,7 +214,7 @@ Section
   WriteRegStr ${INSTDIR_REG_ROOT} "${INSTDIR_REG_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
   WriteRegStr ${INSTDIR_REG_ROOT} "${INSTDIR_REG_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
   WriteRegStr ${INSTDIR_REG_ROOT} "${INSTDIR_REG_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
-  WriteRegStr ${INSTDIR_REG_ROOT} "${INSTDIR_REG_KEY}" "DisplayIcon" "$INSTDIR\electron.ico"
+  WriteRegStr ${INSTDIR_REG_ROOT} "${INSTDIR_REG_KEY}" "DisplayIcon" "$INSTDIR\oregano.ico"
 
   ;Fixes Windows broken size estimates
   ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2

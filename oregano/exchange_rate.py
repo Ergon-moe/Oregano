@@ -177,7 +177,7 @@ class BitcoinAverage(ExchangeBase):
 class BitPay(ExchangeBase):
 
     def get_rates(self, ccy):
-        json = self.get_json('bitpay.com', '/rates/XRG')
+        json = self.get_json('bitpay.com', '/rates/BCH')
         return dict([(r['code'], PyDecimal(r['rate'])) for r in json['data']])
 
 
@@ -242,8 +242,10 @@ class CoinGecko(ExchangeBase):
 
     def get_rates(self, ccy):
         json = self.get_json('api.coingecko.com', '/api/v3/coins/bitcoin-cash?localization=False&sparkline=false')
+        json2 = self.get_json('explorer.ergon.network', '/ext/summary')
+        xrg_price = json2['data'][0]['lastPrice']
         prices = json["market_data"]["current_price"]
-        return dict([(a[0].upper(),PyDecimal(a[1])) for a in prices.items()])
+        return dict([(a[0].upper(),PyDecimal(a[1]*xrg_price)) for a in prices.items()])
 
     def history_ccys(self):
         return ['AED', 'ARS', 'AUD', 'BTD', 'BHD', 'BMD', 'BRL', 'BTC',
