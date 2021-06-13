@@ -145,7 +145,7 @@ exe_standalone = EXE(
     strip=None,
     upx=False,
     manifest=home+'contrib/build-wine/manifest.xml',
-    icon=home+'icons/electron.ico',
+    icon=home+'icons/oregano.ico',
     console=False)
 
 exe_portable = EXE(
