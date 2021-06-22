@@ -45,7 +45,7 @@ def inv_dict(d):
     return {v: k for k, v in d.items()}
 
 
-DEFAULT_BASE_UNIT = "XRG"
+DEFAULT_BASE_UNIT = "mXRG"
 base_units = {'XRG':8, 'mXRG':5, 'Gon':2}
 
 inv_base_units = {}
