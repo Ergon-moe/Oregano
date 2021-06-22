@@ -43,7 +43,7 @@ class ExchangeBase(PrintError):
     def get_json(self, site, get_string):
         # APIs must have https
         url = ''.join(['https://', site, get_string])
-        response = requests.request('GET', url, headers={'User-Agent' : 'Oregano'}, timeout=10)
+        response = requests.request('GET', url, headers={'User-Agent' : 'Oregano'}, timeout=20)
         if response.status_code != 200:
             raise RuntimeWarning("Response status: " + str(response.status_code))
         return response.json()
@@ -145,7 +145,9 @@ class ExchangeBase(PrintError):
         return []
 
     def historical_rate(self, ccy, d_t):
-        return self.history.get(ccy, {}).get(d_t.strftime('%Y-%m-%d'))
+        if d_t is None:
+            return 'NaN'
+        return self.history.get(ccy, {}).get(d_t.strftime('%Y-%m-%d'),'NaN')
 
     def get_currencies(self):
         rates = self.get_rates('')
@@ -444,8 +446,9 @@ class FxThread(ThreadJob):
     def exchange_rate(self):
         '''Returns None, or the exchange rate as a PyDecimal'''
         rate = self.exchange.quotes.get(self.ccy)
-        if rate:
-            return PyDecimal(rate)
+        if rate is None:
+            return PyDecimal('NaN')
+        return PyDecimal(rate)
 
     def format_amount_and_units(self, btc_balance, is_diff=False, commas=True):
         amount_str = self.format_amount(btc_balance, is_diff=is_diff, commas=commas)
@@ -453,7 +456,7 @@ class FxThread(ThreadJob):
 
     def format_amount(self, btc_balance, is_diff=False, commas=True):
         rate = self.exchange_rate()
-        return ('' if rate is None
+        return ('' if rate.is_nan()
                 else self.value_str(btc_balance, rate, is_diff=is_diff, commas=commas))
 
     def get_fiat_status_text(self, btc_balance, base_unit, decimal_point):
@@ -461,30 +464,31 @@ class FxThread(ThreadJob):
         default_prec = 2
         if base_unit == inv_base_units.get(2):  # if base_unit == 'bits', increase precision on fiat as bits is pretty tiny as of 2019
             default_prec = 4
-        return _("  (No FX rate available)") if rate is None else " 1 %s~%s %s" % (base_unit,
+        return _("  (No FX rate available)") if rate.is_nan() else " 1 %s~%s %s" % (base_unit,
             self.value_str(COIN / (10**(8 - decimal_point)), rate, default_prec ), self.ccy )
 
     def value_str(self, fixoshis, rate, default_prec=2, is_diff=False, commas=True):
-        if fixoshis is None:  # Can happen with incomplete history
-            return _("Unknown")
-        if rate:
-            value = PyDecimal(fixoshis) / COIN * PyDecimal(rate)
-            return "%s" % (self.ccy_amount_str(value, commas, default_prec, is_diff=is_diff))
-        return _("No data")
+        value = (PyDecimal('NaN') if fixoshis is None
+                 else PyDecimal(fixoshis) / COIN * PyDecimal(rate))
+        if value.is_nan():
+            return _("No data")
+        return "%s" % (self.ccy_amount_str(value, commas, default_prec, is_diff=is_diff))
 
     def fiat_to_amount(self, fiat):
         rate = self.exchange_rate()
-        return (None if rate is None
+        return (PyDecimal('NaN') if rate.is_nan()
                 else int(PyDecimal(fiat) / rate * COIN))
 
     def history_rate(self, d_t):
+        if d_t is None:
+            return PyDecimal('NaN')
         rate = self.exchange.historical_rate(self.ccy, d_t)
         # Frequently there is no rate for today, until tomorrow :)
         # Use spot quotes in that case
-        if rate is None and (datetime.today().date() - d_t.date()).days <= 2:
-            rate = self.exchange.quotes.get(self.ccy)
+        if rate =='NaN' and (datetime.today().date() - d_t.date()).days <= 2:
+            rate = self.exchange.quotes.get(self.ccy, 'NaN')
             self.history_used_spot = True
-        return PyDecimal(rate) if rate is not None else None
+        return PyDecimal(rate)
 
     def historical_value_str(self, fixoshis, d_t):
         rate = self.history_rate(d_t)
@@ -492,8 +496,7 @@ class FxThread(ThreadJob):
 
     def historical_value(self, fixoshis, d_t):
         rate = self.history_rate(d_t)
-        if rate:
-            return PyDecimal(fixoshis) / COIN * PyDecimal(rate)
+        return PyDecimal(fixoshis) / COIN * PyDecimal(rate)
 
     def timestamp_rate(self, timestamp):
         from .util import timestamp_to_datetime
