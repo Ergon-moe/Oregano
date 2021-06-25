@@ -70,8 +70,8 @@ pr_tooltips = {
 
 del _
 
-REQUEST_HEADERS = {'Accept': 'application/bitcoincash-paymentrequest', 'User-Agent': 'Oregano'}
-ACK_HEADERS = {'Content-Type':'application/bitcoincash-payment','Accept':'application/bitcoincash-paymentack','User-Agent':'Oregano'}
+REQUEST_HEADERS = {'Accept': 'application/ergon-paymentrequest', 'User-Agent': 'Oregano'}
+ACK_HEADERS = {'Content-Type':'application/ergon-payment','Accept':'application/ergon-paymentack','User-Agent':'Oregano'}
 
 ca_path = requests.certs.where()
 ca_list = None
@@ -99,10 +99,10 @@ def get_payment_request(url):
             try:
                 response = requests.request('GET', url, headers=REQUEST_HEADERS)
                 response.raise_for_status()
-                # Guard against `bitcoincash:`-URIs with invalid payment request URLs
+                # Guard against `ergon:`-URIs with invalid payment request URLs
                 if "Content-Type" not in response.headers \
-                or response.headers["Content-Type"] != "application/bitcoincash-paymentrequest":
-                    error = "payment URL not pointing to a bitcoincash payment request handling server"
+                or response.headers["Content-Type"] != "application/ergon-paymentrequest":
+                    error = "payment URL not pointing to a ergon payment request handling server"
                 else:
                     data = response.content
                 print_error('fetched payment request', url, len(response.content))
