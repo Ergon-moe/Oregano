@@ -1896,6 +1896,8 @@ class Abstract_Wallet(PrintError, SPVDelegate):
         # Fee estimator
         if fixed_fee is None:
             fee_estimator = config.estimate_fee
+        elif callable(fixed_fee):
+            fee_estimator = fixed_fee
         else:
             fee_estimator = lambda size: fixed_fee
 
