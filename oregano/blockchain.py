@@ -30,7 +30,7 @@ from typing import Optional
 from . import asert_daa
 from . import networks
 from . import util
-
+from ctypes import c_uint32 as u32
 from .bitcoin import *
 
 class VerifyError(Exception):
@@ -501,7 +501,7 @@ class Blockchain(util.PrintError):
         else:
             work -=((work * t // T) // resistance ) \
             - (work // resistance) \
-            - ((work * (t*t) // (T*T)) // (resistance*resistance) ) \
+            - ((work * u32(t*t).value // (T*T)) // (resistance*resistance) ) \
             + (2 * (work * t // T) // (resistance*resistance) ) \
             - (work // (resistance*resistance))
 
