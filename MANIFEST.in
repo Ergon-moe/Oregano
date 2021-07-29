@@ -3,7 +3,7 @@ include README.rst
 include oregano.conf.sample
 include oregano.desktop
 include *.py
-include oregano
+include oregano-app
 include contrib/requirements/requirements.txt
 include contrib/requirements/requirements-hw.txt
 include contrib/requirements/requirements-binaries.txt
