@@ -206,7 +206,7 @@ setup(
     data_files=data_files,
     description="Lightweight Ergon Wallet",
     author="The Oregano Developers",
-    author_email="jonf@oregano.org",
+    author_email="licho@ergon.moe",
     license="MIT Licence",
     url="http://ergon.moe",
     long_description="""Lightweight Ergon Wallet"""

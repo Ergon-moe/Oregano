@@ -6,35 +6,19 @@ Oregano - Lightweight Ergon client (Doesn't connect to the network yet!)
   Licence: MIT Licence
   Author: Oregano Developers
   Language: Python
-  Homepage: https://oregano.org/
-
-
-.. image:: https://d322cqt584bo4o.cloudfront.net/oregano/localized.svg
-    :target: https://crowdin.com/project/oregano
-    :alt: Help translate Oregano online
-
-
-.. image:: https://img.shields.io/travis/Oregano/Oregano
-    :target: https://travis-ci.org/github/Oregano/Oregano
-    :alt: Travis CI
-
-
-.. image:: https://img.shields.io/coveralls/github/Oregano/Oregano
-    :target: https://coveralls.io/github/Oregano/Oregano
-    :alt: Coveralls code coverage
-
+  Homepage: https://ergon.moe/
 
 
 Getting started
 ===============
 
 **Note: If running from source, Python 3.6 or above is required to run Oregano.** If your system lacks Python 3.6,
-you have other options, such as the `AppImage / binary releases <https://github.com/Oregano/Oregano/releases/>`_
+you have other options, such as the `AppImage / binary releases <https://github.com/Ergon-moe/Oregano/releases/>`_
 or running from source using `pyenv` (see section `Running from source on old Linux`_ below).
 
-**macOS:** It is recommended that macOS users run `the binary .dmg <https://github.com/Oregano/Oregano/releases/>`_  as that's simpler to use and has everything included.  Otherwise, if you want to run from source, see section `Running from source on macOS`_ below.
+**macOS:** It is recommended that macOS users run `the binary .dmg <https://github.com/Ergon-moe/Oregano/releases/>`_  as that's simpler to use and has everything included.  Otherwise, if you want to run from source, see section `Running from source on macOS`_ below.
 
-Oregano is a pure python application forked from Electrum. If you want to use the Qt interface, install the Qt dependencies::
+Oregano is a pure python application forked from Electron Cash. If you want to use the Qt interface, install the Qt dependencies::
 
     sudo apt-get install python3-pyqt5 python3-pyqt5.qtsvg
 
@@ -43,7 +27,7 @@ Oregano from its root directory (called Oregano), without installing it on your
 system; all the python dependencies are included in the 'packages'
 directory. To run Oregano from its root directory, just do::
 
-    ./oregano
+    ./oregano-app
 
 You can also install Oregano on your system, by running this command::
 
@@ -60,14 +44,14 @@ Version".
 Hardware Wallet - Ledger Nano S
 -------------------------------
 
-Oregano natively support Ledger Nano S hardware wallet. If you plan to use
+Oregano support Ledger Nano S hardware wallet by pretending it's a BCH wallet. If you plan to use
 you need an additional dependency, namely btchip. To install it run this command::
 
     sudo pip3 install btchip-python
 
-If you still have problems connecting to your Nano S please have a look at this
-`troubleshooting <https://support.ledger.com/hc/en-us/articles/115005165269-Fix-connection-issues>`_ section on Ledger website.
+Warning [1]: When tricking Ledger you're using Bitcoin Cash, not Ergon, it will give you a bitcoincash: address for verification. You can convert your ergon: address to bitcoincash: format with a script scripts/addree
 
+Warning [2]: When using a nonstandard derivation path (default derivation path of Ergon is different than of Bitcoin Cash) Ledger requires you to confirm each utxo spend with multiple clicks, which is very inconvenient if you have hundreds of coins. Use wisely.
 
 Development version
 ===================
@@ -79,7 +63,7 @@ If you are on macOS, see the `Running from source on macOS`_ section below.
 
 Check out the code from Github::
 
-    git clone https://github.com/Oregano/Oregano
+    git clone https://github.com/Ergon-moe/Oregano
     cd Oregano
 
 Install the python dependencies::
@@ -132,7 +116,7 @@ Running from source on macOS
 
 You need to install **either** `MacPorts <https://www.macports.org>`_  **or** `HomeBrew <https://www.brew.sh>`_.  Follow the instructions on either site for installing (Xcode from `Apple's developer site <https://developer.apple.com>`_ is required for either).
 
-1. After installing either HomeBrew or MacPorts, clone this repository and switch to the directory: ``git clone https://github.com/Oregano/Oregano && cd Oregano``
+1. After installing either HomeBrew or MacPorts, clone this repository and switch to the directory: ``git clone https://github.com/Ergon-moe/Oregano && cd Oregano``
 2. Install python 3.6 or 3.7. For brew: ``brew install python3`` or if using MacPorts: ``sudo port install python36``
 3. Install PyQt5: ``python3 -m pip install --user pyqt5``
 4. Install Oregano requirements: ``python3 -m pip install --user -r contrib/requirements/requirements.txt``

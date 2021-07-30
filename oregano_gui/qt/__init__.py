@@ -670,7 +670,7 @@ class ElectrumGui(QObject, PrintError):
             except BaseException as e:
                 traceback.print_exc(file=sys.stdout)
                 if '2fa' in str(e):
-                    self.warning(title=_('Error'), message = '2FA wallets for Ergon are currently unsupported by <a href="https://api.trustedcoin.com/#/">TrustedCoin</a>. Follow <a href="https://github.com/Oregano/Oregano/issues/41#issuecomment-357468208">this guide</a> in order to recover your funds.')
+                    self.warning(title=_('Error'), message = '2FA wallets for Ergon are currently unsupported by <a href="https://api.trustedcoin.com/#/">TrustedCoin</a>. Follow <a href="https://github.com/Electron-Cash/Electron-Cash/issues/41#issuecomment-357468208">this guide</a> in order to recover your funds.')
                 else:
                     self.warning(title=_('Error'), message = 'Cannot load wallet:\n' + str(e), icon=QMessageBox.Critical)
                 return
@@ -810,7 +810,7 @@ class ElectrumGui(QObject, PrintError):
             return True
 
         # else..
-        howto_url='https://github.com/Oregano/Oregano/blob/master/contrib/secp_HOWTO.md#libsecp256k1-0-for-oregano'
+        howto_url='https://github.com/Ergon.moe/Oregano/blob/master/contrib/secp_HOWTO.md#libsecp256k1-0-for-oregano'
         template = '''
         <html><body>
             <p>

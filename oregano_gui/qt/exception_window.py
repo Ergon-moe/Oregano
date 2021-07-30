@@ -57,7 +57,7 @@ issue_template = """<h2>Traceback</h2>
   <li>Locale: {locale}</li>
 </ul>
 """
-report_server = "https://crashhub.oregano.org/crash"
+report_server = "https://crashhub.ergon.moe/crash"
 
 
 class Exception_Window(QWidget):

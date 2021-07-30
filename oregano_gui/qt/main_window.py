@@ -725,9 +725,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         help_menu.addAction(_("&About"), self.show_about)
         help_menu.addAction(_("About Qt"), self.app.aboutQt)
         help_menu.addAction(_("&Check for Updates"), lambda: self.gui_object.show_update_checker(self))
-        help_menu.addAction(_("&Official Website"), lambda: webopen("https://oregano.org"))
+        help_menu.addAction(_("&Official Website"), lambda: webopen("https://ergon.moe"))
         help_menu.addSeparator()
-        help_menu.addAction(_("Documentation"), lambda: webopen("http://oregano.readthedocs.io/")).setShortcut(QKeySequence.HelpContents)
+        help_menu.addAction(_("Documentation"), lambda: webopen("http://github.com/Ergon-moe/Oregano")).setShortcut(QKeySequence.HelpContents)
         help_menu.addAction(_("&Report Bug..."), self.show_report_bug)
         help_menu.addSeparator()
         help_menu.addAction(_("&Donate to Server") + "...", self.donate_to_server)
@@ -784,7 +784,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     def show_report_bug(self):
         msg = ' '.join([
             _("Please report any bugs as issues on github:<br/>"),
-            "<a href=\"https://github.com/Oregano/Oregano/issues\">https://github.com/Oregano/Oregano/issues</a><br/><br/>",
+            "<a href=\"https://github.com/Ergon-moe/Oregano/issues\">https://github.com/Ergon-moe/Oregano/issues</a><br/><br/>",
             _("Before reporting a bug, upgrade to the most recent version of Oregano (latest release or git HEAD), and include the version number in your report."),
             _("Try to explain not only what the bug is, but how it occurs.")
          ])

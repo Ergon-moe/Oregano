@@ -29,8 +29,8 @@ _("Do you want to close this wallet?")
 _("Enter password")
 _("Export wallet")
 _("Filenames cannot contain the '/' character. Please enter a different filename to proceed.")
-_("For support, please visit us on <a href='https://github.com/Oregano/Oregano/issues'>"
-  "GitHub</a> or on <a href='https://t.me/oreganowallet'>Telegram</a>.")
+_("For support, please visit us on <a href='https://github.com/Ergon-moe/Oregano/issues'>"
+  "GitHub</a> or on <a href='https://t.me/ErgonCommunity'>Telegram</a>.")
 _("ID")
 _("Import addresses or private keys")
 _("Invalid address")

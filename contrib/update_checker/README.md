@@ -6,11 +6,11 @@ This directory contains the `releases.json` file that the Oregano update checker
 #### Update Checker Overview
 As of version 3.3.6 of Oregano, there is an update-checking facility built-in to the Qt desktop app. The facility basically functions as follows:
 
-1. When the user selects "Check for updates...", Oregano connects to the URL hard-coded in `gui/qt/update_checker.py` (currently: https://raw.github.com/Oregano/Oregano/master/contrib/update_checker/releases.json)
+1. When the user selects "Check for updates...", Oregano connects to the URL hard-coded in `gui/qt/update_checker.py` (currently: https://raw.github.com/Ergon-moe/Oregano/master/contrib/update_checker/releases.json)
 2. It downloads `releases.json` (the file in this directory)
 3. It checks the versions seen in `releases.json` -- if they are newer than the version in the running app, and if the signed message is valid and is signed with one of the addresses hard-coded in `update_checker.py`, it then informs the user that an update is available.
 
-*No automatic updating is performed* and the user must manually click on the URL hard-coded in the app to go to https://oregano.org/#download.
+*No automatic updating is performed* and the user must manually click on the URL hard-coded in the app to go to https://ergon.moe/#download.
 
 The purpose of this facility is merely as a convenience for users who aren't on reddit or aren't constantly refreshing our website to be able to find out when a new version is available.
 
@@ -21,24 +21,24 @@ You need to update `releases.json` in this directory whenever a new version of O
 
 This file contains a dictionary of:
 ```
-    { 
+    {
         "version string" : { "bitcoin address" : "signed message" }
     }
 ```
 - **"version string"** above is a version of the form MAJOR.MINOR.REV[variant], e.g. "3.3.5" or "3.3.5CS" (in the latter, 'CS' is the variant)
 - And empty/omitted variant means "Oregano Regular"
 - The variant must match the variant in `lib/version.py`.
-    
+
 
 #### How To Update `releases.json`
 
   1. Release Oregano as normal, updating the version in `lib/version.py`.
   2. After release, or in tandem with releasing, edit `releases.json`
-  3. Make sure to replace the entry for the old version with a new entry. 
+  3. Make sure to replace the entry for the old version with a new entry.
   4. So for example if you were on verson "3.3.4" before and you are now releasing "3.3.5", look for "3.3.4" in `releases.json`, and update it to "3.3.5"
   5. Sign the text "3.3.5" with one of the bitcoin addresses listed in `gui/qt/update_checker.py`.  Paste this address and the signed message (replacing the old address and signed message) into the dictionary entry for "3.3.5" in `releases.json`.
   6. Push the new commit with the updated `releases.json` to master. (Since currently the `update_checker.py` code looks for this file in master on github).
-  
+
 ##### Example
 *The old entry:*
 

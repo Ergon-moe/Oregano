@@ -314,7 +314,7 @@ class MessageBoxMixin:
 class QMessageBoxMixin(QMessageBox, MessageBoxMixin):
     ''' This class's sole purpose is so that MessageBoxMixin.msg_box() always
     presents a message box that has the mixin methods.
-    See https://github.com/Oregano/Oregano/issues/980. '''
+    See https://github.com/Electron-Cash/Electron-Cash/issues/980. '''
     pass
 
 class WindowModalDialog(QDialog, MessageBoxMixin):
