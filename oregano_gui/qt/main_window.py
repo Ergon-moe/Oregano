@@ -712,13 +712,13 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         raw_transaction_menu.addAction(_("From the &Blockchain") + "...", self.do_process_from_txid, QKeySequence("Ctrl+B"))
         raw_transaction_menu.addAction(_("From &QR Code") + "...", self.read_tx_from_qrcode)
         self.raw_transaction_menu = raw_transaction_menu
-        tools_menu.addSeparator()
+        #tools_menu.addSeparator()
         if ColorScheme.dark_scheme and sys.platform != 'darwin':  # use dark icon in menu except for on macOS where we can't be sure it will look right due to the way menus work on macOS
             icon = QIcon(":icons/cashacct-button-darkmode.png")
         else:
             icon = QIcon(":icons/cashacct-logo.png")
-        tools_menu.addAction(icon, _("Lookup &Cash Account..."), self.lookup_cash_account_dialog, QKeySequence("Ctrl+L"))
-        tools_menu.addAction(icon, _("&Register Cash Account..."), lambda: self.register_new_cash_account(addr='pick'), QKeySequence("Ctrl+G"))
+        #tools_menu.addAction(icon, _("Lookup &Cash Account..."), self.lookup_cash_account_dialog, QKeySequence("Ctrl+L"))
+        #tools_menu.addAction(icon, _("&Register Cash Account..."), lambda: self.register_new_cash_account(addr='pick'), QKeySequence("Ctrl+G"))
         run_hook('init_menubar_tools', self, tools_menu)
 
         help_menu = menubar.addMenu(_("&Help"))
@@ -773,7 +773,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         QMessageBox.about(self, "Oregano",
             "<p><font size=+3><b>Oregano</b></font></p><p>" + _("Version") + f" {self.wallet.electrum_version}" + "</p>" +
             '<span style="font-size:11pt; font-weight:500;"><p>' +
-            _("Copyright © {year_start}-{year_end} Oregano LLC and the Oregano developers.").format(year_start=2017, year_end=2021) +
+            _("Copyright © {year_start}-{year_end} Oregano and the Oregano developers.").format(year_start=2021, year_end=2021) +
             "</p><p>" + _("darkdetect for macOS © 2019 Alberto Sottile") + "</p>"
             "</span>" +
             '<span style="font-weight:200;"><p>' +
@@ -1102,8 +1102,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         grid.addWidget(self.receive_address_e, 0, 1, 1, -1)
 
         # Cash Account for this address (if any)
-        msg = _("The Cash Account (if any) associated with this address. It doesn't get saved with the request, but it is shown here for your convenience.\n\nYou may use the Cash Accounts button to register a new Cash Account for this address.")
-        label = HelpLabel(_('Cash Accoun&t'), msg)
+        #msg = _("The Cash Account (if any) associated with this address. It doesn't get saved with the request, but it is shown here for your convenience.\n\nYou may use the Cash Accounts button to register a new Cash Account for this address.")
+        #label = HelpLabel(_('Cash Accoun&t'), msg)
         class CashAcctE(ButtonsLineEdit):
             my_network_signal = pyqtSignal(str, object)
             ''' Inner class encapsulating the Cash Account Edit.s
@@ -1164,10 +1164,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                 super().showEvent(e)
                 if e.isAccepted():
                     slf.set_cash_acct()
-        self.cash_account_e = CashAcctE()
-        label.setBuddy(self.cash_account_e)
-        grid.addWidget(label, 1, 0)
-        grid.addWidget(self.cash_account_e, 1, 1, 1, -1)
+        #self.cash_account_e = CashAcctE()
+        #label.setBuddy(self.cash_account_e)
+        #grid.addWidget(label, 1, 0)
+        #grid.addWidget(self.cash_account_e, 1, 1, 1, -1)
 
 
         self.receive_message_e = QLineEdit()
@@ -1439,7 +1439,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         if self.receive_address:
             text = self.receive_address.to_full_ui_string()
         self.receive_address_e.setText(text)
-        self.cash_account_e.set_cash_acct()
+        #self.cash_account_e.set_cash_acct()
 
     @rate_limited(0.250, ts_after=True)  # this function potentially re-computes the QR widget, so it's rate limited to once every 250ms
     def check_and_reset_receive_address_if_needed(self):
@@ -1549,7 +1549,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                 "<ul>"
                 "<li> Ergon <b>Address</b> <b>★</b>"
                 "<li> Bitcoin Legacy <b>Address</b> <b>★</b>"
-                "<li> <b>Cash Account</b> <b>★</b> e.g. <i>fixoshi#123</i>"
+                #"<li> <b>Cash Account</b> <b>★</b> e.g. <i>fixoshi#123</i>"
                 "<li> <b>Contact name</b> <b>★</b> from the Contacts tab"
                 "<li> <b>OpenAlias</b> e.g. <i>fixoshi@domain.com</i>"
                 "</ul><br>"
@@ -2426,7 +2426,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.show_error(e.args[0] + ":\n\n" + ', '.join(e.args[1:]))
             return
         except Exception as e:
-            self.show_error(_('Invalid bitcoincash URI:') + '\n\n' + str(e))
+            self.show_error(_('Invalid ergon URI:') + '\n\n' + str(e))
             return
         self.show_send_tab()
         r = out.get('r')
@@ -2701,7 +2701,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         that case the returned value would still be a valid Contact.
 
         Returns None on failure.'''
-        assert typ in ('address', 'cashacct')
+        assert typ in ('address')
         contact = None
         if typ == cashacct.URI_SCHEME:
             tup = self.resolve_cashacct(label)  # this displays an error message for us
@@ -4751,7 +4751,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.wallet.thread.stop()
             self.wallet.thread.wait() # Join the thread to make sure it's really dead.
 
-        for w in [self.address_list, self.history_list, self.utxo_list, self.cash_account_e, self.contact_list,
+        for w in [self.address_list, self.history_list, self.utxo_list, self.contact_list,
                   self.tx_update_mgr]:
             if w: w.clean_up()  # tell relevant object to clean itself up, unregister callbacks, disconnect signals, etc
 
