@@ -559,7 +559,7 @@ def lookup_cash_account_dialog(
     d.setObjectName("WindowModalDialog - " + title)
     finalization_print_error(d)
     destroyed_print_error(d)
-    all_cashacct_contacts = set(contact.name for contact in wallet.contacts.get_all(nocopy=True) if contact.type == 'cashacct')
+    all_cashacct_contacts = set(contact.name for contact in wallet.contacts.get_all(nocopy=True) if contact.type == cashacct.URI_SCHEME)
 
     vbox = QVBoxLayout(d)
     hbox = QHBoxLayout()
@@ -615,7 +615,7 @@ def lookup_cash_account_dialog(
                     del add_str
                     def add_contact_slot(ign=None, but=but, item=item):
                         # label, address, typ='address') -> str:
-                        new_contact = parent.set_contact(label=ca_string, address=info.address, typ='cashacct')
+                        new_contact = parent.set_contact(label=ca_string, address=info.address, typ=cashacct.URI_SCHEME)
                         if new_contact:
                             msg = _('<span style="white-space:nowrap"><b>{cash_account}</b> added to Contacts</span>').format(cash_account=ca_string_em)
                             but.setDisabled(True)

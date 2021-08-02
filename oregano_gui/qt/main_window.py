@@ -1924,15 +1924,16 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         emoji_str = ''
         mod_type = _type
         mine_str = ''
-        if _type.startswith('cashacct'):  # picks up cashacct and the cashacct_W pseudo-contacts
-            if _type == 'cashacct_T':
+        ca_uri = cashacct.URI_SCHEME
+        if _type.startswith(ca_uri):  # picks up cashacct and the cashacct_W pseudo-contacts
+            if _type == ca_uri + '_T':
                 # temporary "pending verification" registration pseudo-contact. Never offer it as a completion!
                 return None
-            mod_type = 'cashacct'
+            mod_type = ca_uri
             info = self.wallet.cashacct.get_verified(label)
             if info:
                 emoji_str = f'  {info.emoji}'
-                if _type == 'cashacct_W':
+                if _type == ca_uri + '_W':
                     mine_str = ' [' + _('Mine') + '] '
             else:
                 self.print_error(label, "not found")
@@ -1940,7 +1941,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                 return None
         elif _type == 'openalias':
             return contact.address
-        return label + emoji_str + '  ' + mine_str + '<' + contact.address + '>' if mod_type in ('address', 'cashacct') else None
+        return label + emoji_str + '  ' + mine_str + '<' + contact.address + '>' if mod_type in ('address', ca_uri) else None
 
     def update_completions(self):
         l = []
@@ -2702,7 +2703,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         Returns None on failure.'''
         assert typ in ('address', 'cashacct')
         contact = None
-        if typ == 'cashacct':
+        if typ == cashacct.URI_SCHEME:
             tup = self.resolve_cashacct(label)  # this displays an error message for us
             if not tup:
                 self.contact_list.update() # Displays original

@@ -29,6 +29,7 @@ from oregano.address import Address
 from oregano.contacts import Contact, contact_types
 from oregano.plugins import run_hook
 from oregano.util import FileImportFailed, PrintError, finalization_print_error
+from oregano import cashacct
 # TODO: whittle down these * imports to what we actually use when done with
 # our changes to this class -Calin
 from PyQt5.QtGui import *
@@ -94,7 +95,7 @@ class ContactList(PrintError, MyTreeWidget):
         # openalias items shouldn't be editable
         if column == 2: # Label, always editable
             return True
-        return item.data(0, self.DataRoles.Contact).type in ('address', 'cashacct')
+        return item.data(0, self.DataRoles.Contact).type in ('address', cashacct.URI_SCHEME)
 
     def on_edited(self, item, column, prior_value):
         contact = item.data(0, self.DataRoles.Contact)
@@ -168,9 +169,10 @@ class ContactList(PrintError, MyTreeWidget):
 
     def _get_ca_unverified(self, include_temp=False) -> Set[Contact]:
         i2c = self._i2c
-        types = ('cashacct', 'cashacct_W')
+        ca_uri = cashacct.URI_SCHEME
+        types = (ca_uri, ca_uri + '_W')
         if include_temp:
-            types = (*types, 'cashacct_T')
+            types = (*types, ca_uri + '_T')
         return set(
             i2c(item)
             for item in self.get_leaves()
@@ -181,11 +183,12 @@ class ContactList(PrintError, MyTreeWidget):
         menu = QMenu()
         selected = self.selectedItems()
         i2c = self._i2c
+        ca_uri = cashacct.URI_SCHEME
         ca_unverified = self._get_ca_unverified(include_temp=False)
         if selected:
             names = [item.text(1) for item in selected]
             keys = [i2c(item) for item in selected]
-            payable_keys = [k for k in keys if k.type != 'cashacct_T']
+            payable_keys = [k for k in keys if k.type != ca_uri + '_T']
             deletable_keys = [k for k in keys if k.type in contact_types]
             needs_verif_keys = [k for k in keys if k in ca_unverified]
             column = self.currentColumn()
@@ -194,7 +197,7 @@ class ContactList(PrintError, MyTreeWidget):
             item = self.currentItem()
             typ = i2c(item).type if item else 'unknown'
             ca_info = None
-            if item and typ in ('cashacct', 'cashacct_W'):
+            if item and typ in (ca_uri, ca_uri + '_W'):
                 ca_info = self.wallet.cashacct.get_verified(i2c(item).name)
                 if column == 1 and len(selected) == 1:
                     # hack .. for Cash Accounts just say "Copy Cash Account"
@@ -231,7 +234,7 @@ class ContactList(PrintError, MyTreeWidget):
                 a.setDisabled(True)
             if ca_info:
                 menu.addAction(_("View registration tx..."), lambda: self.parent.do_process_from_txid(txid=ca_info.txid, tx_desc=self.wallet.get_label(ca_info.txid)))
-                if typ in ('cashacct_W', 'cashacct'):
+                if typ in (ca_uri + '_W', ca_uri):
                     _contact_d = i2c(item)
                     menu.addAction(_("Details..."), lambda: cashacctqt.cash_account_detail_dialog(self.parent, _contact_d.name))
             menu.addSeparator()
@@ -312,7 +315,7 @@ class ContactList(PrintError, MyTreeWidget):
             # at the end as pseudo contacts if they also appear in real contacts
             real_contacts = [contact for contact in
                              self.parent.contacts.get_all(nocopy=True)
-                             if contact.type != 'cashacct'  # accept anything that's not cashacct
+                             if contact.type != cashacct.URI_SCHEME  # accept anything that's not cashacct
                                 or not Address.is_valid(contact.address)  # or if it is, it can have invalid address as it's clearly 'not mine"
                                 or not self.wallet.is_mine(  # or if it's not mine
                                     Address.from_string(contact.address))
@@ -335,7 +338,7 @@ class ContactList(PrintError, MyTreeWidget):
         "mine" entries won't be shown if the user explicitly added his own as
         "external"... '''
         try:
-            excl_chk = set((c.name, Address.from_string(c.address)) for c in exclude_contacts if c.type == 'cashacct')
+            excl_chk = set((c.name, Address.from_string(c.address)) for c in exclude_contacts if c.type == cashacct.URI_SCHEME)
         except:
             # Hmm.. invalid address?
             excl_chk = set()
@@ -350,7 +353,7 @@ class ContactList(PrintError, MyTreeWidget):
             wallet_cashaccts.append(Contact(
                 name = name,
                 address = ca_info.address.to_ui_string(),
-                type = 'cashacct_W'
+                type = cashacct.URI_SCHEME + '_W'
             ))
         # Add the [Pend] pseudo-contacts
         for txid, tup in self._ca_pending_conf.copy().items():
@@ -363,7 +366,7 @@ class ContactList(PrintError, MyTreeWidget):
             wallet_cashaccts.append(Contact(
                 name = name,
                 address = address.to_ui_string(),
-                type = 'cashacct_T'
+                type = cashacct.URI_SCHEME + '_T'
             ))
         return wallet_cashaccts
 
@@ -383,19 +386,20 @@ class ContactList(PrintError, MyTreeWidget):
         selected_contacts = set(item.data(0, self.DataRoles.Contact) for item in selected)
         del item, selected  # must not hold a reference to a C++ object that will soon be deleted in self.clear()..
         self.clear()
+        ca_uri = cashacct.URI_SCHEME
         type_names = defaultdict(lambda: _("Unknown"))
         type_names.update({
             'openalias'  : _('OpenAlias'),
-            'cashacct'   : _('Cash Account'),
-            'cashacct_W' : _('Cash Account') + ' [' + _('Mine') + ']',
-            'cashacct_T' : _('Cash Account') + ' [' + _('Pend') + ']',
+            ca_uri       : _('Cash Account'),
+            ca_uri + '_W': _('Cash Account') + ' [' + _('Mine') + ']',
+            ca_uri + '_T': _('Cash Account') + ' [' + _('Pend') + ']',
             'address'    : _('Address'),
         })
         type_icons = {
             'openalias'  : self.icon_openalias,
-            'cashacct'   : self.icon_cashacct,
-            'cashacct_W' : self.icon_cashacct,
-            'cashacct_T' : self.icon_unverif,
+            ca_uri       : self.icon_cashacct,
+            ca_uri + '_W': self.icon_cashacct,
+            ca_uri + '_T': self.icon_unverif,
             'address'    : self.icon_contacts,
         }
         selected_items, current_item = [], None
@@ -403,7 +407,7 @@ class ContactList(PrintError, MyTreeWidget):
         for contact in self.get_full_contacts(include_pseudo=self.show_my_cashaccts):
             _type, name, address = contact.type, contact.name, contact.address
             label_key = address
-            if _type in ('cashacct', 'cashacct_W', 'cashacct_T', 'address'):
+            if _type in (ca_uri, ca_uri + '_W', ca_uri + '_T', 'address'):
                 try:
                     # try and re-parse and re-display the address based on current UI string settings
                     addy = Address.from_string(address)
@@ -416,7 +420,7 @@ class ContactList(PrintError, MyTreeWidget):
             item = QTreeWidgetItem(["", name, label, address, type_names[_type]])
             item.setData(0, self.DataRoles.Contact, contact)
             item.DataRole = self.DataRoles.Contact
-            if _type in ('cashacct', 'cashacct_W', 'cashacct_T'):
+            if _type in (ca_uri, ca_uri + '_W', ca_uri + 'T'):
                 ca_info = self.wallet.cashacct.get_verified(name)
                 tt_warn = None
                 if ca_info:
@@ -432,7 +436,7 @@ class ContactList(PrintError, MyTreeWidget):
                     )
                 else:
                     item.setIcon(0, self.icon_unverif)
-                    if _type == 'cashacct_T':
+                    if _type == ca_uri + '_T':
                         tt_warn = tt = _('Cash Account pending confirmation and/or verification')
                     else:
                         tt_warn = tt = _('Warning: This Cash Account is not verified')
@@ -471,7 +475,7 @@ class ContactList(PrintError, MyTreeWidget):
         )
         if items:
             info, min_chash, name = items[0]
-            self.parent.set_contact(name, info.address.to_ui_string(), typ='cashacct')
+            self.parent.set_contact(name, info.address.to_ui_string(), typ=cashacct.URI_SCHEME)
             run_hook('update_contacts_tab', self)
 
     def ca_update_potentially_unconfirmed_registrations(self, d : Dict[str, Tuple[str, Address]]):

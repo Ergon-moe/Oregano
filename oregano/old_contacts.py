@@ -155,7 +155,7 @@ class Contacts(dict):
             elif _type == 'openalias':
                 if '@' not in k:
                     data.pop(k)
-            elif _type == 'cashacct':
+            elif _type == cashacct.URI_SCHEME:
                 if not Address.is_valid(k) or not cashacct.CashAcct.parse_string(n):
                     data.pop(k)
             else:
