@@ -55,7 +55,7 @@ $SUDO docker build -t oregano-srcdist-builder-img \
 # This is the place where we checkout and put the exact revision we want to work
 # on. Docker will run mapping this directory to /opt/oregano
 # which inside wine will look lik c:\oregano
-FRESH_CLONE=`pwd`/contrib/build-linux/fresh_clone2
+FRESH_CLONE=`pwd`/contrib/build-linux/fresh_clone
 FRESH_CLONE_DIR=$FRESH_CLONE/$GIT_DIR_NAME
 
 (
