@@ -44,7 +44,7 @@ from .plugins import run_hook
 from .wallet import create_new_wallet, restore_wallet_from_text
 from .transaction import Transaction, multisig_script, OPReturn
 from .util import bfh, bh2u, format_satoshis, json_decode, print_error, to_bytes
-from .paymentrequest import PR_PAID, PR_UNPAID, PR_UNKNOWN, PR_EXPIRED
+from .paymentrequest import PR_PAID, PR_UNCONFIRMED, PR_UNPAID, PR_UNKNOWN, PR_EXPIRED
 from .simple_config import SimpleConfig
 
 known_commands = {}
@@ -710,6 +710,7 @@ class Commands:
             PR_UNPAID: 'Pending',
             PR_PAID: 'Paid',
             PR_EXPIRED: 'Expired',
+            PR_UNCONFIRMED: 'Unconfirmed'
         }
         out['address'] = out.get('address').to_ui_string()
         out['amount (XRG)'] = format_satoshis(out.get('amount'))
@@ -998,6 +999,7 @@ def add_global_options(parser):
     group.add_argument("-P", "--portable", action="store_true", dest="portable", default=False, help="Use local 'oregano_data' directory")
     group.add_argument("-w", "--wallet", dest="wallet_path", help="wallet path")
     group.add_argument("-wp", "--walletpassword", dest="wallet_password", default=None, help="Supply wallet password")
+    group.add_argument("--forgetconfig", action="store_true", dest="forget_config", default=False, help="Forget config on exit")
     group.add_argument("--testnet", action="store_true", dest="testnet", default=False, help="Use Testnet")
     group.add_argument("--testnet4", action="store_true", dest="testnet4", default=False, help="Use Testnet4")
     group.add_argument("--scalenet", action="store_true", dest="scalenet", default=False, help="Use Scalenet")

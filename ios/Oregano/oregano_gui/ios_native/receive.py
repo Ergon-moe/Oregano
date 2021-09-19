@@ -12,7 +12,7 @@ from oregano import WalletStorage, Wallet
 from oregano.util import timestamp_to_datetime, format_time
 from oregano.i18n import _, language
 from oregano.address import Address, ScriptOutput
-from oregano.paymentrequest import PR_UNPAID, PR_EXPIRED, PR_UNKNOWN, PR_PAID
+from oregano.paymentrequest import PR_UNCONFIRMED, PR_UNPAID, PR_EXPIRED, PR_UNKNOWN, PR_PAID
 from oregano import bitcoin
 import oregano.web as web
 import sys, traceback, time
@@ -25,13 +25,15 @@ from collections import namedtuple
 pr_icons = {
     PR_UNPAID:"unpaid.png",
     PR_PAID:"confirmed.png",
-    PR_EXPIRED:"expired.png"
+    PR_EXPIRED:"expired.png",
+    PR_UNCONFIRMED:"unconfirmed.png",
 }
 
 pr_tooltips = {
     PR_UNPAID:'Pending',
     PR_PAID:'Paid',
-    PR_EXPIRED:'Expired'
+    PR_EXPIRED:'Expired',
+    PR_UNCONFIRMED: 'Unconfirmed',
 }
 
 ReqItem = namedtuple("ReqItem", "dateStr addrStr signedBy message amountStr statusStr addr iconSign iconStatus fiatStr timestamp expiration expirationStr amount fiat")
