@@ -20,7 +20,7 @@ from .util import PrintError, ThreadJob, print_error, inv_base_units
 
 DEFAULT_ENABLED = True
 DEFAULT_CURRENCY = "USD"
-DEFAULT_EXCHANGE = "CoinPaprika"  # Note the exchange here should ideally also support history rates
+DEFAULT_EXCHANGE = "CoinGecko"  # Note the exchange here should ideally also support history rates
 
 # See https://en.wikipedia.org/wiki/ISO_4217
 CCY_PRECISIONS = {'BHD': 3, 'BIF': 0, 'BYR': 0, 'CLF': 4, 'CLP': 0,
