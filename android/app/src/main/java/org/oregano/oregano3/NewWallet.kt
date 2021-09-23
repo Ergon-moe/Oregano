@@ -181,7 +181,7 @@ class NewWalletImportDialog : NewWalletDialog2() {
 
     override fun onShowDialog() {
         super.onShowDialog()
-        tvPrompt.setText(R.string.enter_a_list_of_bitcoin)
+        tvPrompt.setText(R.string.enter_a_list_of_ergon)
         dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { scanQR(this) }
     }
 
