@@ -164,7 +164,10 @@ class CoinGecko(ExchangeBase):
         json2 = self.get_json('explorer.ergon.network', '/ext/summary')
         xrg_price = json2['data'][0]['lastPrice']
         prices = json["market_data"]["current_price"]
-        return dict([(a[0].upper(),PyDecimal(a[1]*xrg_price)) for a in prices.items()])
+        result = dict([(a[0].upper(),PyDecimal(a[1]*xrg_price)) for a in prices.items()])
+        result['XRG'] = PyDecimal(1)
+        result['mXRG'] = PyDecimal(1000)
+        return result
 
     def history_ccys(self):
         return ['AED', 'ARS', 'AUD', 'BTD', 'BHD', 'BMD', 'BRL', 'BTC',

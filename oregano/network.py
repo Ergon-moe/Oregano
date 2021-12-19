@@ -1858,7 +1858,7 @@ class Network(util.DaemonThread):
             server_msg = str(server_msg)
         server_msg = server_msg.replace("\n", r"\n") # replace \n with slash-n because dict does this.
         if r'dust' in server_msg:
-            dust_thold = 546
+            dust_thold = 3
             try:
                 from .wallet import dust_threshold
                 dust_thold = dust_threshold(Network.get_instance())
