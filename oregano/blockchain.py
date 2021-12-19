@@ -492,7 +492,7 @@ class Blockchain(util.PrintError):
 
         # calculate and return new target
 
-        if normalized_time > daa_minimum:
+        if normalized_time > daa_minimum or t < 0:
             work -= (work * daa_minimum) // resistance \
             - work // resistance \
             - (work * daa_minimum * daa_minimum) // (resistance*resistance) \
