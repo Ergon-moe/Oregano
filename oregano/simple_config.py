@@ -5,6 +5,7 @@ import time
 import os
 import stat
 from decimal import Decimal as PyDecimal
+import math
 
 from . import util
 from copy import deepcopy
@@ -340,7 +341,7 @@ class SimpleConfig(PrintError):
        if retval is None:
            retval = self.get('fee_per_kb')
        if retval is None:
-           retval = 1000  # New wallet
+           retval = self.fee_rates[0]  # New wallet
        return retval
 
     def has_custom_fee_rate(self):
@@ -359,7 +360,7 @@ class SimpleConfig(PrintError):
 
     @classmethod
     def estimate_fee_for_feerate(cls, fee_per_kb, size):
-        return int(PyDecimal(fee_per_kb) * PyDecimal(size) / 1000)
+        return int(math.ceil((PyDecimal(fee_per_kb) * PyDecimal(size) / 1000)))
 
     def update_fee_estimates(self, key, value):
         self.fee_estimates[key] = value

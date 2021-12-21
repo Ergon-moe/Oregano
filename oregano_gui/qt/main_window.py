@@ -3704,7 +3704,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         hbox.setContentsMargins(20, 0, 0, 0)
         hbox.addWidget(QLabel(_("Timeout:")), 0, Qt.AlignRight)
         fee_time_sb = QSpinBox()
-        fee_time_sb.setMinimum(10)
+        fee_time_sb.setMinimum(3)
         fee_time_sb.setMaximum(9999)
         fee_time_sb.setSuffix(" " + _("seconds"))
         fee_time_sb.setValue(30)
@@ -4103,7 +4103,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         customfee_e = BTCSatsByteEdit()
         customfee_e.setAmount(self.config.custom_fee_rate() / 1000.0 if self.config.has_custom_fee_rate() else None)
         customfee_e.textChanged.connect(on_customfee)
-        customfee_label = HelpLabel(_('Custom fee rate:'), _('Custom Fee Rate in Satoshis per byte'))
+        customfee_label = HelpLabel(_('Custom fee rate:'), _('Custom Fee Rate in fix per byte'))
         fee_lo.addWidget(customfee_label, 0, 0, 1, 1, Qt.AlignRight)
         fee_lo.addWidget(customfee_e, 0, 1, 1, 1, Qt.AlignLeft)
 
