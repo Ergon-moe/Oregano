@@ -225,7 +225,7 @@ class PayToEdit(PrintError, ScanQRTextEdit):
         docHeight = docLineCount * self.fontSpacing
 
         h = docHeight + self.verticalMargins
-        h = min(max(h, self.heightMin), self.heightMax)
+        h = int(min(max(h, self.heightMin), self.heightMax))
 
         self.setMinimumHeight(h)
         self.setMaximumHeight(h)
