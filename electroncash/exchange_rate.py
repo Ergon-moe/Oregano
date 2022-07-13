@@ -31,6 +31,17 @@ CCY_PRECISIONS = {'BHD': 3, 'BIF': 0, 'BYR': 0, 'CLF': 4, 'CLP': 0,
                   'VUV': 0, 'XAF': 0, 'XAU': 4, 'XOF': 0, 'XPF': 0}
 
 
+def to_decimal(x):
+    # helper function mainly for float->Decimal conversion, i.e.:
+    #   >>> Decimal(41754.681)
+    #   Decimal('41754.680999999996856786310672760009765625')
+    #   >>> Decimal("41754.681")
+    #   Decimal('41754.681')
+    if isinstance(x, PyDecimal):
+        return x
+    return PyDecimal(str(x))
+
+
 class ExchangeBase(PrintError):
 
     def __init__(self, on_quotes, on_history):
@@ -156,7 +167,7 @@ class BitcoinAverage(ExchangeBase):
 
     def get_rates(self, ccy):
         json = self.get_json('apiv2.bitcoinaverage.com', '/indices/global/ticker/short')
-        return dict([(r.replace("BCH", ""), PyDecimal(json[r]['last']))
+        return dict([(r.replace("BCH", ""), to_decimal(json[r]['last']))
                      for r in json if r != 'timestamp'])
 
     # note: historical rates used to be freely available
@@ -178,14 +189,14 @@ class BitPay(ExchangeBase):
 
     def get_rates(self, ccy):
         json = self.get_json('bitpay.com', '/rates/BCH')
-        return dict([(r['code'], PyDecimal(r['rate'])) for r in json['data']])
+        return dict([(r['code'], to_decimal(r['rate'])) for r in json['data']])
 
 
 class Bitso(ExchangeBase):
 
     def get_rates(self, ccy):
         json = self.get_json('api.bitso.com', '/v2/ticker/?book=bch_btc')
-        return {'BTC': PyDecimal(json['last'])}
+        return {'BTC': to_decimal(json['last'])}
 
 
 class BitStamp(ExchangeBase):
@@ -195,16 +206,16 @@ class BitStamp(ExchangeBase):
         json_eur = self.get_json('www.bitstamp.net', '/api/v2/ticker/bcheur')
         json_btc = self.get_json('www.bitstamp.net', '/api/v2/ticker/bchbtc')
         return {
-            'USD': PyDecimal(json_usd['last']),
-            'EUR': PyDecimal(json_eur['last']),
-            'BTC': PyDecimal(json_btc['last'])}
+            'USD': to_decimal(json_usd['last']),
+            'EUR': to_decimal(json_eur['last']),
+            'BTC': to_decimal(json_btc['last'])}
 
 class Coinbase(ExchangeBase):
 
     def get_rates(self, ccy):
         json = self.get_json('api.coinbase.com',
                              '/v2/exchange-rates?currency=BCH')
-        return {ccy: PyDecimal(rate) for (ccy, rate) in json["data"]["rates"].items()}
+        return {ccy: to_decimal(rate) for (ccy, rate) in json["data"]["rates"].items()}
 
 
 class Kraken(ExchangeBase):
@@ -214,7 +225,7 @@ class Kraken(ExchangeBase):
         pairs = ['BCH%s' % c for c in ccys]
         json = self.get_json('api.kraken.com',
                              '/0/public/Ticker?pair=%s' % ','.join(pairs))
-        return dict((k[-3:], PyDecimal(float(v['c'][0])))
+        return dict((k[-3:], to_decimal(v['c'][0]))
                      for k, v in json['result'].items())
 
 
@@ -222,7 +233,7 @@ class CoinCap(ExchangeBase):
 
     def get_rates(self, ccy):
         json = self.get_json('api.coincap.io', '/v2/rates/bitcoin-cash/')
-        return {'USD': PyDecimal(json['data']['rateUsd'])}
+        return {'USD': to_decimal(json['data']['rateUsd'])}
 
     def history_ccys(self):
         return ['USD']
@@ -243,7 +254,7 @@ class CoinGecko(ExchangeBase):
     def get_rates(self, ccy):
         json = self.get_json('api.coingecko.com', '/api/v3/coins/bitcoin-cash?localization=False&sparkline=false')
         prices = json["market_data"]["current_price"]
-        return dict([(a[0].upper(),PyDecimal(a[1])) for a in prices.items()])
+        return dict([(a[0].upper(),to_decimal(a[1])) for a in prices.items()])
 
     def history_ccys(self):
         return ['AED', 'ARS', 'AUD', 'BTD', 'BHD', 'BMD', 'BRL', 'BTC',
@@ -265,7 +276,7 @@ class BitstampYadio(ExchangeBase):
     def get_rates(self, ccy):
         json_usd = self.get_json('www.bitstamp.net', '/api/v2/ticker/bchusd')
         json_ars = self.get_json('api.yadio.io', '/exrates/ARS')
-        return {'ARS': PyDecimal(json_usd['last']) / PyDecimal(json_ars['ARS']['USD'])}
+        return {'ARS': to_decimal(json_usd['last']) / to_decimal(json_ars['ARS']['USD'])}
 
 
 def dictinvert(d):
