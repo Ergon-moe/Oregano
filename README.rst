@@ -1,5 +1,5 @@
-Oregano - Lightweight Ergon client (Doesn't connect to the network yet!)
-=====================================
+Oregano - Lightweight Ergon client
+==================================
 
 ::
 
@@ -108,8 +108,25 @@ Cash to run completely independently of your system configuration.
    a file ``.python-version`` into the current directory.
 4. While still in this directory, run ``pip install pyqt5``.
 5. If you are installing from the source file (.tar.gz or .zip) then you are
-   ready and you may run ``./oregano``. If you are using the git version,
+   ready and you may run ``./oregano-app``. If you are using the git version,
    then continue by following the Development version instructions above.
+
+
+Running from source on Arch Linux
+=================================
+
+Using pip is is not recommended on Arch Linux. To install the dependencies in your package manager use the following::
+
+    sudo pacman -S python-dnspython python-pyaes python-ecdsa python-requests python-qrcode python-protobuf python-jsonrpclib-pelix python-pysocks python-qdarkstyle python-dateutil python-stem python-certfi
+
+One package from AUR, either use AUR helper of your choice::
+
+    yay -S python-pathvalidate
+
+Or manually::
+
+    git clone https://aur.archlinux.org/python-pathvalidate.git
+    cd python-pathvalidate; makepkg -i
 
 Running from source on macOS
 ============================
@@ -122,19 +139,19 @@ You need to install **either** `MacPorts <https://www.macports.org>`_  **or** `H
 4. Install Oregano requirements: ``python3 -m pip install --user -r contrib/requirements/requirements.txt``
 5. Compile libsecp256k1 (optional, yet highly recommended): ``./contrib/make_secp``.
    This requires GNU tools and automake, install with brew: ``brew install coreutils automake`` or if using MacPorts: ``sudo port install coreutils automake``
-6. At this point you should be able to just run the sources: ``./oregano``
+6. At this point you should be able to just run the sources: ``./oregano-app``
 
 
 Creating Binaries
 =================
 
 Linux AppImage & Source Tarball
---------------
+-------------------------------
 
 See `contrib/build-linux/README.md <contrib/build-linux/README.md>`_.
 
 Mac OS X / macOS
---------
+----------------
 
 See `contrib/osx/ <contrib/osx/>`_.
 
@@ -149,6 +166,6 @@ Android
 See `android/ <android/>`_.
 
 iOS
--------
+---
 
 See `ios/ <ios/>`_.
