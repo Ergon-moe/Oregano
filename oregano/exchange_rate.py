@@ -154,13 +154,10 @@ class ExchangeBase(PrintError):
         return sorted([str(a) for (a, b) in rates.items() if b is not None and len(a)==3])
 
 
-
-
-
 class CoinGecko(ExchangeBase):
 
     def get_rates(self, ccy):
-        json = self.get_json('api.coingecko.com', '/api/v3/coins/bitcoin-cash?localization=False&sparkline=false')
+        json = self.get_json('api.coingecko.com', '/api/v3/coins/tether?localization=False&sparkline=false')
         json2 = self.get_json('explorer.ergon.network', '/ext/summary')
         xrg_price = json2['data'][0]['lastPrice']
         prices = json["market_data"]["current_price"]
@@ -179,7 +176,7 @@ class CoinGecko(ExchangeBase):
                 'ZAR']
 
     def request_history(self, ccy):
-        history = self.get_json('api.coingecko.com', '/api/v3/coins/bitcoin-cash/market_chart?vs_currency=%s&days=max' % ccy)
+        history = self.get_json('api.coingecko.com', '/api/v3/coins/tether/market_chart?vs_currency=%s&days=max' % ccy)
         from datetime import datetime as dt
         return dict([(dt.utcfromtimestamp(h[0]/1000).strftime('%Y-%m-%d'), h[1])
                      for h in history['prices']])
