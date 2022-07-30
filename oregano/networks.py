@@ -64,7 +64,8 @@ class MainNet(AbstractNet):
 
     # Nov 13. 2017 HF to CW144 DAA height (height of last block mined on old DAA)
     CW144_HEIGHT = 0
-
+    EMA_ACTIVATION_TIME = 1659182400
+    #EMA_ACTIVATION_TIME = 1659093627
     # Note: this is not the Merkle root of the verification block itself , but a Merkle root of
     # all blockchain headers up until and including this block. To get this value you need to
     # connect to an ElectrumX server you trust and issue it a protocol command. This can be

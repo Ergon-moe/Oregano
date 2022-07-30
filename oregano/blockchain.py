@@ -461,11 +461,10 @@ class Blockchain(util.PrintError):
 
     def get_bits(self, header, chunk=None):
         '''Returns bits for the given height'''
-        resistance = 1000;
-        T = 600
-        daa_minimum = resistance//2 - 1
+
         height = header['block_height']
         prevheight = height-1
+        ema_activation = networks.net.EMA_ACTIVATION_TIME
         # Genesis
         if height == 0:
             return MAX_BITS
@@ -474,6 +473,22 @@ class Blockchain(util.PrintError):
         elif prevheight < 4:
             return 0x1a04b500
 
+        if self.get_median_time_past(prevheight, chunk) <= ema_activation:
+            daa_target = self.exp_target(height, chunk)
+        if self.get_median_time_past(prevheight, chunk) > ema_activation and self.get_median_time_past(prevheight-1, chunk) <= ema_activation:
+            return MAX_BITS
+        else:
+            daa_target = self.ema_target(height, chunk)
+        daa_retval = target_to_bits(daa_target)
+        daa_retval = int(daa_retval)
+
+        return daa_retval
+
+    def exp_target(self, height, chunk):
+        resistance = 1000;
+        T = 600
+        daa_minimum = resistance//2 - 1
+        prevheight = height-1
 
         prior = self.read_header(height - 1, chunk)
         if prior is None:
@@ -506,128 +521,46 @@ class Blockchain(util.PrintError):
             - (work // (resistance*resistance))
 
         daa_target = (1 << 256) // work - 1
-        daa_retval = target_to_bits(daa_target)
-        daa_retval = int(daa_retval)
+        return daa_target
 
-        return daa_retval
-
-
-    def get_bits_old(self, header, chunk=None):
-        '''Return bits for the given height.'''
-        # Difficulty adjustment interval?
-        height = header['block_height']
-        # Genesis
-        if height == 0:
-            return MAX_BITS
+    def ema_target(self, height, chunk):
+        resistance = 1000;
+        T = 600
+        daa_minimum = resistance//2 - 1
+        prevheight = height-1
 
         prior = self.read_header(height - 1, chunk)
         if prior is None:
             raise Exception("get_bits missing header {} with chunk {!r}".format(height - 1, chunk))
         bits = prior['bits']
 
-        # NOV 13 HF DAA and/or ASERT DAA
+        work = bits_to_work(bits)
 
-        prevheight = height - 1
-        daa_mtp = self.get_median_time_past(prevheight, chunk)
+        daa_starting_height = self.get_suitable_block_height(prevheight-1, chunk)
+        daa_ending_height = self.get_suitable_block_height(prevheight, chunk)
+        # calculate and sanitize elapsed time
+        daa_starting_timestamp = self.read_header(daa_starting_height, chunk)['timestamp']
+        daa_ending_timestamp = self.read_header(daa_ending_height, chunk)['timestamp']
+        t = daa_ending_timestamp - daa_starting_timestamp
+        normalized_time = t // T
 
+        # calculate and return new target
 
-        # ASERTi3-2d DAA activated on Nov. 15th 2020 HF
-        if daa_mtp >= networks.net.asert_daa.MTP_ACTIVATION_TIME:
-            header_ts = header['timestamp']
-            prev_ts = prior['timestamp']
-            if networks.net.TESTNET:
-                # testnet 20 minute rule
-                if header_ts - prev_ts > 20*60:
-                    return MAX_BITS
+        if normalized_time > daa_minimum:
+            work -= (work * daa_minimum) // resistance \
+            - work // resistance \
+            - (work * daa_minimum * daa_minimum) // (resistance*resistance) \
+            + 2 * (work * daa_minimum) // (resistance*resistance) \
+             - work // (resistance*resistance)
+        else:
+            work -=((work * t // T) // resistance ) \
+            - (work // resistance) \
+            - ((work * t*t // (T*T)) // (resistance*resistance) ) \
+            + (2 * (work * t // T) // (resistance*resistance) ) \
+            - (work // (resistance*resistance))
 
-            anchor = self.get_asert_anchor(prior, daa_mtp, chunk)
-            assert anchor is not None, "Failed to find ASERT anchor block for chain {!r}".format(self)
-
-            return networks.net.asert_daa.next_bits_aserti3_2d(anchor.bits,
-                                                               prev_ts - anchor.prev_time,
-                                                               prevheight - anchor.height)
-
-
-        # Mon Nov 13 19:06:40 2017 DAA HF
-        if prevheight >= networks.net.CW144_HEIGHT:
-
-            if networks.net.TESTNET:
-                # testnet 20 minute rule
-                if header['timestamp'] - prior['timestamp'] > 20*60:
-                    return MAX_BITS
-
-            # determine block range
-            daa_starting_height = self.get_suitable_block_height(prevheight-144, chunk)
-            daa_ending_height = self.get_suitable_block_height(prevheight, chunk)
-
-            # calculate cumulative work (EXcluding work from block daa_starting_height, INcluding work from block daa_ending_height)
-            daa_cumulative_work = 0
-            for daa_i in range (daa_starting_height+1, daa_ending_height+1):
-                daa_prior = self.read_header(daa_i, chunk)
-                daa_bits_for_a_block = daa_prior['bits']
-                daa_work_for_a_block = bits_to_work(daa_bits_for_a_block)
-                daa_cumulative_work += daa_work_for_a_block
-
-            # calculate and sanitize elapsed time
-            daa_starting_timestamp = self.read_header(daa_starting_height, chunk)['timestamp']
-            daa_ending_timestamp = self.read_header(daa_ending_height, chunk)['timestamp']
-            daa_elapsed_time = daa_ending_timestamp - daa_starting_timestamp
-            if (daa_elapsed_time>172800):
-                daa_elapsed_time=172800
-            if (daa_elapsed_time<43200):
-                daa_elapsed_time=43200
-
-            # calculate and return new target
-            daa_Wn = (daa_cumulative_work*600) // daa_elapsed_time
-            daa_target = (1 << 256) // daa_Wn - 1
-            daa_retval = target_to_bits(daa_target)
-            daa_retval = int(daa_retval)
-            return daa_retval
-
-        #END OF NOV-2017 DAA
-        N_BLOCKS = networks.net.LEGACY_POW_RETARGET_BLOCKS  # Normally 2016
-        if height % N_BLOCKS == 0:
-            return self.get_new_bits(height, chunk)
-
-        if networks.net.TESTNET:
-            # testnet 20 minute rule
-            if header['timestamp'] - prior['timestamp'] > 20*60:
-                return MAX_BITS
-            # special case for a newly started testnet (such as testnet4)
-            if height < N_BLOCKS:
-                return MAX_BITS
-            return self.read_header(height // N_BLOCKS * N_BLOCKS, chunk)['bits']
-
-        # bitcoin cash EDA
-        # Can't go below minimum, so early bail
-        if bits == MAX_BITS:
-            return bits
-        mtp_6blocks = self.get_median_time_past(height - 1, chunk) - self.get_median_time_past(height - 7, chunk)
-        if mtp_6blocks < 12 * 3600:
-            return bits
-
-        # If it took over 12hrs to produce the last 6 blocks, increase the
-        # target by 25% (reducing difficulty by 20%).
-        target = bits_to_target(bits)
-        target += target >> 2
-
-        return target_to_bits(target)
-
-    def get_new_bits(self, height, chunk=None):
-        N_BLOCKS = networks.net.LEGACY_POW_RETARGET_BLOCKS
-        assert height % N_BLOCKS == 0
-        # Genesis
-        if height == 0:
-            return MAX_BITS
-        first = self.read_header(height - N_BLOCKS, chunk)
-        prior = self.read_header(height - 1, chunk)
-        prior_target = bits_to_target(prior['bits'])
-
-        target_span = networks.net.LEGACY_POW_TARGET_TIMESPAN # usually: 14 * 24 * 60 * 60 = 2 weeks
-        span = prior['timestamp'] - first['timestamp']
-        span = min(max(span, target_span // 4), target_span * 4)
-        new_target = (prior_target * span) // target_span
-        return target_to_bits(new_target)
+        daa_target = (1 << 256) // work - 1
+        return daa_target
 
     def can_connect(self, header, check_height=True):
         height = header['block_height']
