@@ -54,7 +54,7 @@ class MainNet(AbstractNet):
     CASHADDR_PREFIX = "ergon"
     HEADERS_URL = "http://bitcoincash.com/files/blockchain_headers"  # Unused
     GENESIS = "000000070e37bfee7e84b94f997f38155a85b22172f5ca25fd4eb3d64c5ad7c5"
-    DEFAULT_PORTS = {'t': '50001', 's': '50002'}
+    DEFAULT_PORTS = {'t': '52137', 's': '52138'}
     DEFAULT_SERVERS = _read_json_dict('servers.json')  # DO NOT MODIFY IN CLIENT CODE
     TITLE = 'Oregano Ergon Light Wallet'
 
