@@ -476,7 +476,7 @@ class Blockchain(util.PrintError):
         if self.get_median_time_past(prevheight, chunk) <= ema_activation:
             daa_target = self.exp_target(height, chunk)
         if self.get_median_time_past(prevheight, chunk) > ema_activation and self.get_median_time_past(prevheight-1, chunk) <= ema_activation:
-            return MAX_BITS
+            return 0x1a04b500
         else:
             daa_target = self.ema_target(height, chunk)
         daa_retval = target_to_bits(daa_target)
