@@ -188,6 +188,16 @@ class TorController(PrintError):
         kwargs['start_new_session'] = True
         return TorController._orig_subprocess_popen(*args, **kwargs)
 
+    _orig_launch_tor = stem.process.launch_tor
+
+    @staticmethod
+    def _launch_tor_patch(*args, **kwargs):
+        # This sets the close_output argument to false so we can keep monitoring tor logs
+        # This will not be needed anymore when a new stem version that includes this commit is released:
+        # https://github.com/torproject/stem/commit/7a4357b2c21d0af5088c1cafce0800fc63cebbb4
+        kwargs['close_output'] = False
+        return TorController._orig_launch_tor(*args, **kwargs)
+
     @staticmethod
     def _get_tor_binary() -> Tuple[Optional[str], BinaryType]:
         # Try to locate a bundled tor binary
@@ -237,6 +247,7 @@ class TorController(PrintError):
 
         try:
             subprocess.Popen = TorController._popen_monkey_patch
+            stem.process.launch_tor = TorController._launch_tor_patch
             self._tor_process = stem.process.launch_tor_with_config(
                 tor_cmd=self.tor_binary,
                 completion_percent=0,  # We will monitor the bootstrap status
