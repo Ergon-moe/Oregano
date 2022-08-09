@@ -3548,8 +3548,8 @@ def restore_wallet_from_text(text, *, path, config,
     """Restore a wallet from text. Text can be a seed phrase, a master
     public key, a master private key, a list of bitcoin addresses
     or bitcoin private keys."""
-    storage = WalletStorage(path)
-    if storage.file_exists():
+    storage = WalletStorage(path, in_memory_only=path is None)
+    if path is not None and storage.file_exists():
         raise Exception("Remove the existing wallet first!")
 
     text = text.strip()
