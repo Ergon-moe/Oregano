@@ -195,7 +195,8 @@ class TorController(PrintError):
         # This sets the close_output argument to false so we can keep monitoring tor logs
         # This will not be needed anymore when a new stem version that includes this commit is released:
         # https://github.com/torproject/stem/commit/7a4357b2c21d0af5088c1cafce0800fc63cebbb4
-        kwargs['close_output'] = False
+        if len(args) < 8:
+            kwargs['close_output'] = False
         return TorController._orig_launch_tor(*args, **kwargs)
 
     @staticmethod
