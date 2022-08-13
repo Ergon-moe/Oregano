@@ -510,7 +510,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
             self.cashacct.save()
 
     def basename(self):
-        return os.path.basename(self.storage.path)
+        return os.path.basename(self.storage.path) if self.storage.path else "memory"
 
     def save_addresses(self):
         addr_dict = {
@@ -3520,8 +3520,8 @@ class Wallet:
 def create_new_wallet(*, path, config, passphrase=None, password=None,
                       encrypt_file=True, seed_type=None, gap_limit=None) -> dict:
     """Create a new wallet"""
-    storage = WalletStorage(path)
-    if storage.file_exists():
+    storage = WalletStorage(path, in_memory_only=path is None)
+    if path is not None and storage.file_exists():
         raise Exception("Remove the existing wallet first!")
 
     from .mnemonic import Mnemonic_Electrum, Mnemonic
@@ -3550,8 +3550,8 @@ def restore_wallet_from_text(text, *, path, config,
     """Restore a wallet from text. Text can be a seed phrase, a master
     public key, a master private key, a list of bitcoin addresses
     or bitcoin private keys."""
-    storage = WalletStorage(path)
-    if storage.file_exists():
+    storage = WalletStorage(path, in_memory_only=path is None)
+    if path is not None and storage.file_exists():
         raise Exception("Remove the existing wallet first!")
 
     text = text.strip()
