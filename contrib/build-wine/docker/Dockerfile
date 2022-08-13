@@ -1,10 +1,10 @@
-FROM ubuntu:21.10@sha256:74fd1c59ac5d29527f56a9ac22753571ce4c40a301d083a56d963bde98a7dfdc
+FROM ubuntu:22.04@sha256:42ba2dfce475de1113d55602d40af18415897167d47c2045ec7b6d9746ff148f
 
 ARG UBUNTU_MIRROR=http://archive.ubuntu.com/ubuntu/
 
 ENV LC_ALL=C.UTF-8 LANG=C.UTF-8
 
-ENV UBUNTUDIST=impish
+ENV UBUNTUDIST=jammy
 
 # This prevents questions during package installations
 ENV DEBIAN_FRONTEND=noninteractive
@@ -16,17 +16,17 @@ RUN echo deb ${UBUNTU_MIRROR} ${UBUNTUDIST} main restricted universe multiverse 
     dpkg --add-architecture i386 && \
     apt-get update -q && \
     apt-get install -qy \
-        gnupg2=2.2.20-1ubuntu4 \
-        ca-certificates=20210119ubuntu1 \
-        wget=1.21-1ubuntu3 \
-        git=1:2.32.0-1ubuntu1 \
+        gnupg2=2.2.27-3ubuntu2.1 \
+        ca-certificates=20211016 \
+        wget=1.21.2-2ubuntu1 \
+        git=1:2.34.1-1ubuntu1.4 \
         p7zip-full=16.02+dfsg-8 \
-        make=4.3-4ubuntu1 \
-        autotools-dev=20180224.1+nmu1 \
-        autoconf=2.69-14 \
-        libtool=2.4.6-15 \
-        gettext=0.21-4ubuntu3 \
-        autopoint=0.21-4ubuntu3 \
+        make=4.3-4.1build1 \
+        autotools-dev=20220109.1 \
+        autoconf=2.71-2 \
+        libtool=2.4.6-15build2 \
+        gettext=0.21-4ubuntu4 \
+        autopoint=0.21-4ubuntu4 \
         mingw-w64=8.0.0-1 \
         mingw-w64-tools=8.0.0-1 \
         win-iconv-mingw-w64-dev=0.0.8-4
@@ -51,9 +51,9 @@ RUN echo "78b185fabdb323971d13bd329fefc8038e08559aa51c4996de18db0639a51df6 /tmp/
         # cabextract is needed for winetricks to install the .NET framework
         cabextract=1.9-3 \
         # xvfb is needed to launch the Visual Studio installer
-        xvfb=2:1.20.13-1ubuntu1.1 \
+        xvfb=2:21.1.3-2ubuntu2.1 \
         # winbind is needed for the Visual Studio installer and cl.exe PDB generation
-        winbind=2:4.13.17~dfsg-0ubuntu0.21.10.1
+        winbind=2:4.15.9+dfsg-0ubuntu0.2
 
 RUN rm -rf /var/lib/apt/lists/* && \
     apt-get autoremove -y && \
