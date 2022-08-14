@@ -31,6 +31,17 @@ CCY_PRECISIONS = {'BHD': 3, 'BIF': 0, 'BYR': 0, 'CLF': 4, 'CLP': 0,
                   'VUV': 0, 'XAF': 0, 'XAU': 4, 'XOF': 0, 'XPF': 0}
 
 
+def to_decimal(x):
+    # helper function mainly for float->Decimal conversion, i.e.:
+    #   >>> Decimal(41754.681)
+    #   Decimal('41754.680999999996856786310672760009765625')
+    #   >>> Decimal("41754.681")
+    #   Decimal('41754.681')
+    if isinstance(x, PyDecimal):
+        return x
+    return PyDecimal(str(x))
+
+
 class ExchangeBase(PrintError):
 
     def __init__(self, on_quotes, on_history):
@@ -161,7 +172,7 @@ class CoinGecko(ExchangeBase):
         json2 = self.get_json('explorer.ergon.network', '/ext/summary')
         xrg_price = json2['data'][0]['lastPrice']
         prices = json["market_data"]["current_price"]
-        result = dict([(a[0].upper(),PyDecimal(a[1]*xrg_price)) for a in prices.items()])
+        result = dict([(a[0].upper(),to_decimal(a[1])*to_decimal(xrg_price)) for a in prices.items()])
         result['XRG'] = PyDecimal(1)
         result['mXRG'] = PyDecimal(1000)
         return result
@@ -190,7 +201,7 @@ class CoinPaprika(ExchangeBase):
                 'MYR', 'NOK', 'PKR', 'SEK', 'TWD', 'ZAR', 'VND', 'BOB', 'COP', 'PEN', 'ARS', 'ISK']
         json = self.get_json('api.coinpaprika.com', '/v1/tickers/xrg-ergon?quotes=%s' % ','.join(ccys))
         prices = json['quotes']
-        return dict([(curr, PyDecimal(data["price"])) for curr, data in prices.items()])
+        return dict([(curr, to_decimal(data["price"])) for curr, data in prices.items()])
 
     def history_ccys(self):
         return ['BTC', 'USD']
