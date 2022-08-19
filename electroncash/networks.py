@@ -72,8 +72,8 @@ class MainNet(AbstractNet):
     #    network.synchronous_get(("blockchain.block.header", [height, height]))
     #
     # Consult the ElectrumX documentation for more details.
-    VERIFICATION_BLOCK_MERKLE_ROOT = "60b3f9f9e439fd5f6c95ae380b91a480359657afd9206a9274f66fd42845273b"
-    VERIFICATION_BLOCK_HEIGHT = 717171
+    VERIFICATION_BLOCK_MERKLE_ROOT = "e48add946584c05f97a46370f3431de74b83f532af661180b8cf01a64c6a3c13"
+    VERIFICATION_BLOCK_HEIGHT = 752000
     asert_daa = ASERTDaa(is_testnet=False)
     # Note: We *must* specify the anchor if the checkpoint is after the anchor, due to the way
     # blockchain.py skips headers after the checkpoint.  So all instances that have a checkpoint
@@ -113,8 +113,8 @@ class TestNet(AbstractNet):
     BITCOIN_CASH_FORK_BLOCK_HEIGHT = 1155876
     BITCOIN_CASH_FORK_BLOCK_HASH = "00000000000e38fef93ed9582a7df43815d5c2ba9fd37ef70c9a0ea4a285b8f5"
 
-    VERIFICATION_BLOCK_MERKLE_ROOT = "7551842b70e20582390f5693ffce71df5509f5a3f6e32ac0f91123231dbcf97a"
-    VERIFICATION_BLOCK_HEIGHT = 1476226
+    VERIFICATION_BLOCK_MERKLE_ROOT = "72c5bf50d5220b80fa1b1c099e533c2b9cbdb69c846087b2b463bdfac59f9643"
+    VERIFICATION_BLOCK_HEIGHT = 1510000
     asert_daa = ASERTDaa(is_testnet=True)
     asert_daa.anchor = Anchor(height=1421481, bits=486604799, prev_time=1605445400)
 
@@ -144,8 +144,8 @@ class TestNet4(TestNet):
     # Nov 13. 2017 HF to CW144 DAA height (height of last block mined on old DAA)
     CW144_HEIGHT = 3000
 
-    VERIFICATION_BLOCK_MERKLE_ROOT = "e4cd956daecf2a1d2894954bb479f09e6d2d488e470ed59e1af6a329170597d6"
-    VERIFICATION_BLOCK_HEIGHT = 68611
+    VERIFICATION_BLOCK_MERKLE_ROOT = "a0b8403a44af7509a0849c79dc49b779291c2ed3f13a23ff825ef1abf512b435"
+    VERIFICATION_BLOCK_HEIGHT = 108000
     asert_daa = ASERTDaa(is_testnet=True)  # Redeclare to get instance for this subclass
     asert_daa.anchor = Anchor(height=16844, bits=486604799, prev_time=1605451779)
 
