@@ -1289,3 +1289,30 @@ and there is no warning message.
   (Axel Gembe)
 - Removal of dead code (cculianu)
 - Fixup for dark mode on some Linux and Windows systems (Pierre K)
+
+# RELEASE NOTES 4.2.11
+
+- Use fallback pure python implementation of ripemd160 in address.py
+  #2452 (Voker57)
+- Consolidate all use of ripemd160 to one + add pycryptodomex fallback
+  (cculianu)
+- Fix DAA activation height for testnet3 (cculianu)
+- Updated requirements to peg protobuf to a version <4.0 (cculianu)
+- Fix to blockchain.py get_bits; was sometimes wrong (cculianu)
+- Update servers.json #2453 (kzKallisti)
+- Ledger: Add Nano-S-Plus USB device ids #2454 (vrabe)
+- Tor: Update to version 0.4.7.8 with a patch for static linking
+  #2456 (Axel Gembe)
+- Add RPA - Reusable Payment Addresses #2450  (Jonald Fyookball, OPReturn)
+- Normalise exchange rate #2462 (MrNaif2018)
+- Tor: Fix closing of stdout on Windows #2466 (Axel Gembe)
+- Allow restoring wallet in diskless mode #2464 (MrNaif2018)
+- Add same code for restore_wallet_from_text #2473 (MrNaif2018)
+- Tor: Fix launch_tor override of close_output argument #2468 (Axel Gembe)
+- Update default CashFusion server to fusion.servo.cash (#2469) (kzKallisti)
+- AppImage: Fix package versions and add cargo dependency #2470 (Axel Gembe)
+- Wine: Update Ubuntu from impish to jammy #2471 (Axel Gembe)
+- Tor: Update to version 0.4.7.10 with a patch for static linking #2472
+  (Axel Gembe)
+- Updated checkpoints (cculianu)
+
