@@ -10,7 +10,7 @@
   !define PRODUCT_NAME "Oregano"
   !define INTERNAL_NAME "Oregano"
   !define PRODUCT_WEB_SITE "https://github.com/Ergon-moe/Oregano"
-  !define PRODUCT_PUBLISHER "Oregano LLC"
+  !define PRODUCT_PUBLISHER "Ergon Moe"
   !define INSTDIR_REG_ROOT "HKCU"
   !define INSTDIR_REG_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 
@@ -68,7 +68,7 @@
   VIAddVersionKey ProductName "${PRODUCT_NAME} Installer"
   VIAddVersionKey Comments "The installer for ${PRODUCT_NAME}"
   VIAddVersionKey CompanyName "${PRODUCT_NAME}"
-  VIAddVersionKey LegalCopyright "2013-2021 ${PRODUCT_PUBLISHER} and Electrum Technologies GmbH"
+  VIAddVersionKey LegalCopyright "2013-2022 ${PRODUCT_PUBLISHER} and Electrum Technologies GmbH"
   VIAddVersionKey FileDescription "${PRODUCT_NAME} Installer"
   VIAddVersionKey FileVersion ${PRODUCT_VERSION}
   VIAddVersionKey ProductVersion ${PRODUCT_VERSION}
@@ -142,7 +142,7 @@ Function .onInit
   noinstdir:
   ClearErrors
 
-  ; Request uninstallation of an old Electron Cash installation
+  ; Request uninstallation of an old Oregano installation
   ReadRegStr $R0 ${INSTDIR_REG_ROOT} "${INSTDIR_REG_KEY}" UninstallString
   ReadRegStr $R1 ${INSTDIR_REG_ROOT} "${INSTDIR_REG_KEY}" DisplayName
   ${If} $R0 != ""
@@ -202,11 +202,6 @@ Section
   WriteRegStr ${INSTDIR_REG_ROOT} "Software\Classes\ergon" "URL Protocol" ""
   WriteRegStr ${INSTDIR_REG_ROOT} "Software\Classes\ergon" "DefaultIcon" "$\"$INSTDIR\oregano.ico, 0$\""
   WriteRegStr ${INSTDIR_REG_ROOT} "Software\Classes\ergon\shell\open\command" "" "$\"$INSTDIR\${INTERNAL_NAME}.exe$\" $\"%1$\""
-  ;Links cashacct: URI's to Oregano
-  WriteRegStr ${INSTDIR_REG_ROOT} "Software\Classes\cashacct" "" "URL:cashacct Protocol"
-  WriteRegStr ${INSTDIR_REG_ROOT} "Software\Classes\cashacct" "URL Protocol" ""
-  WriteRegStr ${INSTDIR_REG_ROOT} "Software\Classes\cashacct" "DefaultIcon" "$\"$INSTDIR\oregano.ico, 0$\""
-  WriteRegStr ${INSTDIR_REG_ROOT} "Software\Classes\cashacct\shell\open\command" "" "$\"$INSTDIR\${INTERNAL_NAME}.exe$\" $\"%1$\""
 
   ;Adds an uninstaller possibilty to Windows Uninstall or change a program section
   WriteRegStr ${INSTDIR_REG_ROOT} "${INSTDIR_REG_KEY}" "DisplayName" "$(^Name)"
@@ -242,7 +237,6 @@ Section "Uninstall"
   RMDir  "$SMPROGRAMS\${PRODUCT_NAME}"
 
   DeleteRegKey ${INSTDIR_REG_ROOT} "Software\Classes\ergon"
-  DeleteRegKey ${INSTDIR_REG_ROOT} "Software\Classes\cashacct"
   DeleteRegKey ${INSTDIR_REG_ROOT} "Software\${PRODUCT_NAME}"
   DeleteRegKey ${INSTDIR_REG_ROOT} "${INSTDIR_REG_KEY}"
 SectionEnd
