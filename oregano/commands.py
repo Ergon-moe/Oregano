@@ -43,9 +43,10 @@ from .i18n import _
 from .plugins import run_hook
 from .wallet import create_new_wallet, restore_wallet_from_text
 from .transaction import Transaction, multisig_script, OPReturn
-from .util import bfh, bh2u, format_satoshis, json_decode, print_error, to_bytes
+from .util import bfh, bh2u, format_satoshis, json_decode, print_error, standardize_path, to_bytes
 from .paymentrequest import PR_PAID, PR_UNCONFIRMED, PR_UNPAID, PR_UNKNOWN, PR_EXPIRED
 from .simple_config import SimpleConfig
+from .version import PACKAGE_VERSION
 
 known_commands = {}
 
@@ -109,9 +110,10 @@ def command(s):
 
 class Commands:
 
-    def __init__(self, config, wallet, network, callback = None):
+    def __init__(self, config, wallet, network, daemon=None, callback = None):
         self.config = config
         self.wallet = wallet
+        self.daemon = daemon
         self.network = network
         self._callback = callback
 
@@ -174,6 +176,59 @@ class Commands:
     def commands(self):
         """List of commands"""
         return ' '.join(sorted(known_commands.keys()))
+
+    @command('n')
+    def getinfo(self):
+        """ network info """
+        net_params = self.network.get_parameters()
+        response = {
+            'path': self.network.config.path,
+            'server': net_params[0],
+            'blockchain_height': self.network.get_local_height(),
+            'server_height': self.network.get_server_height(),
+            'spv_nodes': len(self.network.get_interfaces()),
+            'connected': self.network.is_connected(),
+            'auto_connect': net_params[4],
+            'version': PACKAGE_VERSION,
+            'default_wallet': self.config.get_wallet_path(),
+            'wallets': {k: w.is_up_to_date()
+                        for k, w in self.daemon.wallets.items()},
+            'fee_per_kb': self.config.fee_per_kb(),
+        }
+        return response
+
+    @command('n')
+    def stop(self):
+        """Stop daemon"""
+        self.daemon.stop()
+        return "Daemon stopped"
+
+    @command('n')
+    def list_wallets(self):
+        """List wallets open in daemon"""
+        return [{'path':k, 'synchronized':w.is_up_to_date()} for k, w in self.daemon.wallets.items()]
+
+    @command('n')
+    def load_wallet(self):
+        """Open wallet in daemon"""
+        path = self.config.get_wallet_path()
+        wallet = self.daemon.load_wallet(path, self.config.get('password'))
+        if wallet is not None:
+            self.wallet = wallet
+        response = wallet is not None
+        return response
+
+    @command('n')
+    def close_wallet(self):
+        """Close wallet"""
+        path = self.config.get_wallet_path()
+        if path in self.daemon.wallets:
+            self.daemon.stop_wallet(path)
+            response = True
+        else:
+            response = False
+        return response
+
 
     @command('')
     def create(self, passphrase=None, password=None, encrypt_file=True, seed_type=None, wallet_path=None):

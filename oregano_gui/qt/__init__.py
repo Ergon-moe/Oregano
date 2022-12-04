@@ -635,6 +635,8 @@ class ElectrumGui(QObject, PrintError):
 
                 try:
                     wallet = self.daemon.load_wallet(path, None)
+                    if wallet is not None:
+                        self.daemon.cmd_runner.wallet = wallet
                 except BaseException as e:
                     self.print_error(repr(e))
                     if self.windows:
@@ -664,6 +666,7 @@ class ElectrumGui(QObject, PrintError):
                         return
                     wallet.start_threads(self.daemon.network)
                     self.daemon.add_wallet(wallet)
+                    self.daemon.cmd_runner.wallet = wallet
                     self._cache_password(wallet, password)
             except BaseException as e:
                 traceback.print_exc(file=sys.stdout)

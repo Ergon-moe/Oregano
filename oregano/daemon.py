@@ -181,7 +181,7 @@ class Daemon(DaemonThread):
         server.register_function(self.ping, 'ping')
         server.register_function(self.run_gui, 'gui')
         server.register_function(self.run_daemon, 'daemon')
-        self.cmd_runner = Commands(self.config, None, self.network)
+        self.cmd_runner = Commands(self.config, None, self.network, self)
         for cmdname in known_commands:
             server.register_function(getattr(self.cmd_runner, cmdname), cmdname)
         server.register_function(self.run_cmdline, 'run_cmdline')
@@ -320,7 +320,7 @@ class Daemon(DaemonThread):
         kwargs = {}
         for x in cmd.options:
             kwargs[x] = (config_options.get(x) if x in ['password', 'new_password'] else config.get(x))
-        cmd_runner = Commands(config, wallet, self.network)
+        cmd_runner = Commands(config, wallet, self.network, self)
         func = getattr(cmd_runner, cmd.name)
         try:
             result = func(*args, **kwargs)
