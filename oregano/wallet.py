@@ -2372,7 +2372,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
             tx_hashes.append(tx_hash)
             if vsum >= amount:
                 return True, conf, tx_hashes
-        return False, None, []
+        return False, None, tx_hashes
 
     def has_payment_request(self, addr):
         ''' Returns True iff Address addr has any extant payment requests
@@ -2388,8 +2388,9 @@ class Abstract_Wallet(PrintError, SPVDelegate):
         out = copy.copy(r)
         addr_text = addr.to_ui_string()
         amount_text = format_satoshis(r['amount'])
-        out['URI'] = '{}:{}?amount={}'.format(networks.net.CASHADDR_PREFIX,
-                                              addr_text, amount_text)
+        out['URI'] = '{}:{}'.format(networks.net.CASHADDR_PREFIX, addr_text)
+        if r['amount']:
+            out['URI'] += '?amount={}'.format(amount_text)
         status, conf, tx_hashes = self.get_request_status(addr)
         out['status'] = status
         out['tx_hashes'] = tx_hashes
@@ -2406,7 +2407,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
                 if rewrite:
                     baseurl = baseurl.replace(*rewrite)
                 out['request_url'] = os.path.join(baseurl, 'req', key[0], key[1], key, key)
-                out['URI'] += '&r=' + out['request_url']
+                out['URI'] += ('&r=' if r['amount'] else '?r=') + out['request_url']
                 if not 'index_url' in out:
                     out['index_url'] = os.path.join(baseurl, 'index.html') + '?id=' + key
                 websocket_server_announce = config.get('websocket_server_announce')
@@ -2435,18 +2436,15 @@ class Abstract_Wallet(PrintError, SPVDelegate):
             expiration = 0
         conf = None
         tx_hashes = []
-        if amount:
-            paid, conf, tx_hashes = self.get_payment_status(address, amount)
-            if not paid:
-                status = PR_UNPAID
-            elif conf == 0:
-                status = PR_UNCONFIRMED
-            else:
-                status = PR_PAID
-            if status == PR_UNPAID and expiration is not None and time.time() > timestamp + expiration:
-                status = PR_EXPIRED
+        paid, conf, tx_hashes = self.get_payment_status(address, amount)
+        if not paid:
+            status = PR_UNPAID
+        elif conf == 0:
+            status = PR_UNCONFIRMED
         else:
-            status = PR_UNKNOWN
+            status = PR_PAID
+        if status == PR_UNPAID and expiration is not None and time.time() > timestamp + expiration:
+            status = PR_EXPIRED
         return status, conf, tx_hashes
 
     def make_payment_request(self, addr, amount, message, expiration=None, *,
