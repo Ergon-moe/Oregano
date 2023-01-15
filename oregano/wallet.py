@@ -2367,6 +2367,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
             l.append((conf, v, txid))
         tx_hashes = []
         vsum = 0
+        amount = amount or 0
         for conf, v, tx_hash in reversed(sorted(l)):
             vsum += v
             tx_hashes.append(tx_hash)
